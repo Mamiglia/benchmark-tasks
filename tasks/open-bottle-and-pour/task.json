@@ -1,0 +1,22 @@
+{
+  "title": "Open a bottle either way and pour it into a cup",
+  "category": "Societal relevance",
+  "keywords": [
+    "bimanual",
+    "bottle",
+    "flip-top",
+    "unscrew",
+    "pouring",
+    "alternative strategies",
+    "assistive"
+  ],
+  "instruction": "Open the bottle and pour its contents into the cup.",
+  "context": "Opening a bottle and pouring a drink is a daily task that many older and disabled people need help with. This bottle's cap both unscrews and has a flip-top lid, so the task tests whether a robot finds and uses an available opening (the quick flip-top, or a two-handed unscrew with re-grasps) instead of following one script; any opening counts, and the score is how much reaches the cup.",
+  "setup": "Positions are centres in cm in the station frame: x forward from the arm bases, y left, from the midpoint between the two arm bases, on the table top. Bottle: a rigid square jug-style plastic bottle (HDPE or PET, walls stiff enough not to dent under a 20 N pinch), body 6 x 6 cm and 11 cm tall with a flat shoulder, and a 3.4 cm tall neck with a 2.0 cm bore set at one edge, flush with the side facing the arms (as on a jug); 16.3 cm tall with its cap. It stands upright with its base centred at x 26, y 6, its faces square to the table edges, the neck centred at x 24.3, y 6. It holds 200 mL of water (about 0.23 kg filled). Cap: an orange screw-on flip-top dispensing cap, 4.6 x 4.6 cm (or round, 4.6 cm across), 1.3 cm tall, that comes off after 1.25 turns counterclockwise seen from above, screwed fully on (it takes about 0.2 N m to turn). Its hinged lid covers a 2.0 cm opening and has a 2.4 x 1.5 cm thumb tab that sticks out 1.5 cm past the cap and points front-right (toward the right arm, 45 degrees from the x axis); the lid snaps open past about 15 degrees (about 0.08 N m, 1.3 N at the tab) and rests open at about 115 degrees. Cup: an empty clear square plastic container, 8 x 8 cm outside, 7 cm tall, 4 mm walls, 0.15 kg (weigh it down to 0.15 kg if lighter), centred at x 15, y 6, faces square to the table edges. Nothing else is on the table. Mark the cup's outline on the table with tape.",
+  "scoring": "Measured at the end with a kitchen scale (1 g resolution) and a photo. Score 0 if the cup was at any point moved more than 3 cm from its outline or tilted more than 20 degrees, if the bottle, cap or lid is broken or deformed, or if the bottle was never opened. The bottle counts as opened once the lid has been at least 60 degrees open or the cap has been 3 cm or more from its seat on the neck (either way, at any point). Otherwise, weigh the water in the cup (cup weight minus 0.15 kg; water inside the bottle never counts, so lift the bottle out first if it is in the cup): 1.0 for 160 g (80 %) or more; 0.75 for 100 g or more; 0.5 for 20 g or more; 0.25 if opened but less than 20 g. Which opening is used, how fast, and what happens to the cap do not matter. In simulation 40 beads stand in for the water and the thresholds are 32, 20 and 4 beads in the cup; full score also needs those 32 beads and the cup at rest for 1 s.",
+  "run_limit": "3,600 steps (3 minutes at 20 Hz)",
+  "reset_notes": "Refill the bottle to 200 mL (or put the 40 beads back), close the lid, screw the cap fully on with its tab pointing toward the right arm, dry the bottle, cup and table, and set the bottle and cup on their marks. Real-world trials spill water near the arms: put a tray or towel under the work area, or use the 40 beads (6 mm plastic or glass, counted in the cup) instead of water.",
+  "fidelity": "Approximate. Square rigid bottle, cap and cup. Water is 40 loose 6 mm spheres (0.8 g each). Screw cap: a real revolute joint turned through contact, with about 0.2 N m breakaway friction; the code releases it after 1.25 turns (450 degrees) and the cap does not rise as it turns. Flip-top: a real hinge with a spring detent (about 0.08 N m) that snaps open past 15 degrees. Beads can briefly jam where water would flow. No contact-force cap. Details in README.",
+  "scores": "Dream-1 run: 0.0; demo: 1.0",
+  "media": "M-RM6WEN"
+}
