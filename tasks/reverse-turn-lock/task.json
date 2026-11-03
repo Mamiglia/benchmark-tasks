@@ -18,5 +18,6 @@
   "run_limit": "1,200 steps (1 minute at 20 Hz)",
   "reset_notes": "Turn the key counter-clockwise back to its stop, bow along the long (y) ticks, slide the lid shut so the cam drops into its notch, and set the box back in its taped outline. A broken shear pin is used up: push out both halves and fit a new 9 mm piece of 1.75 mm PLA filament before the next trial.",
   "fidelity": "Approximate. Rigid-box parts; the loose box is a floating articulation with revolute key and prismatic lid joints, so every reaction acts on the box. The lock is not geometry: each physics step applies key friction from the resistance curve, a stiff counter-clockwise stop, 3 N lid rail friction, and a cam spring until 75 degrees. The shear pin breaks above 0.6 N m for 12.5 ms. Foot friction 0.3. Real pin strength and foot friction vary; calibrate per batch (README).",
-  "scores": "Dream-1 run: 0.0; demo: 1.0"
+  "scores": "Dream-1 run: 0.0; demo: 1.0",
+  "media": "M-Y33GF2"
 }
