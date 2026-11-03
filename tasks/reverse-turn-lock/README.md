@@ -14,7 +14,7 @@ against its habit, and, if it still turns the usual way first, whether it backs 
 forcing. It also asks whether the policy steadies the object it is working on. Dream-1 works from joint positions and cameras. It can
 see the stall: the bow does not move against the dial ticks, and measured joint6 lags its command.
 
-## Why this lock, and why the warning is in words
+## Why this lock: grounding in a human convention
 
 - **A real reversed lock.** Quarter-turn cam locks (mailboxes, filing cabinets, tool chests, lockers, cash boxes)
   are sold for either rotation, and installers flip the cam or stop to suit the door. Most people expect "turn
@@ -23,7 +23,7 @@ see the stall: the bow does not move against the dial ticks, and measured joint6
 - **A spoken warning, no arrow.** The dial is 24 unlabeled ticks every 15 degrees: it shows how far the key has
   turned, not which way unlocks. Real reversed cam locks usually carry no direction marking; the owner tells you
   ("it opens the other way"). The instruction gives that warning without naming clockwise or counter-clockwise, so
-  the policy must map "opposite to normal" onto a direction. Turning the usual way anyway meets the hard stop, and
+  the policy must know the human convention (counter-clockwise to open) and invert it. Turning the usual way anyway meets the hard stop, and
   forcing it snaps the key.
 - **A loose, light box.** Cash boxes, document boxes and tool cases sit loose on a desk. People hold them with one
   hand while they turn the key with the other.
