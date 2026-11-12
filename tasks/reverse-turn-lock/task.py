@@ -25,7 +25,7 @@ SCENE = "station"
 SCORE_OVER = "end"
 TOP = TABLE_TOP[SCENE]
 
-INSTRUCTION = "This lock turns the opposite way to a normal lock. Unlock the box with the orange key, then slide its blue lid open."
+INSTRUCTION = "Unlock the box with the orange key, then slide its blue lid open."
 
 # The submitted lock: unlocks CLOCKWISE seen from above (the reverse of the usual counter-clockwise), breakaway peak
 # 0.40 N m at 6 deg, 0.30 N m running, shear pin at 0.6 N m. Variants: change LockParams (see README).
