@@ -1,0 +1,23 @@
+{
+  "title": "Move four sealed cups of unknown weight without crushing or dropping them",
+  "category": "Impact on jobs",
+  "keywords": [
+    "bimanual",
+    "grip force",
+    "unknown payload",
+    "thin-walled container",
+    "slip",
+    "crush avoidance",
+    "food service",
+    "lab consumables"
+  ],
+  "instruction": "Put all four cups on the tray upright.",
+  "context": "Food service and lab work move sealed thin-walled cups whose contents are hidden. Squeezed too hard the wall buckles; gripped too lightly a full cup slides out. The four cups look the same but hold 20 to 400 g, and no single grip force moves all four intact: the robot must feel each cup's weight as it lifts and set its grip from that.",
+  "setup": "Positions in cm from the midpoint between the two arm bases, on the table top (x forward, y left). Four identical white thin-walled plastic cups, 7 cm across, 9 cm tall, straight sides, red foil seal recessed 6 mm below the rim, 1 cm bands drawn on the wall; 26 g empty, each filled with damp sand to a hidden mass from the seed (default seed 0: 120 g at (34, 21), 205 g at (22, 21), 45 g at (34, -21), 320 g at (22, -21)); all upright. A dark grey tray taped to the table, 21 x 28 cm outside (long side along y), 5 mm floor, 1 cm rims 2 cm tall, centred at (30, 0). Nothing else on the table. Arms start in the ready pose.",
+  "scoring": "Per cup, 0.25 if: it was lifted 2 cm or more by a grip on its side wall; that grip ended with it on the tray; at the end its base is inside the tray rim, it stands within 10 degrees of upright and no gripper holds it; and never during the trial did its wall crease or buckle, a gripper touch its base or seal, its base rise over 1 cm above the surface under it without a side-wall grip (dropped, scooped, stacked), it slide over 1 cm along the fingers, tilt past 30 degrees, share one gripper with another cup in the air, or leave the table. Score is the sum; 1.0 when all four (success, held 1 s).",
+  "run_limit": "2,000 steps (100 s at 20 Hz)",
+  "reset_notes": "A creased cup is used up: replace it with a fresh cup filled to the same mass. Fill masses for other seeds are listed in the README (CUPS_SEED); weigh each cup after filling. Stand the cups back on their taped marks.",
+  "fidelity": "Approximate. Each cup wall is 8 rigid panels on radial spring slides (about 1,000 N/m under a pad), so a grip visibly presses it in. PhysX cannot buckle a shell: when the measured pad force exceeds the cup's buckling force (1.5 N + 34 N/kg x fill) for 12.5 ms, the panels take a dented rest position, as a creased cup stays dented. Wall stiffness does not depend on fill. Fill is a rigid mass; pad friction about 0.33; tray fixed. Details in README.",
+  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seed 0; also 1.0 on seeds 1 and 2)",
+  "media": "M-CF4S2K"
+}
