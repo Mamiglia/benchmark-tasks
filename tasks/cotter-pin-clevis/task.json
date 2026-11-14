@@ -1,0 +1,23 @@
+{
+  "title": "Secure a clevis pin with its cotter pin by bending the legs one each way",
+  "category": "Impact on jobs",
+  "keywords": [
+    "cotter pin",
+    "split pin",
+    "clevis pin",
+    "fastener locking",
+    "plastic bending",
+    "non-prehensile pushing",
+    "heavy equipment repair",
+    "aircraft maintenance"
+  ],
+  "instruction": "Finish securing the clevis pin with its cotter pin, then move both arms clear.",
+  "context": "A straight cotter pin shakes out of its hole and the clevis pin then walks out of the linkage; it only secures the joint once its legs are bent, one each way, and a cotter that is bent and then straightened must be scrapped (FAA AC 43.13-1B ch. 7; farm and heavy-equipment service manuals). The legs start together: only the long leg's 4 mm extension can be pushed from the inside, then the short leg from the side the long leg has left, each bent round its root with 4-8 N at the finger, or gripped like pliers. Done by farm, heavy-equipment, industrial machinery and aircraft mechanics (O*NET 49-3041, 49-3042, 49-9041, 49-3011). The instruction states only the goal.",
+  "setup": "Positions in cm from the midpoint between the two arm bases, on the table top (x forward, y left, z up). Arms start in the ready pose. Clevis joint (all fixed, clamped to the table), centred on an upright ISO 2341-B 8 x 22 steel clevis pin at x 30, y -8 (head 14 mm, under the bottom prong): a dark steel fork clevis for an M8 rod (8 mm slot, two horizontal prongs 4 mm thick and 16 mm wide, the top one 9.3-9.7 cm and the bottom one 8.1-8.5 cm above the table, with rounded ends 8 mm round the pin), a yellow painted steel rod end 12 x 7.6 mm between the prongs running 11 cm toward +x onto a steel support block, an ISO 7089 8 mm steel washer (16 mm OD, 1.6 mm) on the top prong, and a steel stand block under the fork. Cotter pin: ISO 1234 2 x 25 zinc-plated low-carbon steel (wire 1.8 mm, 1.0 g), through the pin's 2 mm cross-hole along +x, its axis 10 cm above the table, eye (3.6 mm wide) against the pin's near side, legs straight and together, pointing away from the arms; the long leg (21 mm past the pin) on the left (+y), the short leg (17 mm past the pin) on the right. Nothing else on the table.",
+  "scoring": "From a top-down photo with a protractor overlay; a leg's bend is its angle to the cotter's axis. 0 if either leg was ever re-bent (bent back 15 degrees or more after it had been bent 30 degrees or more), checked over the whole trial. Otherwise 1.0 (success) when both legs are bent 60 degrees or more, every finger is 2 cm or more from the cotter and the legs are still, held 1 s; 0.75 for that state not yet held 1 s at the end; 0.5 both legs bent 60 degrees or more but a finger within 2 cm or a leg moving; 0.25 one leg bent 60 degrees or more; else 0.",
+  "run_limit": "900 steps (45 s at 20 Hz)",
+  "reset_notes": "Pull the bent cotter out with pliers and discard it; push a new ISO 1234 2 x 25 cotter fully home, legs together, long leg on the left. The clevis joint does not move.",
+  "fidelity": "Approximate. The clevis parts and the cotter's eye and shank are one fixed body. Each leg is a rigid 0.9 x 1.8 mm box on a revolute joint at its root, 0-100 degrees, with an elastic-plastic hinge: elastic stiffness 2.5 N m/rad (3EI/L) as an implicit drive whose target is the leg's permanent set, yield moment 0.077 N m (300 MPa wire) hardening 25% over 90 degrees. Legs 20 g each in the solver (real 0.2 g) for contact stability. No fatigue cracking or twisting. Details in README.",
+  "scores": "Dream-1 run: 0.0 (seed 0); scripted demo: 1.0 (seeds 0, 4 and 10)",
+  "media": ""
+}
