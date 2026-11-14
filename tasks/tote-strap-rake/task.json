@@ -19,5 +19,5 @@
   "reset_notes": "Lift the ring back over the middle tine, lay the strap as in the screenshot, put the tote and rake back on their taped outlines (shifted by the seed's offset from the README table).",
   "fidelity": "Approximate. Tote, ring and rake are rigid bodies of boxes (the tines are cylinders; the ring is square with a 31 mm opening). The strap is five rigid 3.95 cm webbing links on spherical joints, 5 g each (real webbing is about 1 g) for solver stability: a coarse model of a limp strap. The shelf is static; the rake slides on the deck at friction 0.4. Ring-on-tine, deck-edge, table and release checks are geometric, from body poses. Details in README.",
   "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seeds 0, 4 and 10)",
-  "media": ""
+  "media": "M-N7QNJK"
 }

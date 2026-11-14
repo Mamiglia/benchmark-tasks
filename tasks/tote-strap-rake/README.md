@@ -231,3 +231,7 @@ the shelf it falls 15 cm onto the table: no hazard to people. Keep people out of
 
 No third-party assets. The shelf, tote, strap, ring and rake are primitives defined in `totekit.py`. The robot, room and
 cameras are the standard yam_arena embodiment.
+
+## Credit
+
+The idea for this task was first proposed in robocurve/benchmark-tasks#295 (TK-UVZ464). The code, models and text here are an independent implementation.
