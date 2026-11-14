@@ -239,3 +239,7 @@ gloves and a lab coat when filling, weighing and emptying the tubes, and dispose
 
 No third-party assets. The rack, tubes and liquid are primitives defined in `task.py` / `mixkit.py`. The robot, room
 and cameras are the standard yam_arena embodiment.
+
+## Credit
+
+The idea for this task was first proposed in robocurve/benchmark-tasks#1433 (TK-FC5K99). The code, models and text here are an independent implementation.

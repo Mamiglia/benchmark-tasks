@@ -18,5 +18,6 @@
   "run_limit": "1,800 steps (90 s at 20 Hz)",
   "reset_notes": "Empty, rinse and dry the tubes. Refill each with 2 mL of 0.5 M copper(II) sulfate solution, then layer 2 mL of water on top slowly down the wall with a dropping pipette (or use dyed sugar solution under water, README); weigh each tube in the rack. Replace the white bench paper if marked.",
   "fidelity": "Approximate. Tubes are PhysX rigid bodies, the rack fixed boxes. There is no liquid simulation: a reduced-order model (first sloshing mode, exact wall height, column lift), stepped at 240 Hz from each tube's pose, latches a spill when the liquid reaches the mouth and counts mixing strokes. Its 30-degree stroke threshold and 25% mixing per stroke are chosen, not measured; the real trial measures spills and colour directly. Details in README.",
-  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seeds 0, 4 and 10)"
+  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seeds 0, 4 and 10)",
+  "media": "M-BG8TB7"
 }
