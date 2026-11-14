@@ -16,5 +16,6 @@
   "run_limit": "2,000 steps (100 s at 20 Hz)",
   "reset_notes": "Put the five blanks back on their tray marks and one blank in the nest; empty the chute; start the loader's program for the trial's seed at the same moment as the trial.",
   "fidelity": "Approximate. Blanks are rigid cylinders with rubber-like pad friction; the gripper pinches with up to 50 N. The nest pocket is four fixed walls, the same shape as the milled block. Arm links collide as convex hulls slightly larger than the real links, so a near miss under about 1 cm can count as a touch (PhysX, 240 Hz). The loader runs its seeded program open loop and closes whether or not a blank is there. Manufacturer joint gains and torque-speed limits.",
-  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seeds 0, 4 and 10)"
+  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seeds 0, 4 and 10)",
+  "media": "M-XRSBZJ"
 }

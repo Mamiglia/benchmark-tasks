@@ -185,3 +185,7 @@ blank in the nest and empty the chute.
 
 No third-party assets: every object is built from primitives in `task.py`. The robot, the station and the cameras
 come from yam_arena (YAM URDF and meshes from I2RT, MIT).
+
+## Credit
+
+The idea for this task was first proposed in robocurve/benchmark-tasks#441 (TK-TT776S). The code, models and text here are an independent implementation.
