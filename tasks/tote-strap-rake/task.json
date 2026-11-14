@@ -1,0 +1,23 @@
+{
+  "title": "Take a tote off a shelf when its strap is caught on a hand rake",
+  "category": "Societal relatability",
+  "keywords": [
+    "bimanual",
+    "entanglement",
+    "strap",
+    "shelf",
+    "unhooking",
+    "household",
+    "level carry",
+    "do not disturb"
+  ],
+  "instruction": "Take the tote down from the shelf and put it on the table.",
+  "context": "Totes and bags on garage, shed and pantry shelves carry straps and rings, and the shelves hold tools with hooks and tines. Here the tote's hanging strap has dropped over a tine of a light hand rake lying next to it: any carry that leaves it there drags the rake along the shelf. The robot has to pinch the strap and lift the ring straight up off the tine without pulling the rake, then take the tote down with both hands.",
+  "setup": "Positions in cm from the midpoint between the two arm bases, on the table top (x forward, y left, z up). Arms start in the ready pose. Steel shelf (bench riser), fixed: painted steel deck 30 cm deep (x 36 to 66) x 76 cm wide (y -32 to +44) x 1.5 cm, its top 15 cm above the table, on four 25 mm square steel posts at its corners. On the deck: a blue polypropylene storage tote, 26 cm long (along y) x 18 cm deep x 10 cm tall, 5 mm walls, open top, 0.40 kg, empty, footprint centred at x 47, y -6; along the top of each end wall a hand-hold ledge 3.5 cm out, 10 cm long, 6 mm thick. An orange 25 mm polypropylene webbing strap, 20 cm long (taut), is sewn to the outside of the tote's back wall 1 cm below the rim, 1 cm from its left end, and ends in a steel ring (square D-ring, 45 mm outside, 6 mm bar, 31 mm opening, 30 g). A three-tine steel hand rake with an ash handle (0.22 kg) lies on its back on the deck, tines up: head 8 x 2 x 2.5 cm, three 8 mm tines rising 4.5 cm above it, 3 cm apart, at x 42, 45, 48, y +23; then a 3 cm neck and a 14 cm handle, 2.4 cm square, running left to y +41. The ring lies flat on the rake's head round the middle tine. The trial seed shifts tote, strap, ring and rake together by up to 2 cm in x and 3 cm in y (README table); the shelf stays. Tape the tote's and rake's outlines on the deck.",
+  "scoring": "Latched over the whole trial, 0 if: any point of the rake goes more than 1 cm past any edge of the deck (front, back, left or right) or more than 1 cm below the deck top; the rake's head moves 3 cm or more from its start while the ring is still round a tine; the tote falls (faster than 0.6 m/s down, about a 2 cm free fall) or goes below the table top. Also 0 if at the end the ring is round any tine, or the rake is not resting on the deck (lowest point within 1 cm of the deck top, still). Otherwise: 1.0 (success) when the tote stands on the table, released (both grippers at least 80% open, every finger pad 3 cm or more from the tote) and still, held 1 s; 0.75 for that state not yet held 1 s; 0.5 on the table but held or moving; 0.25 anywhere else. On the table: all four bottom corners between 0.3 cm below and 1 cm above the table top, inside the table's footprint and in front of the deck's front edge (x 36 or less), up axis within 5 degrees of vertical. Read from the video with tape marks along the rake, along the deck edges and under the shelf's front edge.",
+  "run_limit": "1,200 steps (1 minute at 20 Hz)",
+  "reset_notes": "Lift the ring back over the middle tine, lay the strap as in the screenshot, put the tote and rake back on their taped outlines (shifted by the seed's offset from the README table).",
+  "fidelity": "Approximate. Tote, ring and rake are rigid bodies of boxes (the tines are cylinders; the ring is square with a 31 mm opening). The strap is five rigid 3.95 cm webbing links on spherical joints, 5 g each (real webbing is about 1 g) for solver stability: a coarse model of a limp strap. The shelf is static; the rake slides on the deck at friction 0.4. Ring-on-tine, deck-edge, table and release checks are geometric, from body poses. Details in README.",
+  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seeds 0, 4 and 10)",
+  "media": ""
+}
