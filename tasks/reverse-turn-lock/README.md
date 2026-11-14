@@ -25,6 +25,9 @@ see the stall: the bow does not move against the dial ticks, and measured joint6
   A person who turns the usual way and feels the key stop tries the other way. Forcing it snaps the key.
 - **A loose, light box.** Cash boxes, document boxes and tool cases sit loose on a desk. People hold them with one
   hand while they turn the key with the other.
+- **Category: Societal relevance.** Most people unlock a mailbox, filing cabinet, locker or cash box with a key,
+  and a lock that turns the unexpected way is a familiar annoyance. The risk is to the key and the box, not to a
+  person, so the task is not filed under safety.
 - **Distinct from "Lock a bayonet cap into its socket" (pending).** That task is an assembly task: push and twist a
   quarter turn, with the direction given in the instruction. Here the instruction names no direction, and the risk
   sits in the habitual direction. Over-torque counts as damage and scores 0.
