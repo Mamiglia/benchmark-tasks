@@ -1,0 +1,20 @@
+{
+  "title": "Keep a machine loader's infeed nest stocked while it works on its own cycle",
+  "category": "Impact on jobs",
+  "keywords": [
+    "machine tending",
+    "multi-robot cell",
+    "part feeding",
+    "variable cycle time",
+    "locating nest",
+    "shared workspace"
+  ],
+  "instruction": "Keep the infeed nest stocked with one blank at a time from your tray, so the other arm finds a blank there every time it comes for one.",
+  "context": "Machine feeders and tenders keep a machine's or loading robot's infeed supplied with raw parts. The loader here comes at intervals of 10 to 16 s that change every cycle, takes whatever stands in the nest and never waits. Every visit must find exactly one part, set into a 40 mm locating pocket and with the feeding hand already clear. So the robot must watch the nest and the other arm, and fit each pick and set-down into the time between visits.",
+  "setup": "Positions in cm from the midpoint between the two arm bases, on the table top (x forward, y left). Two I2RT YAM arms, bases at (0, 30.5) and (0, -30.5); the right one is controlled, the left one is the machine loader running its own program (policy commands to it are ignored). Infeed nest: black acetal block 70 x 70 x 12 mm with a 40 x 40 mm square pocket through to the table, centred at (32, 0); one blank stands in it. Blank tray: blue-grey ESD plastic, 24 x 20 cm outside, 5 mm floor, 1 cm rims 12 mm tall, centred at (33, -37.5), with five blanks standing on end at (26, -33), (33, -33), (40, -33), (29.5, -42), (36.5, -42). Blanks: 6061 aluminium bar, 30 mm diameter x 40 mm, deburred, 76 g. Infeed chute (the machine's load station): open-topped steel box 12 x 12 cm inside, 1 cm walls, 10 cm tall, centred at (27, 40). The loader waits above (20, 28) at 15 cm; on each of six visits it goes into the nest, closes, carries what it holds into the chute, lets go and returns. Its first close is 5.0 to 6.5 s after the start and each later one 10 to 16 s after the previous, drawn per visit from the trial seed (table in the README).",
+  "scoring": "1/5 for each of the five tray blanks that (a) was standing in the nest's pocket at the moment the loader's fingers closed at one of its visits, with the right gripper's tool point 8 cm or more (horizontally) from the nest centre, and (b) is in the chute at the end (centre inside its inner walls, under 14 cm above the table). The blank that starts in the nest never counts, so a robot that does nothing scores 0. Score 0 if the two arms touch at any time, or if two blanks are ever in the pocket at once (both latched). Success (1.0) once all five count, held 1 s.",
+  "run_limit": "2,000 steps (100 s at 20 Hz)",
+  "reset_notes": "Put the five blanks back on their tray marks and one blank in the nest; empty the chute; start the loader's program for the trial's seed at the same moment as the trial.",
+  "fidelity": "Approximate. Blanks are rigid cylinders with rubber-like pad friction; the gripper pinches with up to 50 N. The nest pocket is four fixed walls on the table, the same shape as the milled block. Arm links collide as convex hulls slightly larger than the real links, so a near miss under about 1 cm can count as a touch; arm-to-arm contact is read from PhysX at 240 Hz. The loader follows its seeded program open loop by IK and closes whether or not a blank is there. The controller uses the manufacturer's joint gains, gravity compensation and motor torque-speed limits.",
+  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seed 0; also 1.0 on seeds 4 and 10)"
+}
