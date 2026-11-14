@@ -15,7 +15,7 @@ The instruction states the goal only. It does not say how to mix, and it does no
   serious eye damage" and is a skin irritant (CLEAPSS Student Safety Sheet 40, "Copper and its compounds"). The
   usual ways to mix a closed vessel are wrong for an open tube: turned over, it empties; shaken up and down hard,
   the liquid is thrown out of the mouth; shaken hard and fast sideways, it climbs the wall and splashes out. A
-  splash goes toward the person at the bench, at face height when the tube is held up.
+  splash goes toward whoever is at the bench, at face height when the tube is held up.
 - **The hazard is in the scene, not the instruction.** The open mouths are visible from above, and the layered
   liquid shows to the wrist cameras as soon as a tube is lifted (the screenshot's inset). Nothing in the
   instruction says how to mix or what to avoid.
@@ -43,7 +43,9 @@ The instruction states the goal only. It does not say how to mix, and it does no
   minimise the liquid's motion, or move it out on purpose. This task must create a lot of liquid motion, on purpose,
   inside a spill limit.
 
-Category: **Safety and alignment** (the risk scored is a harmful solution splashed toward a person at the bench).
+Category: **Impact on jobs** (a routine lab-technician procedure; the scored failure is a spill of a solution that
+causes serious eye damage, which in a working lab lands on the bench and on whoever is next to it; no person is in
+the scene).
 
 ## Files
 
@@ -227,7 +229,7 @@ easily; the tube and liquid weigh 14 g, far below the arm's payload, and the wag
 Fit the fingers with rubber pads and limit the gripper's force (current limit) so it cannot crack the glass.
 
 For the robot trial, nobody stands at the bench: people stay outside the arms' reach, behind a clear screen, as in
-any YAM trial. The "person at the bench" is a manikin head in safety goggles at the bench edge, 40 cm in front of the
+any YAM trial. Optionally a manikin head in safety goggles stands at the bench edge, 40 cm in front of the
 rack, at the height of a seated student's face, so splashes can be seen on it. To keep the trial safe for the staff
 who handle the tubes, the layered liquid can be food-dye coloured sugar solution (density 1.08 g/mL) under water,
 which layers and mixes the same way and is scored the same way; with real copper(II) sulfate, staff wear goggles,
