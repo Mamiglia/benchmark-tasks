@@ -18,5 +18,6 @@
   "run_limit": "1,800 steps (90 s at 20 Hz)",
   "reset_notes": "Seat the blade's adapter on the post, put the 40 walnut pieces back around it, set the bowl on its taped outline with the handle to the right. Handle the blade by its adapter with cut-resistant gloves.",
   "fidelity": "Approximate. Rigid boxes: 16-sided bowls, square post and stem, flat blade arms; mixing bowl and board fixed. 40 rigid walnut pieces (count kept low for fast, stable PhysX). The adapter slides on the post through a joint; its friction is computed each physics step from the sleeve's measured side load and tilt (beyond 1.5 deg play), set so a pull >8 deg off-axis wedges and a tipped bowl lets the blade go near 97 deg. Details in README.",
-  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seeds 0, 4 and 10)"
+  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seeds 0, 4 and 10)",
+  "media": "M-EGHD6D"
 }
