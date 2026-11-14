@@ -170,3 +170,7 @@ PD-driven finger, which then passes through it. The legs turn only about the ver
 and at a few mm/s their inertia adds well under 0.01 N.
 
 No third-party assets: every part is a box or cylinder defined in task.py.
+
+## Credit
+
+The idea for this task was first proposed in robocurve/benchmark-tasks#994 (TK-T6U364). The code, models and text here are an independent implementation.
