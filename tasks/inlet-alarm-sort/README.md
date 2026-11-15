@@ -1,4 +1,4 @@
-# Pour four bottles of concentrate into a batch tank whose water inlet is still running, and shut the inlet at the fill line
+# Pour four bottles of concentrate into a tank whose inlet is running, and shut the inlet at the fill line
 
 A clear 7.6 L batch tank stands in the middle of the table with water already running into it from a pipe on the
 right. Four open 500 mL bottles of cleaning concentrate stand on the left. A float switch at the tank's fill line
