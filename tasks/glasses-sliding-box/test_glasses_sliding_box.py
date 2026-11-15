@@ -13,23 +13,30 @@ import pytest
 HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
-from yam_arena.task_file import ObjectState, load  # noqa: E402
+from glasskit import ContactState  # noqa: E402
+from yam_arena.task_file import load  # noqa: E402
 
 M = load(HERE / "task.py").module
 T = M.T
 
 
-def st(pos, yaw=0.0, tilt_x=0.0, v=0.0):
-    """An object state: turned ``yaw`` about z, then tipped ``tilt_x`` degrees about x."""
+WEIGHT = M.GLASSES_MASS * 9.81
+
+
+def st(pos, yaw=0.0, tilt_x=0.0, v=0.0, robot_n=0.0, support_n=WEIGHT, axis=0):
+    """An object state: turned ``yaw`` about z, then tipped ``tilt_x`` degrees about its own x (``axis`` 1: y); by default resting on a surface
+    (carrying its weight, as the glasses' would be) and not touched by a robot."""
     a, b = yaw / 2, math.radians(tilt_x) / 2
     qz = np.array([0, 0, math.sin(a), math.cos(a)])
-    qx = np.array([math.sin(b), 0, 0, math.cos(b)])
+    qx = np.array([0.0, 0.0, 0.0, math.cos(b)])
+    qx[axis] = math.sin(b)
     x1, y1, z1, w1 = qz
     x2, y2, z2, w2 = qx
     q = np.array([w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2, w1 * y2 - x1 * z2 + y1 * w2 + z1 * x2,
                   w1 * z2 + x1 * y2 - y1 * x2 + z1 * w2, w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2])
     p = np.asarray(pos, float)
-    return ObjectState(pos=p, quat_xyzw=q, lin_vel=np.array([v, 0, 0]), ang_vel=np.zeros(3), low=p, high=p)
+    return ContactState(pos=p, quat_xyzw=q, lin_vel=np.array([v, 0, 0]), ang_vel=np.zeros(3), low=p, high=p,
+                          robot_n=robot_n, support_n=support_n)
 
 
 START = dict(glasses=st((*M.GLASSES_START, T), math.pi), keys=st((*M.KEYS_START, T + 0.085)),
@@ -69,9 +76,38 @@ def test_partial_credit():
 def test_glasses_upside_down_count_and_carrying_sideways_is_not_a_fall():
     upside_down = st((M.BOX_XY[0], -0.035, T + M.FLOOR + M.GLASSES_TOP), math.pi, tilt_x=180)  # arms now point +y
     assert run({"keys": IN_DISH}, {"lid": LID_OPEN}, {"glasses": upside_down}, {"lid": START["lid"]}) == 1.0
-    turning = st((0.2, 0.2, T + 0.15), math.pi, tilt_x=90, v=0.1)  # carried sideways through the air
+    turning = st((0.2, 0.2, T + 0.15), math.pi, tilt_x=90, v=0.1, robot_n=0.4, support_n=0.0)  # carried sideways
     assert run({"keys": IN_DISH}, {"lid": LID_OPEN}, {"glasses": turning}, {"glasses": IN_BOX},
                {"lid": START["lid"]}) == 1.0
+
+
+@pytest.mark.parametrize("tilt_x,pos", [
+    (90, (*M.GLASSES_START, T + 0.07)),  # on the lenses, on the table
+    (-90, (*M.GLASSES_START, T + 0.07)),  # the other way over
+    (90, (M.BOX_XY[0], 0.04, T + M.FLOOR + 0.07)),  # on the lenses, on the box floor
+])
+@pytest.mark.parametrize("axis", [0, 1])  # tipped about the glasses' x (onto the lenses) or y (onto a side)
+def test_resting_on_lenses_or_side_latches(tilt_x, pos, axis):
+    # still, carried by a surface (the default state), nobody holding them: a fall, even if then put right
+    lying = st(pos, math.pi, tilt_x=tilt_x, axis=axis)
+    assert run({"keys": IN_DISH}, {"glasses": lying}, {"lid": LID_OPEN}, {"glasses": IN_BOX},
+               {"lid": START["lid"]}) == 0.0
+    assert M.LATCH == {"glasses_on_lenses_or_side": True}
+
+
+def test_sideways_pause_while_held_is_not_a_fall():
+    for held in (st((0.2, 0.2, T + 0.15), math.pi, tilt_x=90, robot_n=0.4, support_n=0.0),  # paused in the air
+                 st((0.2, 0.2, T + 0.15), math.pi, tilt_x=90, robot_n=0.4, support_n=-0.1),
+                 st((*M.GLASSES_START, T + 0.07), math.pi, tilt_x=90, robot_n=0.3, support_n=0.1)):  # held, grazing
+        frames = [{"keys": IN_DISH}, {"lid": LID_OPEN}] + [{"glasses": held}] * 40 + [{"glasses": IN_BOX},
+                                                                                       {"lid": START["lid"]}]
+        assert run(*frames) == 1.0, held
+    # sideways and still with nothing holding or carrying them (a state between frames): not a fall either
+    assert run({"keys": IN_DISH}, {"lid": LID_OPEN}, {"glasses": st((0.2, 0.2, T + 0.15), math.pi, tilt_x=90,
+               support_n=0.0)}, {"glasses": IN_BOX}, {"lid": START["lid"]}) == 1.0
+    # the same grip let go on the table: the moment the table carries them and the fingers are off, it latches
+    assert run({"keys": IN_DISH}, {"glasses": st((*M.GLASSES_START, T + 0.07), math.pi, tilt_x=90, robot_n=0.3,
+               support_n=0.1)}, {"glasses": st((*M.GLASSES_START, T + 0.07), math.pi, tilt_x=90)}) == 0.0
 
 
 def test_glasses_must_stand_still_on_floor():

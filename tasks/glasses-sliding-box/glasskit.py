@@ -8,7 +8,9 @@ without modifying yam_arena:
 - ``yam_arena.scene.task_object``: builds a Compound as an Arena object whose root prim is the rigid body, with one
   box collider child per part.
 - ``yam_arena.scene.object_states``: for a Compound, ``ObjectState.pos`` is the origin of its own frame (not the
-  bounding-box centre that yam_arena reports for primitives).
+  bounding-box centre that yam_arena reports for primitives). A Compound made with ``sense_contacts=True`` is reported
+  as a :class:`ContactState`, which adds PhysX's contact forces on it at the end of the control step: the largest from
+  any robot link, and the upward force from everything else (the table, the box, the lid, the dish).
 - ``yam_arena.inspect_embodiment.YamArenaEmbodiment.reset``: after every reset (and its settle steps) it calls the
   functions in ``ON_RESET``, so a task file can clear its whole-trial latches.
 
@@ -24,9 +26,16 @@ import sys
 from dataclasses import dataclass
 
 import numpy as np
-from yam_arena.task_file import Box
+from yam_arena.task_file import Box, ObjectState
 
 ON_RESET: list = []  # callables run after each embodiment reset
+ARMS = ("left_robot", "right_robot")
+
+
+@dataclass(frozen=True)
+class ContactState(ObjectState):
+    robot_n: float = 0.0  # N: the largest contact force on the object from any robot link
+    support_n: float = 0.0  # N: the upward contact force on it from everything but the robots
 
 
 @dataclass(frozen=True)
@@ -36,13 +45,14 @@ class Compound(Box):
 
     parts: tuple = ()
     friction: tuple[float, float] | None = None  # (static, dynamic); None: yam_arena's grippy default
+    sense_contacts: bool = False  # report robot and support contact forces (see ContactState)
 
 
-def compound(name, pos, parts, mass, yaw=0.0, friction=None) -> Compound:
+def compound(name, pos, parts, mass, yaw=0.0, friction=None, sense_contacts=False) -> Compound:
     lo = np.min([np.subtract(c, np.divide(s, 2)) for c, s, _ in parts], axis=0)
     hi = np.max([np.add(c, np.divide(s, 2)) for c, s, _ in parts], axis=0)
     return Compound(name=name, pos=tuple(pos), mass=mass, yaw=yaw, size=tuple(float(v) for v in hi - lo),
-                    parts=tuple(parts), friction=friction)
+                    parts=tuple(parts), friction=friction, sense_contacts=sense_contacts)
 
 
 def quat_matrix(q) -> np.ndarray:
@@ -68,6 +78,32 @@ def corners(spec: Compound, pos, q) -> np.ndarray:
 # -- Isaac Sim side ---------------------------------------------------------------------------------------------
 
 _SPECS: dict[str, Compound] = {}
+_PATHS: dict[str, str] = {}  # env 0's prim path of each contact-sensing compound
+_VIEWS: dict = {}  # its PhysX contact view, made on the first state read
+
+
+def _arr(x) -> np.ndarray:
+    x = getattr(x, "torch", x)
+    if hasattr(x, "detach"):
+        return x.detach().cpu().numpy().astype(np.float64)
+    return np.asarray(x.numpy() if hasattr(x, "numpy") else x, dtype=np.float64)
+
+
+def _contacts(base, name: str) -> tuple[float, float]:
+    """(largest robot-link contact force, upward contact force from everything else) on ``name``, in N."""
+    if name not in _VIEWS:
+        from isaaclab_physx.physics import PhysxManager
+
+        links = []
+        for arm in ARMS:
+            paths = base.scene[arm].root_physx_view.link_paths
+            links += list(paths[0] if paths and isinstance(paths[0], (list, tuple)) else paths)
+        _VIEWS[name] = PhysxManager.get_physics_sim_view().create_rigid_contact_view(
+            [_PATHS[name]], filter_patterns=[links], max_contact_data_count=256)
+    view, dt = _VIEWS[name], float(base.physics_dt)
+    robot = _arr(view.get_contact_force_matrix(dt=dt)).reshape(-1, 3)
+    net = _arr(view.get_net_contact_forces(dt=dt)).reshape(-1, 3)[0]
+    return float(np.linalg.norm(robot, axis=1).max(initial=0.0)), float(net[2] - robot[:, 2].sum())
 
 
 def _spawn(prim_path: str, cfg, translation=None, orientation=None, **kwargs):
@@ -92,6 +128,9 @@ def _spawn(prim_path: str, cfg, translation=None, orientation=None, **kwargs):
         rb = PhysxSchema.PhysxRigidBodyAPI.Apply(prim)
         rb.CreateMaxDepenetrationVelocityAttr(1.0)
         rb.CreateSolverPositionIterationCountAttr(16)
+        if spec.sense_contacts:
+            PhysxSchema.PhysxContactReportAPI.Apply(prim).CreateThresholdAttr(0.0)
+            _PATHS.setdefault(spec.name, prim_path)
     mu = spec.friction or GRIPPY_FRICTION
     material = f"{prim_path}/Looks/physics"
     pm = sim_utils.RigidBodyMaterialCfg(static_friction=mu[0], dynamic_friction=mu[1],
@@ -155,6 +194,8 @@ def _patch_scene(scene) -> None:
                 p = (base.arena_world.get_pose_w(n)[0, :3] - origin).detach().cpu().numpy().astype(np.float64)
                 s = out[n]
                 out[n] = type(s)(p, s.quat_xyzw, s.lin_vel, s.ang_vel, s.low, s.high)
+                if _SPECS[n].sense_contacts:
+                    out[n] = ContactState(*vars(out[n]).values(), *_contacts(base, n))
         return out
 
     scene.task_object, scene.object_states, scene._glasskit = _task_object, _object_states, True

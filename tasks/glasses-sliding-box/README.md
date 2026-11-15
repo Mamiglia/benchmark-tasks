@@ -50,8 +50,8 @@ Category: **Societal relatability** (an everyday tidying job at home; what is pr
 | File | What |
 |---|---|
 | `task.py` | The yam_arena task file: layout, `score()` / `success()` and the scripted demo `demo()` |
-| `glasskit.py` | Compound objects built from boxes, each with its own friction (glasses, keys, lid, box) and a per-trial reset hook, added to yam_arena without modifying it |
-| `test_glasses_sliding_box.py` | Tests of every scoring outcome and latch, and that the layout fits; no Isaac Sim needed |
+| `glasskit.py` | Compound objects built from boxes, each with its own friction (glasses, keys, lid, box), a per-trial reset hook and the glasses' contact forces (from the robot, and from the surfaces under them), added to yam_arena without modifying it |
+| `test_glasses_sliding_box.py` | Tests of every scoring outcome and latch (including held sideways versus resting on the lenses or a side), and that the layout fits; no Isaac Sim needed |
 | `task.json` | Submission details |
 
 `glasskit.py` builds the glasses, keys, lid and the box with its guides and block (one fixed body), and patches `yam_arena.scene.task_object` and `object_states` (a compound object's position is its own
@@ -84,8 +84,10 @@ Nothing else is on the table. Tape the glasses', keys' and mug's start marks.
 `score()` runs after every control step. **Violations are latched for the whole trial** (cleared only by a reset),
 and any of them makes the score 0:
 
-- the glasses come to rest (under 2 cm/s and 0.5 rad/s) 60 to 120 degrees from standing, that is on their lenses or
-  on a side, anywhere (carrying them through that range in the air does not count), or fall off the table;
+- the glasses lie on their lenses or on a side: 60 to 120 degrees from standing, at rest (under 2 cm/s and
+  0.5 rad/s), carried by a surface (the table, box, lid or dish pushes up on them with at least half their weight)
+  and not held (no robot link touches them with more than 0.05 N). Both contact forces are read from PhysX after
+  every control step. Holding them that way in a gripper, moving or paused, does not count; or they fall off the table;
 - any part of the keys goes inside the box (below its rim, within its inner walls), or the keys fall off the table;
 - the lid leaves its guides: it tilts more than 10 degrees, its underside rises 1.5 cm above the rim or block, or it
   drops 1 cm below them;
@@ -106,7 +108,7 @@ A violation cannot be undone: standing knocked-over glasses back up, or taking t
 scores 0. Leaving the keys on the lid and sliding it open and shut with them riding on it scores at most 0.8.
 
 **Real trial.** Measured at the end with a tape measure and a top-down photo, and over the trial from the video: the
-glasses' tilt (lying on their lenses or side is unmistakable), whether the keys ever dropped into the box, whether the
+glasses' tilt (lying on their lenses or side is unmistakable), whether they were ever let go lying that way, whether the keys ever dropped into the box, whether the
 lid ever came off its guides, and the mug's position against its taped outline (2 cm) and whether it tipped. The lid
 is shut when its edges are within 1.5 cm of the box's edges.
 
@@ -145,10 +147,15 @@ top-down gripper waypoints, written from the fixed layout in `task.py`; it reads
 | Scripted demo, `--seed 0`, 4, 10 | 1.0, 1.0, 1.0 | Success held at about 38 s (770 steps). Lid ends 1 to 10 mm from the box's centre; glasses standing on the floor, tilted 1 degree |
 | Keys left on the lid (the lid slid open and shut with them riding on it; glasses put in) | 0.8 | Keys not in the dish |
 | Keys dropped into the open box beside the glasses, then lid shut | 0.0 | `keys_in_box` latched; the rest of the run would have scored 1.0 |
-| Dream-1, `--seed 0` | 0.0 | Both arms folded back beside the table and stayed there for the whole minute; nothing moved |
+| Glasses spawned lying on one side on the table, arms only wait (check of the fall latch) | 0.0 | `glasses_on_lenses_or_side` latched on the first step: tilted 90 degrees, still, the table carrying 0.275 N (their full weight), no robot contact |
+| Dream-1, `--seed 0` | 0.0 | The left arm hovered over the glasses and the right arm over the lid's end for the whole minute; no object moved |
 
-The two cheat runs are the demo with steps changed (`cheat_*.py` task files that import `task.py` and replace
-`demo()`); they are not part of the submission.
+In the demo, while the left arm carries the glasses PhysX reports about 11 N of finger contact on them and no
+support; once they stand on the box floor and are let go, 0 N robot contact and 0.275 N support. The scripted arms
+grip only straight down, so a sideways pause in the gripper cannot be played in simulation; the unit tests cover it
+(held sideways and still in the air, or grazing the table while held: no latch; the same pose let go on the table:
+latch). The cheat and check runs are the demo with steps changed or a changed start (`cheat_*.py` task files that
+import `task.py` and replace `demo()`); they are not part of the submission.
 
 ## Real-world trial
 
@@ -164,7 +171,7 @@ The two cheat runs are the demo with steps changed (`cheat_*.py` task files that
 
 Approximate, at full size. Every object is rigid, built from boxes (the mug a cylinder). The glasses are one rigid
 body: the hinges do not fold and the arms do not flex; their mass (28 g) is spread over the parts by volume.
-Lens contact is not sensed; only the glasses' orientation is scored. The keys are one rigid body (no ring), the mug
+Lens contact is not sensed as such: a fall is the glasses' orientation while a surface, not a gripper, carries them. The keys are one rigid body (no ring), the mug
 has no handle and its coffee is part of its mass (spills are not simulated; tipping or moving it counts). All
 contacts with the box, guides, block and lid use pine on pine: 0.4 static, 0.3 dynamic (wood on wood, clean and dry,
 0.25 to 0.5 static: Engineering ToolBox, "Friction and Friction Coefficients for some Common Materials"); the kit

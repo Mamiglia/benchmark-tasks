@@ -104,7 +104,8 @@ KEYS_PARTS = (
 PINE_MU = (0.4, 0.3)
 BOX = compound("pine_box", (*BOX_XY, T), _box_parts(), None, friction=PINE_MU)
 LID = compound("lid", (*BOX_XY, LID_Z), (((0.0, 0.0, 0.0), (BOX_X, BOX_Y, LID_T), PINE),), LID_MASS, friction=PINE_MU)
-GLASSES = compound("glasses", (*GLASSES_START, T + 0.0005), GLASSES_PARTS, GLASSES_MASS, yaw=math.pi)
+GLASSES = compound("glasses", (*GLASSES_START, T + 0.0005), GLASSES_PARTS, GLASSES_MASS, yaw=math.pi,
+                   sense_contacts=True)
 KEYS = compound("keys", (*KEYS_START, T + BOX_H + LID_T + 0.0005), KEYS_PARTS, KEYS_MASS)
 MUG = Cylinder("mug", (*MUG_XY, T + MUG_H / 2), MUG_RED, mass=MUG_MASS, radius=MUG_R, height=MUG_H)
 OBJECTS = [BOX, *_dish_parts(), LID, GLASSES, KEYS, MUG]
@@ -112,10 +113,13 @@ START = {"lid": np.array([*BOX_XY, LID_Z]), "mug": np.array([*MUG_XY, T + MUG_H 
 
 # -- scoring ---------------------------------------------------------------------------------------------------------
 # Lens-safe stances: standing on the lower rims and ear bends, or upside down on the brow bar and arms (both only
-# touch the frame). Resting 60 to 120 degrees from standing is lying on the lenses or on one side.
+# touch the frame). Resting 60 to 120 degrees from standing, on a surface and not held, is lying on the lenses or on
+# one side; held that way in a gripper, still or not, is not.
 GLASSES_FALLEN_DEG = (60.0, 120.0)
 GLASSES_UPRIGHT_DEG = 20.0  # within 20 degrees of standing, or of upside down
 REST_V, REST_W = 0.02, 0.5  # m/s, rad/s
+HELD_N = 0.05  # N: a robot contact force above this means the glasses are held (or touched)
+SUPPORT_N = 0.5 * GLASSES_MASS * 9.81  # N: a surface carrying at least half their weight supports them
 MUG_TIP_DEG, MUG_MOVE = 15.0, 0.02
 LID_TILT_DEG, LID_LIFT = 10.0, 0.015  # lid off its guides: tilted, or its underside 1.5 cm above the rim or block
 LID_SHUT_XY, LID_SHUT_DEG = 0.015, 5.0
@@ -131,8 +135,10 @@ _N = [0]
 def _debug(o) -> None:
     _N[0] += 1
     if _N[0] % 20 == 0:
+        g = o["glasses"]
         print("[glasses-sliding-box] " + " ".join(f"{n} {np.round(o[n].pos, 3)} tilt {tilt_deg(o[n].quat_xyzw):.0f}"
-                                                 for n in ("lid", "glasses", "keys", "mug")), flush=True)
+                                                 for n in ("lid", "glasses", "keys", "mug"))
+              + f" glasses robot {g.robot_n:.3f} N support {g.support_n:.3f} N", flush=True)
 
 
 def clear_latches() -> None:
@@ -173,7 +179,8 @@ def update_latches(o) -> None:
     checks = {
         "glasses_on_lenses_or_side": (GLASSES_FALLEN_DEG[0] < tilt_deg(g.quat_xyzw) < GLASSES_FALLEN_DEG[1]
                                       and float(np.linalg.norm(g.lin_vel)) < REST_V
-                                      and float(np.linalg.norm(g.ang_vel)) < REST_W),
+                                      and float(np.linalg.norm(g.ang_vel)) < REST_W
+                                      and g.support_n >= SUPPORT_N and g.robot_n <= HELD_N),
         "glasses_off_table": g.pos[2] < FLOOR_Z,
         "keys_in_box": any(inside_box(p) for p in corners(KEYS, k.pos, k.quat_xyzw)),
         "keys_off_table": k.pos[2] < FLOOR_Z,
@@ -189,8 +196,8 @@ def update_latches(o) -> None:
 
 
 def score(objects) -> float:
-    """0 if at any time the glasses came to rest on their lenses or a side (60 to 120 degrees from standing) or left
-    the table, any part of the keys went inside the
+    """0 if at any time the glasses came to rest on their lenses or a side (60 to 120 degrees from standing, still,
+    carried by a surface, not held by a gripper) or left the table, any part of the keys went inside the
     box, the keys left the table, the lid left its guides (tilted past 10 degrees, lifted 1.5 cm, or dropped), or the
     mug tipped 15 degrees or moved 2 cm. Otherwise 0.2 for the keys in the dish, plus 0.4 for the glasses on the box
     floor, standing or upside down, plus 0.4 more if the lid is also shut over them."""
