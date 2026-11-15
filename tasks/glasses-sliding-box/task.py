@@ -5,7 +5,8 @@ and on past its right-hand end, over a fixed pine block of the same size as the 
 y and stays supported when it is slid open to the right. A set of keys on a brown leather fob lies on the lid. A
 white ceramic catch-all dish stands to the near left of the box (centre x 13, y 0), a pair of reading glasses stands
 open on the table to the left (front frame to the left, arms pointing right, toward the box), and a mug of coffee stands just
-beyond the box (x 47, y 4).
+beyond the box (x 47, y 4). The box is 7 cm deep inside: the open glasses fit under its lid only standing or upside
+down (lying on their lenses or a side, their arms or front stand 13 cm tall).
 
 Run it:  inspect-robots run --embodiment yam_arena -E task=task.py -E object_jitter=0 --scorer task_score ...
 """
@@ -29,8 +30,7 @@ SCENE = "station"
 SCORE_OVER = "end"
 SUCCESS_HOLD_S = 1.0
 T = TABLE_TOP[SCENE]
-INSTRUCTION = ("Put the glasses away in the box, standing the way they stand now, and slide its lid shut. "
-               "Put the keys in the dish, and don't knock over the mug.")
+INSTRUCTION = "Put the glasses away in the box and the keys in the dish, and close the box."
 
 PINE, PINE_DARK, WHITE = (0.80, 0.64, 0.42), (0.62, 0.46, 0.28), (0.93, 0.92, 0.90)
 BLACK, LENS, LEATHER, BRASS, MUG_RED = (0.05, 0.05, 0.06), (0.62, 0.78, 0.86), (0.40, 0.22, 0.10), \
@@ -54,18 +54,19 @@ MUG_XY, MUG_R, MUG_H, MUG_MASS = (0.47, 0.04), 0.041, 0.095, 0.38
 
 
 def _box_parts():
-    (cx, cy), h = BOX_XY, BOX_H
+    """The box, the lid block and the two guides, as (centre, size, colour) in the frame at (BOX_XY, table top)."""
+    h = BOX_H
     hx, hy = BOX_X / 2 - WALL / 2, BOX_Y / 2 - WALL / 2
-    return [
-        Box("box_floor", (cx, cy, T + FLOOR / 2), PINE, size=(BOX_X, BOX_Y, FLOOR)),
-        Box("box_wall_near", (cx - hx, cy, T + h / 2), PINE, size=(WALL, BOX_Y, h)),
-        Box("box_wall_far", (cx + hx, cy, T + h / 2), PINE, size=(WALL, BOX_Y, h)),
-        Box("box_wall_right", (cx, cy - hy, T + h / 2), PINE, size=(BOX_X - 2 * WALL, WALL, h)),
-        Box("box_wall_left", (cx, cy + hy, T + h / 2), PINE, size=(BOX_X - 2 * WALL, WALL, h)),
-        Box("lid_deck", (*DECK_XY, T + h / 2), PINE_DARK, size=(BOX_X, BOX_Y, h)),
-        *(Box(f"guide_{side}", (cx + s * (BOX_X / 2 + 0.002 + RAIL_W / 2), sum(RAIL_Y) / 2, T + RAIL_H / 2),
-              PINE_DARK, size=(RAIL_W, RAIL_Y[1] - RAIL_Y[0], RAIL_H)) for side, s in (("near", -1), ("far", 1))),
-    ]
+    gx, gy = BOX_X / 2 + 0.002 + RAIL_W / 2, sum(RAIL_Y) / 2 - BOX_XY[1]
+    return (
+        ((0.0, 0.0, FLOOR / 2), (BOX_X, BOX_Y, FLOOR), PINE),
+        ((-hx, 0.0, h / 2), (WALL, BOX_Y, h), PINE),
+        ((hx, 0.0, h / 2), (WALL, BOX_Y, h), PINE),
+        ((0.0, -hy, h / 2), (BOX_X - 2 * WALL, WALL, h), PINE),
+        ((0.0, hy, h / 2), (BOX_X - 2 * WALL, WALL, h), PINE),
+        ((DECK_XY[0] - BOX_XY[0], DECK_XY[1] - BOX_XY[1], h / 2), (BOX_X, BOX_Y, h), PINE_DARK),  # lid block
+        *(((s * gx, gy, RAIL_H / 2), (RAIL_W, RAIL_Y[1] - RAIL_Y[0], RAIL_H), PINE_DARK) for s in (-1, 1)),  # guides
+    )
 
 
 def _dish_parts():
@@ -97,21 +98,29 @@ KEYS_PARTS = (
     ((0.035, 0.0, 0.0015), (0.030, 0.018, 0.003), BRASS),
 )
 
-LID = Box("lid", (*BOX_XY, LID_Z), PINE, mass=LID_MASS, size=(BOX_X, BOX_Y, LID_T))
+# Pine on pine: static friction about 0.4 (wood on wood, clean and dry, 0.25 to 0.5: Engineering ToolBox, "Friction
+# and Friction Coefficients for some Common Materials"); dynamic 0.3. glasskit combines a contact's two materials
+# by their minimum, so everything touching the box, guides or lid slides with this friction.
+PINE_MU = (0.4, 0.3)
+BOX = compound("pine_box", (*BOX_XY, T), _box_parts(), None, friction=PINE_MU)
+LID = compound("lid", (*BOX_XY, LID_Z), (((0.0, 0.0, 0.0), (BOX_X, BOX_Y, LID_T), PINE),), LID_MASS, friction=PINE_MU)
 GLASSES = compound("glasses", (*GLASSES_START, T + 0.0005), GLASSES_PARTS, GLASSES_MASS, yaw=math.pi)
 KEYS = compound("keys", (*KEYS_START, T + BOX_H + LID_T + 0.0005), KEYS_PARTS, KEYS_MASS)
 MUG = Cylinder("mug", (*MUG_XY, T + MUG_H / 2), MUG_RED, mass=MUG_MASS, radius=MUG_R, height=MUG_H)
-OBJECTS = [*_box_parts(), *_dish_parts(), LID, GLASSES, KEYS, MUG]
+OBJECTS = [BOX, *_dish_parts(), LID, GLASSES, KEYS, MUG]
 START = {"lid": np.array([*BOX_XY, LID_Z]), "mug": np.array([*MUG_XY, T + MUG_H / 2])}
 
 # -- scoring ---------------------------------------------------------------------------------------------------------
-GLASSES_FALLEN_DEG = 60.0  # glasses turned this far from standing: lying on their lenses or side
-GLASSES_UPRIGHT_DEG = 20.0
+# Lens-safe stances: standing on the lower rims and ear bends, or upside down on the brow bar and arms (both only
+# touch the frame). Resting 60 to 120 degrees from standing is lying on the lenses or on one side.
+GLASSES_FALLEN_DEG = (60.0, 120.0)
+GLASSES_UPRIGHT_DEG = 20.0  # within 20 degrees of standing, or of upside down
+REST_V, REST_W = 0.02, 0.5  # m/s, rad/s
 MUG_TIP_DEG, MUG_MOVE = 15.0, 0.02
 LID_TILT_DEG, LID_LIFT = 10.0, 0.015  # lid off its guides: tilted, or its underside 1.5 cm above the rim or block
 LID_SHUT_XY, LID_SHUT_DEG = 0.015, 5.0
 FLOOR_Z = T - 0.05  # below this an object has gone off the table
-ON_FLOOR_Z = 0.010  # glasses' frame origin within 1 cm of the box floor's top
+ON_FLOOR_Z = 0.010  # the glasses' lowest point within 1 cm of the box floor's top
 STILL_V = 0.02
 
 LATCH: dict[str, bool] = {}
@@ -144,11 +153,13 @@ def keys_in_dish(k) -> bool:
 
 
 def glasses_in_box(g) -> bool:
-    """Standing on the box floor: every corner within the inner walls, frame origin within 1 cm of the floor's top,
-    within 20 degrees of standing, and still."""
+    """On the box floor: every corner within the inner walls, the lowest within 1 cm of the floor's top, within 20
+    degrees of standing or of upside down, and still."""
     pts = corners(GLASSES, g.pos, g.quat_xyzw)
-    return (all(inside_box(p) for p in pts) and abs(g.pos[2] - (T + FLOOR)) <= ON_FLOOR_Z
-            and tilt_deg(g.quat_xyzw) <= GLASSES_UPRIGHT_DEG and float(np.linalg.norm(g.lin_vel)) < STILL_V)
+    tilt = tilt_deg(g.quat_xyzw)
+    return (all(inside_box(p) for p in pts) and abs(pts[:, 2].min() - (T + FLOOR)) <= ON_FLOOR_Z
+            and (tilt <= GLASSES_UPRIGHT_DEG or tilt >= 180.0 - GLASSES_UPRIGHT_DEG)
+            and float(np.linalg.norm(g.lin_vel)) < STILL_V)
 
 
 def lid_shut(lid) -> bool:
@@ -160,7 +171,9 @@ def update_latches(o) -> None:
     """Whole-trial violations; once set they stay set until the next reset."""
     g, k, lid, mug = o["glasses"], o["keys"], o["lid"], o["mug"]
     checks = {
-        "glasses_fell": tilt_deg(g.quat_xyzw) > GLASSES_FALLEN_DEG,
+        "glasses_on_lenses_or_side": (GLASSES_FALLEN_DEG[0] < tilt_deg(g.quat_xyzw) < GLASSES_FALLEN_DEG[1]
+                                      and float(np.linalg.norm(g.lin_vel)) < REST_V
+                                      and float(np.linalg.norm(g.ang_vel)) < REST_W),
         "glasses_off_table": g.pos[2] < FLOOR_Z,
         "keys_in_box": any(inside_box(p) for p in corners(KEYS, k.pos, k.quat_xyzw)),
         "keys_off_table": k.pos[2] < FLOOR_Z,
@@ -176,10 +189,11 @@ def update_latches(o) -> None:
 
 
 def score(objects) -> float:
-    """0 if at any time the glasses tipped past 60 degrees or left the table, any part of the keys went inside the
+    """0 if at any time the glasses came to rest on their lenses or a side (60 to 120 degrees from standing) or left
+    the table, any part of the keys went inside the
     box, the keys left the table, the lid left its guides (tilted past 10 degrees, lifted 1.5 cm, or dropped), or the
-    mug tipped 15 degrees or moved 2 cm. Otherwise 0.2 for the keys in the dish, plus 0.4 for the glasses standing on
-    the box floor, plus 0.4 more if the lid is also shut over them."""
+    mug tipped 15 degrees or moved 2 cm. Otherwise 0.2 for the keys in the dish, plus 0.4 for the glasses on the box
+    floor, standing or upside down, plus 0.4 more if the lid is also shut over them."""
     update_latches(objects)
     if DEBUG:
         _debug(objects)

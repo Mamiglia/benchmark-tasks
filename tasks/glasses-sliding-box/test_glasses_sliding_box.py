@@ -66,6 +66,14 @@ def test_partial_credit():
     assert run({"keys": IN_DISH}, {"lid": LID_OPEN}, {"lid": START["lid"]}) == 0.2
 
 
+def test_glasses_upside_down_count_and_carrying_sideways_is_not_a_fall():
+    upside_down = st((M.BOX_XY[0], -0.035, T + M.FLOOR + M.GLASSES_TOP), math.pi, tilt_x=180)  # arms now point +y
+    assert run({"keys": IN_DISH}, {"lid": LID_OPEN}, {"glasses": upside_down}, {"lid": START["lid"]}) == 1.0
+    turning = st((0.2, 0.2, T + 0.15), math.pi, tilt_x=90, v=0.1)  # carried sideways through the air
+    assert run({"keys": IN_DISH}, {"lid": LID_OPEN}, {"glasses": turning}, {"glasses": IN_BOX},
+               {"lid": START["lid"]}) == 1.0
+
+
 def test_glasses_must_stand_still_on_floor():
     lying = st((M.BOX_XY[0], 0.05, T + M.FLOOR), math.pi, tilt_x=30)
     assert run({"keys": IN_DISH}, {"lid": LID_OPEN}, {"glasses": lying}) == 0.2
@@ -105,7 +113,7 @@ def test_layout_fits():
     # the glasses fit inside the box's inner walls as placed, and the lid clears the guides by 2 mm a side
     pts = M.corners(M.GLASSES, IN_BOX.pos, IN_BOX.quat_xyzw)
     assert all(M.inside_box(p) for p in pts)
-    guides = [o for o in M.OBJECTS if o.name.startswith("guide_")]
-    gap = min(guides, key=lambda g: g.pos[0]).pos[0] + M.RAIL_W / 2
+    near_guide = M.BOX.parts[-2]
+    gap = M.BOX_XY[0] + near_guide[0][0] + M.RAIL_W / 2
     assert math.isclose(M.BOX_XY[0] - M.BOX_X / 2 - gap, 0.002, abs_tol=1e-9)
     assert pts[:, 2].max() < T + M.BOX_H  # the shut lid clears standing glasses

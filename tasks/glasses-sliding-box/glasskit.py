@@ -1,7 +1,8 @@
 """glasskit: compound rigid objects and a per-trial reset hook, for a yam_arena task file.
 
 yam_arena task files take single primitives only. This module adds :class:`Compound`: one rigid body (free, with a
-mass) made of several boxes in its own frame, used here for the glasses and the keys. Importing the module wraps,
+mass) or one fixed collider (no mass) made of several boxes in its own frame, each with its own friction; used here
+for the glasses, the keys, the lid and the box with its guides. Importing the module wraps,
 without modifying yam_arena:
 
 - ``yam_arena.scene.task_object``: builds a Compound as an Arena object whose root prim is the rigid body, with one
@@ -85,14 +86,16 @@ def _spawn(prim_path: str, cfg, translation=None, orientation=None, **kwargs):
     x, y, z, w = orientation if orientation is not None else (0.0, 0.0, 0.0, 1.0)
     root.AddOrientOp(precision=dbl).Set(Gf.Quatd(w, x, y, z))
     prim = root.GetPrim()
-    UsdPhysics.RigidBodyAPI.Apply(prim)
-    UsdPhysics.MassAPI.Apply(prim).CreateMassAttr(spec.mass)
-    rb = PhysxSchema.PhysxRigidBodyAPI.Apply(prim)
-    rb.CreateMaxDepenetrationVelocityAttr(1.0)
-    rb.CreateSolverPositionIterationCountAttr(16)
+    if spec.free:
+        UsdPhysics.RigidBodyAPI.Apply(prim)
+        UsdPhysics.MassAPI.Apply(prim).CreateMassAttr(spec.mass)
+        rb = PhysxSchema.PhysxRigidBodyAPI.Apply(prim)
+        rb.CreateMaxDepenetrationVelocityAttr(1.0)
+        rb.CreateSolverPositionIterationCountAttr(16)
     mu = spec.friction or GRIPPY_FRICTION
     material = f"{prim_path}/Looks/physics"
-    pm = sim_utils.RigidBodyMaterialCfg(static_friction=mu[0], dynamic_friction=mu[1])
+    pm = sim_utils.RigidBodyMaterialCfg(static_friction=mu[0], dynamic_friction=mu[1],
+                                        friction_combine_mode="min")
     pm.func(material, pm)
     looks: dict = {}
     for i, (centre, size, color) in enumerate(spec.parts):
@@ -128,7 +131,7 @@ def _arena_object(spec: Compound):
         compound_name: str = ""
 
     h = spec.yaw / 2
-    return Object(name=spec.name, object_type=ObjectType.RIGID, spawner_cfg=_Cfg(compound_name=spec.name),
+    return Object(name=spec.name, object_type=ObjectType.RIGID if spec.free else ObjectType.BASE, spawner_cfg=_Cfg(compound_name=spec.name),
                   initial_pose=Pose(position_xyz=tuple(spec.pos), rotation_xyzw=(0.0, 0.0, math.sin(h), math.cos(h))))
 
 
