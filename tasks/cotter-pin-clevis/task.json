@@ -19,5 +19,5 @@
   "reset_notes": "Pull the bent cotter out with pliers and discard it; push a new ISO 1234 2 x 25 cotter fully home, legs together, long leg on the left. The clevis joint does not move.",
   "fidelity": "Approximate. The clevis parts and the cotter's eye and shank are one fixed body. Each leg is a rigid 0.9 x 1.8 mm box on a revolute joint at its root, +-100 degrees, legs colliding, with an elastic-plastic hinge: elastic stiffness 2.5 N m/rad (3EI/L) as an implicit drive whose target is the leg's permanent set, yield moment 0.077 N m (300 MPa wire) hardening 25% over 90 degrees. Legs 20 g each in the solver (real 0.2 g) for contact stability. No fatigue cracking or twisting.",
   "scores": "Dream-1 run: 0.0 (seed 0); scripted demo: 1.0 (seeds 0, 4 and 10); both legs bent the same way: 0.25",
-  "media": "M-WPV5ZD"
+  "media": "M-5PUZ3W"
 }
