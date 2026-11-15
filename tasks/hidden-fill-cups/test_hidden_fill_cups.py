@@ -107,13 +107,62 @@ def test_seed_zero_is_the_default_and_reproducible():
     assert task.fills_for(1) != task.fills_for(0)
 
 
-def test_touching_the_base_or_seal_fails():
+def touch(m):
+    """Robot contact on the base or seal for 3 physics steps (12.5 ms)."""
+    for _ in range(3):
+        m.physics(np.zeros(N_PANELS), 1.0)
+
+
+def test_touching_the_base_or_seal_alone_does_not_fail():
     m = mon()
     m.physics(np.zeros(N_PANELS), 1.0)
     m.physics(np.zeros(N_PANELS), 1.0)
     assert not m.touched
     m.physics(np.zeros(N_PANELS), 1.0)
-    assert m.touched and m.failed
+    assert m.touched and not m.failed
+
+
+def test_incidental_touches_on_the_seal_and_base_keep_an_intact_transfer():
+    """Fingertips brush the seal before the grip, and the base once while carried: full credit."""
+    m = mon()
+    start, slot = task.CUP_XY[0], task.SLOTS["cup_lf"]
+    touch(m)
+    free_at(m, start, TOP)
+    for k in range(10):
+        held_at(m, start, TOP + 0.045 * k / 10)
+    for k in range(21):
+        if k == 10:
+            touch(m)
+        s = k / 20
+        held_at(m, (start[0] + s * (slot[0] - start[0]), start[1] + s * (slot[1] - start[1])), TOP + 0.045)
+    held_at(m, slot, R.tray_z + 0.004)
+    free_at(m, slot, R.tray_z)
+    assert m.touched and m.lifted and m.placed and not m.failed
+    assert task.cup_ok(state_of(m, slot, R.tray_z))
+
+
+def test_a_cup_carried_with_support_on_its_base_or_seal_never_counts_as_lifted():
+    """A light wall grip plus fingers under the base (or pressing the seal) the whole way: not a wall-grip lift."""
+    m = mon()
+    start, slot = task.CUP_XY[0], task.SLOTS["cup_lf"]
+    for k in range(30):
+        touch(m)
+        s = max(0.0, (k - 10) / 19)
+        held_at(m, (start[0] + s * (slot[0] - start[0]), start[1] + s * (slot[1] - start[1])),
+                TOP + 0.045 * min(k, 10) / 10, mm=0.5)
+    assert not m.lifted
+
+
+def test_a_lift_shorter_than_half_a_second_does_not_count():
+    m = mon()
+    xy = task.CUP_XY[0]
+    for _ in range(9):
+        held_at(m, xy, TOP + 0.03)
+    held_at(m, xy, TOP)
+    assert not m.lifted
+    for _ in range(10):
+        held_at(m, xy, TOP + 0.03)
+    assert m.lifted
 
 
 def test_lifted_carried_and_placed_scores():
@@ -146,8 +195,8 @@ def test_pushed_onto_the_tray_never_counts():
 def test_set_down_on_the_table_then_pushed_onto_the_tray_does_not_count():
     m = mon()
     start, slot = task.CUP_XY[0], task.SLOTS["cup_lf"]
-    for k in range(10):
-        held_at(m, start, TOP + 0.03 * k / 9)
+    for k in range(20):
+        held_at(m, start, TOP + 0.03 * min(k, 9) / 9)
     held_at(m, start, TOP)
     free_at(m, start, TOP)
     assert m.lifted and not m.placed
@@ -176,17 +225,23 @@ def test_a_grip_on_the_lid_level_or_below_the_wall_is_not_a_wall_grip():
     assert m.holder is None and m.dropped
 
 
-def test_slip_of_more_than_a_centimetre_in_the_grip_fails():
+def test_a_slip_in_the_grip_that_drops_nothing_keeps_an_intact_transfer():
+    """The pads slide 1.5 cm up the wall before the cup comes up, and the cup sinks 1 cm in the fingers while
+    carried: still full credit (a slip that drops the cup fails by the off-support rule)."""
     m = mon()
-    xy = task.CUP_XY[0]
-    held_at(m, xy, TOP)
-    for k in range(10):  # hand rises 1.5 cm, the cup stays on the table: the pads slide up the wall
-        held_at(m, xy, TOP, grip_dz=0.03 + 0.015 * k / 9)
-    assert m.slipped and m.failed
-    m = mon()
+    start, slot = task.CUP_XY[0], task.SLOTS["cup_lf"]
     for k in range(10):
-        held_at(m, xy, TOP, grip_dz=0.03 + 0.008 * k / 9)
-    assert not m.slipped
+        held_at(m, start, TOP, grip_dz=0.03 + 0.015 * k / 9)
+    for k in range(10):
+        held_at(m, start, TOP + 0.045 * k / 10, grip_dz=0.045)
+    for k in range(21):
+        s = k / 20
+        held_at(m, (start[0] + s * (slot[0] - start[0]), start[1] + s * (slot[1] - start[1])),
+                TOP + 0.045 - 0.01 * s, grip_dz=0.045 + 0.01 * s)
+    held_at(m, slot, R.tray_z + 0.004, grip_dz=0.055)
+    free_at(m, slot, R.tray_z)
+    assert m.slipped and m.lifted and m.placed and not m.failed
+    assert task.cup_ok(state_of(m, slot, R.tray_z))
 
 
 def test_tipped_or_off_the_table_fails():

@@ -86,8 +86,10 @@ class Rules:
     tray_inner: tuple[float, float, float, float]
     tray_outer: tuple[float, float, float, float]
     airborne_m: float = 0.010  # base more than this above what is under it: off its support
-    lifted_m: float = 0.020  # a lift counts from here
-    slip_m: float = 0.010  # cup moved this far along the gripper while held
+    lifted_m: float = 0.020  # a lift counts from here ...
+    lift_steps: int = 10  # ... held this many control steps in a row (0.5 s at 20 Hz) in a wall grip alone: no robot
+    #                       contact on the base or seal meanwhile
+    slip_m: float = 0.010  # cup moved this far along the gripper while held (logged; not a failure)
     grip_n: float = 0.3  # wall force on two opposite sides at least this: a wall grip
     grip_reach_m: float = 0.05  # gripper tool point this close to the cup's axis (horizontally) ...
     grip_band_m: float = 0.010  # ... and between this far above the base and this far below the rim
@@ -132,9 +134,11 @@ class CupMonitor:
         self.buckled = np.zeros(N_PANELS, bool)
         self.peak_n = 0.0  # highest panel spring force so far
         self.touching = 0
-        self.touched = False  # robot contact on the base or seal
+        self.touched = False  # robot contact on the base or seal at some point (logged; not a failure)
+        self.touch_now = False  # robot contact on the base or seal since the last control step
+        self.lift_run = 0  # control steps in a row lifted in a wall grip alone
         self.dropped = False  # off its support without a wall grip
-        self.slipped = False  # moved more than slip_m along the gripper while held
+        self.slipped = False  # moved more than slip_m along the gripper while held (logged; not a failure)
         self.tipped = False
         self.fell = False
         self.doubled = False  # one gripper held it together with another cup
@@ -150,7 +154,7 @@ class CupMonitor:
 
     @property
     def failed(self) -> bool:
-        return self.collapsed or self.touched or self.dropped or self.slipped or self.tipped or self.fell or self.doubled
+        return self.collapsed or self.dropped or self.tipped or self.fell or self.doubled
 
     def physics(self, deflection, touch_force: float) -> np.ndarray:
         force = side_forces(deflection, self.p)
@@ -161,6 +165,7 @@ class CupMonitor:
         self.buckled |= hit | np.roll(hit, 1) | np.roll(hit, -1)
         self.touching = self.touching + 1 if touch_force > self.r.touch_n else 0
         self.touched |= self.touching >= self.r.touch_steps
+        self.touch_now |= self.touching >= self.r.touch_steps
         return self.buckled.copy()
 
     def support_z(self, xy) -> float:
@@ -199,8 +204,12 @@ class CupMonitor:
             if holder != self.holder:
                 self.grip_offset = offset
             self.slipped |= abs(offset - self.grip_offset) > self.r.slip_m
-            self.lifted |= pos[2] - self.r.table_z >= self.r.lifted_m
-        elif self.holder is not None:
+        # A lift counts only if the wall grip alone carries the cup: 2 cm up, nothing touching its base or seal, 0.5 s.
+        alone = holder is not None and not self.touch_now and pos[2] - self.r.table_z >= self.r.lifted_m
+        self.lift_run = self.lift_run + 1 if alone else 0
+        self.lifted |= self.lift_run >= self.r.lift_steps
+        self.touch_now = False
+        if holder is None and self.holder is not None:
             self.placed = self.on_tray(pos)
         self.holder = holder
         self.airborne = height > self.r.airborne_m
@@ -270,7 +279,7 @@ class CupState(ObjectState):
 
     @property
     def failed(self) -> bool:
-        return self.collapsed or self.touched or self.dropped or self.slipped or self.tipped or self.fell or self.doubled
+        return self.collapsed or self.dropped or self.tipped or self.fell or self.doubled
 
     def tilt_deg(self) -> float:
         return tilt_deg(self.quat_xyzw)

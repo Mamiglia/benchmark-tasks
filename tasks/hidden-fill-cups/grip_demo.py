@@ -29,6 +29,8 @@ Per cup, each arm:
 ``DEMO_CHEAT`` (environment variable) plays a loophole instead, to check that the scorer gives it nothing:
 ``squeeze`` (grip every cup with the gripper fully closed, its 50 N), ``push`` (shove the cups onto the tray with
 closed fingers, never lifting them), ``seal`` (press closed fingertips down on each seal and drag the cup there).
+``tap`` is not a loophole but an incidental contact: tap each seal with the closed fingertips, then take the cup as
+usual; it must still score.
 """
 
 from __future__ import annotations
@@ -231,9 +233,19 @@ class Arm:
         yield from self.move((sx, sy, press + 0.01), 3.0)
         yield from self.move((sx, sy, top + HOVER_DZ), 1.0)
 
+    def tap(self, cup_xy, slot_xy, first: bool):
+        """Press the closed fingertips on the seal for 0.5 s, then take the cup as usual."""
+        (cx, cy), top = cup_xy, self.ctl.table_z
+        press = top + 0.084 + 0.013 - 0.004
+        yield from self.move((cx, cy, top + HOVER_DZ), 2.0 if first else 1.2, g=0.0)
+        yield from self.move((cx, cy, press), 1.0)
+        yield from self.wait(0.5)
+        yield from self.move((cx, cy, top + HOVER_DZ), 0.8)
+        yield from self.take(cup_xy, slot_xy, False)
+
     def run(self, jobs, delay: float, cheat: str):
         yield from self.wait(delay)
-        play = {"squeeze": self.squeeze, "push": self.push, "seal": self.seal}.get(cheat, self.take)
+        play = {"squeeze": self.squeeze, "push": self.push, "seal": self.seal, "tap": self.tap}.get(cheat, self.take)
         for i, (cup, slot) in enumerate(jobs):
             yield from play(cup, slot, i == 0)
         self.done = True

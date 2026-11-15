@@ -83,10 +83,10 @@ configure(CUPS, RULES)
 
 
 def cup_ok(s) -> bool:
-    """One cup's credit: never failed (wall buckled, robot touched its base or seal, off its support without a wall
-    grip, slid more than 1 cm in the grip, tipped past 30 degrees, carried with another cup in one gripper, off the
-    table); lifted at least 2 cm in a wall grip; let go on the tray; now standing on the tray within 10 degrees of
-    upright, released."""
+    """One cup's credit: never failed (wall buckled, off its support without a wall grip, tipped past 30 degrees,
+    carried with another cup in one gripper, off the table); lifted at least 2 cm and held there 0.5 s by a wall grip
+    alone (no robot contact on its base or seal meanwhile); let go on the tray; now standing on the tray within 10
+    degrees of upright, released. A touch on the base or seal, or a slip along the fingers, costs nothing by itself."""
     return (not s.failed and s.lifted and s.placed and s.on_tray and s.tilt_deg() < RULES.upright_deg
             and s.holder is None)
 

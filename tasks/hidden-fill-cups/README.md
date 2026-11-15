@@ -66,6 +66,8 @@ buckles at 3.5 N or less and one that needs 5.1 N or more per pad to lift: no fi
 | 0 (default) | 120 g | 205 g | 45 g | 320 g |
 | 1 | 395 g | 210 g | 40 g | 175 g |
 | 2 | 30 g | 265 g | 325 g | 125 g |
+| 4 | 60 g | 140 g | 280 g | 325 g |
+| 10 | 330 g | 115 g | 60 g | 265 g |
 
 `python -c "import task; print(task.fills_for(7))"` prints any seed's fills (kg).
 
@@ -77,19 +79,24 @@ earns 0.25 if all of the following hold; 1.0 (success, held 1 s) when all four d
 | Per cup, at any time during the trial (any one fails the cup for good) | Real-world check |
 |---|---|
 | The wall buckled (wall force under a pad above the buckling force for 12.5 ms) | A crease or dent in the wall (photo) |
-| A robot link touched the base or the seal (over 0.3 N for 12.5 ms) | Video |
-| The cup's base was more than 1 cm above the table or tray under it without a wall grip (dropped, tossed, scooped from below, carried on the fingers or the seal, stacked) | Video against a 1 cm scale |
-| It slid more than 1 cm along the gripper while held (cup lags the fingers) | Video: 1 cm bands on the cup wall against the finger tips |
+| The cup's base was more than 1 cm above the table or tray under it without a wall grip (dropped, slid out of the fingers, tossed, scooped from below, carried on the fingers or the seal, stacked) | Video against a 1 cm scale |
 | It tilted more than 30 degrees (knocked over) | Video |
 | One gripper held it together with another cup, both off their supports | Video |
 | It fell off the table | Video |
 
 A **wall grip** is two opposite sides of the wall pressed with at least 0.3 N each, by a gripper whose tool point is
-within 5 cm of the cup's axis and between 1 cm above its base and 1 cm below its rim.
+within 5 cm of the cup's axis and between 1 cm above its base and 1 cm below its rim. Robot contact on the base or
+seal means over 0.3 N for 12.5 ms, read from the contact reports.
+
+**What does not fail a cup.** Touching its base or seal (a fingertip brushing the seal while closing, a knuckle on the
+base) and a slip of the pads along the wall (the pads sliding up the wall before the cup comes up, or the cup sinking
+in the fingers while carried) cost nothing by themselves. An intact, upright transfer scores. What they cannot do is
+replace the wall grip: a cup carried with a finger under its base or on its seal is not lifted in a wall grip alone,
+and a slip that lets the cup fall from more than 1 cm is a drop. Both are logged (`CUPS_DEBUG=1`).
 
 | Per cup, at the end | Real-world check |
 |---|---|
-| It was lifted at least 2 cm in a wall grip at some point | Video |
+| At some point it was at least 2 cm up, held by a wall grip alone, for 0.5 s: no robot contact on its base or seal during that time | Video |
 | The last wall grip ended with the cup on the tray (pushing a cup onto the tray, or setting it on the table and sliding it in later, does not count) | Video |
 | Its base is inside the tray's rim (3 mm overhang allowed) and resting on the tray floor | Photo |
 | It is within 10 degrees of upright | Photo |
@@ -98,8 +105,9 @@ within 5 cm of the cup's axis and between 1 cm above its base and 1 cm below its
 Unintended routes and what they score:
 - **Squeezing hard** so no cup slips: the wall buckles (every cup buckles under the gripper's 50 N).
 - **Pushing or dragging cups** onto the tray: never lifted in a wall grip, so 0 for that cup.
-- **Scooping** from under the base, **pinching** at the seal or base, or **pressing down on the seal**: the
-  touch rule, and any lift without a wall grip is the off-support rule.
+- **Scooping** from under the base, **carrying on the seal**, or a light wall grip helped by a finger under the
+  base: never 0.5 s up in a wall grip alone, so 0; any lift with no wall grip at all is the off-support rule.
+- **Pressing down on the seal and dragging** the cup: never lifted in a wall grip, so 0.
 - **Two cups in one hand:** both fail.
 - **Recovering** a dropped or knocked-over cup: the failure is latched.
 
@@ -139,7 +147,9 @@ comes up, the load is its weight and stops growing. So it sets the hand back dow
 load rises by less than 15 %, then carries the cup at 1.2 times that grip and sets it on the tray.
 
 Loophole checks: `DEMO_CHEAT=squeeze` (grip fully closed), `DEMO_CHEAT=push` (shove the cups onto the tray with closed
-fingers) and `DEMO_CHEAT=seal` (press down on the seals and drag), with the same command.
+fingers) and `DEMO_CHEAT=seal` (press down on the seals and drag), with the same command. `DEMO_CHEAT=tap` is the
+opposite check: it presses the closed fingertips on each seal for 0.5 s, then takes the cup as usual, and must still
+score.
 
 ## Files
 
@@ -148,7 +158,7 @@ fingers) and `DEMO_CHEAT=seal` (press down on the seals and drag), with the same
 | `task.py` | The yam_arena task file: layout, seeds, `score()` / `success()`, `demo_controller` |
 | `cupkit.py` | The cup (articulated wall, buckling), the scoring monitor, and the hooks into yam_arena |
 | `grip_demo.py` | The closed-loop scripted demo |
-| `test_hidden_fill_cups.py` | Tests: buckling, every scoring rule on handcrafted trajectories, seeds, demo reach |
+| `test_hidden_fill_cups.py` | Tests: buckling, every scoring rule on handcrafted trajectories (including incidental base or seal contact and a harmless slip), seeds, demo reach |
 | `task.json` | Submission details |
 
 `cupkit.py` hooks yam_arena without modifying it: `yam_arena.scene.task_object` and `object_states`, the embodiment's
@@ -172,16 +182,18 @@ Isaac Lab-Arena (Isaac Lab 3.0, Isaac Sim 6.1) on a shared RTX workstation, with
 | Run | `task_score` | What the log shows |
 |---|---|---|
 | Scripted demo, seed 0 | **1.0** | Lift-test grips at which the load stopped rising: 1.1 N (45 g), 1.6 N (120 g), 3.1 N (205 g), 6.0 N (320 g); highest wall force 5.1 N against 12.4 N for the 320 g cup. All four on the tray, success at 57 s (1,148 steps) |
-| Scripted demo, seed 1 | **1.0** | 40 g, 175 g, 210 g and 395 g (carried at a 10.1 N grip; highest wall force 9.1 N against 14.9 N). Success at 75 s |
-| Scripted demo, seed 2 | **1.0** | 30 g, 125 g, 265 g, 325 g (highest wall force 5.1 N against 12.6 N). Success at 69 s |
+| Scripted demo, seed 4 | **1.0** | 60 g, 140 g, 280 g, 325 g (highest wall force 5.1 N against 12.6 N for the 325 g cup). All four on the tray |
+| Scripted demo, seed 10 | **1.0** | 330 g, 115 g, 60 g, 265 g (highest wall force 5.1 N against 12.7 N for the 330 g cup). All four on the tray |
+| `DEMO_CHEAT=tap`, seed 0 (closed fingertips pressed on each seal for 0.5 s, then the normal take) | **1.0** | Every cup logged a base or seal touch; none failed, all four on the tray |
 | `DEMO_CHEAT=squeeze` (fingers fully closed, 50 N) | **0** | Every cup's wall buckled on the first squeeze |
-| `DEMO_CHEAT=push` | **0** | No cup was lifted in a wall grip; the shoved cups tipped over the rim |
-| `DEMO_CHEAT=seal` | **0** | Fingertips on every seal: touch rule |
-| Dream-1, seed 0 | **0** | 2,000 steps. Both arms reached down beside the cups and toward the tray but never closed on a cup; nothing moved |
+| `DEMO_CHEAT=push` | **0** | The shoved cups tipped over and fell off the tray rim (tipped, off-support rules) |
+| `DEMO_CHEAT=seal` | **0** | No cup lifted in a wall grip; each dragged cup went over the tray rim with no wall grip (off-support rule) |
+| Dream-1, seed 0 | **0** | 2,000 steps. Both grippers went down beside the outer cups but never closed on one; no cup moved |
 
 A scoop from under the base is not reachable with this gripper on a cup standing flat (the base sits on the table,
 3 mm inside the wall); the rule that catches it (off its support without a wall grip) is covered by the unit tests,
-as are a set-down-then-push, a drop, two cups in one hand and a slip.
+as are a set-down-then-push, a drop, two cups in one hand, a carry helped by a finger under the base, a lift shorter
+than 0.5 s, and an intact transfer with incidental seal and base touches and a 1 cm slip (full credit).
 
 ## Runtime and seeds
 
@@ -191,14 +203,49 @@ the default (seed 0) is reproducible with `-E object_jitter=0`.
 
 ## Real-world build
 
-- **Cups:** 8 identical thin-walled PP or PET cups with straight sides, about 7 cm across and 9 cm tall (specimen
-  pots or deli cups), sealed with a red foil lid recessed 6 mm. Draw 1 cm bands on the wall for the slip check. Fill
-  with damp sand to the seed's masses (kitchen scale), seal, and keep a spare set: a buckled cup is used up.
-- **Calibrate the buckling law** per batch with a force gauge and two flat 2 cm pads: squeeze an empty cup and a 400 g
-  one at 3 cm above the base until the wall creases. Choose a cup wall (or fill height) that gives about 1.5 N empty
-  and 15 N at 400 g; the scoring only needs the crease to show.
+**The cup (build 8; a creased cup is used up).**
+
+| Part | Build |
+|---|---|
+| Wall | 0.25 mm clear PETG sheet, 226 x 86 mm, rolled into a tube 70 mm outside diameter (6 mm overlap glued with cyanoacrylate), sprayed matt white on the outside, 1 cm bands drawn in black |
+| Base | PLA disc 64 mm across, 4 mm thick, with a 5 mm lip, 3D printed, glued inside the bottom of the tube |
+| Seal | PLA disc 64 mm across, 3 mm thick, glued inside the tube with its top 6 mm below the rim, covered with red foil tape; it goes in after filling |
+| Fill | Damp builder's sand (about 1,600 kg/m3), weighed into the cup on a kitchen scale (1 g) and pressed level; at this density 60 g reaches 12 mm up the wall, 180 g 35 mm, 320 g 62 mm |
+| Mass | 26 g empty: wall about 6 g; base and seal printed at the infill that brings the empty cup to 26 g |
+
+The fill braces the wall only where the sand reaches: the grip zone (pads centred 3 cm above the base) is unbraced in
+the 20-60 g cups, partly braced from about 150 g, and fully braced in the 320-400 g cups. That is why the buckling
+force rises with the fill.
+
+**Acceptance check per batch, before trials.** The task needs only the inequality below, not the simulation's exact
+law; each batch of cups is checked against these windows with a digital force gauge (0.01 N) fitted with a flat
+2 x 2 cm pad of the gripper's pad material, the cup held by a matching pad on a fixed block, pads centred 3 cm above
+the base. A batch that misses a window is rebuilt (wall 0.20 mm if the empty crease force is too high, 0.30 mm if it
+is too low).
+
+| Property | How | Window | Simulation |
+|---|---|---|---|
+| Crease force, 20-60 g cup (one spare cup per batch, destroyed) | Push slowly until the wall snaps in and stays dented | 1.0 to 2.0 N | 2.2 to 3.5 N |
+| Pad-on-wall friction coefficient (any filled cup, not destroyed) | Hold the cup between the two pads at 2.0 N (gauge), pull the cup down with a spring scale until it slips: mu = pull / (2 x 2.0 N) | 0.3 to 0.8 | 0.33 |
+| Crease force, 320-400 g cup (one spare cup per batch, destroyed) | As above | at least 1.5 x 9.81 x mass / (2 mu): 10.4 N at mu 0.3, 3.9 N at mu 0.8 | 12.4 to 15.1 N |
+
+For scale: Le, Lundell and Kyrki ("Safe Grasping with a Force Controlled Soft Robotic Hand", arXiv:1909.06756,
+2020) report a thin disposable plastic cup deformed by a 1 N contact force and a paper cup holding up to
+2 N, which is where the empty window sits.
+
+**Why no single grip force works, from the windows alone.** The heaviest cup of every seed is at least 346 g in all,
+so lifting it straight up needs at least 9.81 x 0.346 / (2 x 0.8) = 2.1 N per pad even at the highest accepted
+friction; the lightest cup creases at 2.0 N or less. Any force that lifts the heavy cup creases the light one, and
+the heavy cup itself tolerates 1.5 times its own lifting grip. The simulation's numbers (last column) sit at the stiff,
+low-friction end of these windows: the empty cup is a little stronger there, and the same inequality holds (seeds
+section, checked by a test).
+
+We have not built and measured this batch ourselves; the windows are the build's acceptance criteria, and a batch that
+passes them makes the task's premise true by the argument above.
+
 - **Tray:** any low tray, 19 x 26 cm inside with 2 cm rims, taped to the table.
-- **Safety:** no hazards beyond the arms themselves; damp sand is the only spill.
+- **Safety:** no hazards beyond the arms themselves; damp sand is the only spill. The operator stays outside the arms'
+  reach during a trial, with the e-stop in hand.
 
 ## Simplifications
 
