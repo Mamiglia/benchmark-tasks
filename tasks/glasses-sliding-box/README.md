@@ -170,3 +170,7 @@ contacts with the box, guides, block and lid use pine on pine: 0.4 static, 0.3 d
 0.25 to 0.5 static: Engineering ToolBox, "Friction and Friction Coefficients for some Common Materials"); the kit
 combines a contact's two materials by their minimum. Other contacts use yam_arena's default (1.2 static, 1.0 dynamic).
 Pushing the lid takes about 0.6 N. The lid is a free box between fixed guides with 2 mm clearance a side.
+
+## Credit
+
+The idea for this task was first proposed in robocurve/benchmark-tasks#532 (TK-6X9K96). The code, models and text here are an independent implementation.

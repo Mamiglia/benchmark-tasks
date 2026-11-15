@@ -17,5 +17,6 @@
   "run_limit": "1,200 steps (60 seconds at 20 Hz)",
   "reset_notes": "Lift the glasses out and stand them on their taped mark (front frame to the left, arms pointing right); slide the lid shut and lay the keys on it at their mark; stand the mug on its mark (top up the water if any spilled). Nothing is consumed; about 1 minute.",
   "fidelity": "Approximate, full size, all rigid and built from boxes (mug a cylinder); no third-party models. Glasses are one body (hinges and arms rigid); lens contact is not sensed, only stance. Keys one body; mug has no handle or liquid (tipping or moving it counts). Box, guides and lid use pine-on-pine friction 0.4 static, 0.3 dynamic (Engineering ToolBox, wood on wood 0.25-0.5); other contacts 1.2/1.0. Lid is free between fixed guides, 2 mm clear a side.",
-  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seeds 0, 4 and 10)"
+  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seeds 0, 4 and 10)",
+  "media": "M-H8MQ5F"
 }
