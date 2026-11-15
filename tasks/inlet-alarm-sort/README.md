@@ -194,3 +194,7 @@ three seeds above.
 
 A scripted trial takes about 2,100 control steps (105 s of simulated time) and 15 to 20 minutes of wall time on a
 shared workstation. A 2,400-step policy run takes longer, depending on the policy's latency. Seeds: see above.
+
+## Credit
+
+The idea for this task was first proposed in robocurve/benchmark-tasks#380 (TK-CVKHAK). The code, models and text here are an independent implementation.
