@@ -6,7 +6,8 @@ yam_arena (without modifying it) so that:
 - ``yam_arena.scene.task_object`` builds it as a FIXED-base articulation. The root body is the clevis joint (stand,
   fork, rod end, clevis pin, washer) with the cotter pin's eye and shank, which sit in the pin's cross-hole. Its two
   children are the cotter's legs, each on a revolute joint about the vertical at its root, where it leaves the
-  cross-hole. The legs lie flat against each other at the start; each can only open away from the other.
+  cross-hole, free to bend either way (+-100 degrees). The legs lie flat against each other at the start and
+  collide with each other, so a leg pushed toward the other carries it along (both legs can end on one side).
 - Before every PHYSICS step (240 Hz, via a wrapper on ``InteractiveScene.write_data_to_sim``) a :class:`Leg` per leg
   turns the measured joint angle into the leg's permanent set (elastic-plastic bending, below) and writes it as the
   joint's position target. The joint's implicit drive has the leg's elastic bending stiffness, so the moment it
@@ -94,7 +95,8 @@ class LegParams:
 
 
 class Leg:
-    """A leg's permanent set (rad, bend sense: 0 straight, + away from the other leg) and its latches. Call
+    """A leg's permanent set (rad, bend sense: 0 straight, + away from the other leg, - toward it) and its latches.
+    ``peak`` is the set furthest from straight (signed). Call
     :meth:`step` with the measured bend every physics step; it returns the new set (the joint's drive target) and
     the moment the leg carries (N m)."""
 
@@ -110,14 +112,17 @@ class Leg:
 
     def step(self, bend: float) -> tuple[float, float]:
         p = self.p
-        k, m_y = p.stiffness, p.moment_nm(self.peak)
+        k, m_y = p.stiffness, p.moment_nm(abs(self.peak))
         m = k * (bend - self.set)
         if abs(m) > m_y:  # yielding (either way): the set follows the leg
             m = math.copysign(m_y, m)
-            self.set = max(0.0, bend - m / k)
-        self.peak = max(self.peak, self.set)
+            self.set = bend - m / k
+        if abs(self.set) > abs(self.peak):
+            self.peak = self.set
         self.peak_moment = max(self.peak_moment, abs(m))
-        if self.peak >= math.radians(p.rebend_after_deg) and self.set <= self.peak - math.radians(p.rebend_deg):
+        # bent back toward (or through) straight by rebend_deg from the furthest set, once that was rebend_after_deg
+        far = abs(self.peak) >= math.radians(p.rebend_after_deg)
+        if far and abs(self.set - self.peak) >= math.radians(p.rebend_deg):
             self.rebent = True
         return self.set, m
 
@@ -267,7 +272,7 @@ def _spawn(prim_path: str, cfg, translation=None, orientation=None, **kwargs):
         j.CreateLocalRot0Attr(Gf.Quatf(1, 0, 0, 0))
         j.CreateLocalPos1Attr(Gf.Vec3f(0, 0, 0))
         j.CreateLocalRot1Attr(Gf.Quatf(1, 0, 0, 0))
-        lo, hi = sorted((0.0, s * spec.max_bend_deg))
+        lo, hi = -spec.max_bend_deg, spec.max_bend_deg  # either way: the scorer, not a limit, decides the side
         j.CreateLowerLimitAttr(lo)
         j.CreateUpperLimitAttr(hi)
         d = UsdPhysics.DriveAPI.Apply(j.GetPrim(), "angular")  # gains come from the actuator config
@@ -286,7 +291,7 @@ def _spawn(prim_path: str, cfg, translation=None, orientation=None, **kwargs):
     fj.CreateLocalRot1Attr(Gf.Quatf(1, 0, 0, 0))
     UsdPhysics.ArticulationRootAPI.Apply(root.GetPrim())
     art = PhysxSchema.PhysxArticulationAPI.Apply(root.GetPrim())
-    art.CreateEnabledSelfCollisionsAttr(False)
+    art.CreateEnabledSelfCollisionsAttr(True)  # the legs push each other (a leg and the clevis body are filtered)
     art.CreateSolverPositionIterationCountAttr(32)
     art.CreateSolverVelocityIterationCountAttr(8)
     return root.GetPrim()

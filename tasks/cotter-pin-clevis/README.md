@@ -48,28 +48,34 @@ the push is made, not its size:
 - **The legs start together.** Only the long leg's 4 mm extension, past the short leg's end, can be pushed from the
   inside. The fingertip must land in a window about 3 mm long, beside a 0.9 mm wire.
 - **One each way.** The short leg can only be pushed once the long leg has moved out of the way, from the side the
-  long leg has left.
-- **Swing round the root.** A push that does not follow the leg round its root slides off its end. The arm's joints are
-  compliant (PD position control): the finger lags its command by millimetres under a few newtons, so a policy has to
+  long leg has left. Nothing stops a leg bending either way: pliers or a push that takes both legs at once bends
+  them both to the same side, which leaves the cotter free to shake out (scores 0.25).
+- **Mind the leg's end.** A push near the leg's end slides off it as the leg turns. The arm's joints are
+  compliant (PD position control): the finger lags its command by up to 2 cm under a few newtons, so a policy has to
   push past where it wants the leg and allow for springback.
 - **No second chance.** A leg that is bent and then straightened again is a re-bent cotter, which fatigue-cracks at
   the bend and must be scrapped. The trial scores 0.
 
 ## Scoring
 
-Read at the end of the trial, with one latch over the whole trial. A leg's bend is the angle between it and the
-cotter's axis (a protractor on a top-down photo).
+Read at the end of the trial, with one latch over the whole trial. A leg's angle is signed: the angle between it
+and the cotter's axis seen from above, + to the left (+y), - to the right. The legs are "bent one each way" when
+one is at +60 degrees or more and the other at -60 degrees or more, i.e. on opposite sides of the axis (which leg
+is on which side does not matter).
 
-- **0** if either leg was ever re-bent: bent back 15 degrees or more after it had been set 30 degrees or more.
-- **1.0 (success)**: both legs bent 60 degrees or more, every finger 2 cm or more from the cotter, legs still (under
-  5 deg/s), held for 1 s.
+- **0** if either leg was ever re-bent: moved back 15 degrees or more from the furthest it had been set, once that
+  was 30 degrees or more (pushing a bent leg back through straight to the other side counts).
+- **1.0 (success)**: both legs bent 60 degrees or more, on opposite sides, every finger 2 cm or more from the
+  cotter, legs still (under 5 deg/s), held for 1 s.
 - **0.75**: the same at the end of the run but not yet held 1 s.
-- **0.5**: both legs bent 60 degrees or more, but a finger is within 2 cm or a leg is moving.
-- **0.25**: one leg bent 60 degrees or more.
+- **0.5**: both legs bent 60 degrees or more on opposite sides, but a finger is within 2 cm or a leg is moving.
+- **0.25**: a leg bent 60 degrees or more, but not both on opposite sides (this includes both legs bent the same
+  way, which leaves the cotter free to shake out).
 - **0** otherwise.
 
-The legs can only open away from each other (they lie flat together and the cotter is in the hole), so "one each
-way" needs no separate check. Possible scores: 0, 0.25, 0.5, 0.75, 1.0.
+In the simulation each leg's hinge turns either way (-100 to +100 degrees) and the legs collide with each other, so
+both can be pushed to the same side, as on a real pin; only the scorer decides. Possible scores: 0, 0.25, 0.5,
+0.75, 1.0.
 
 ## Files
 
@@ -98,34 +104,39 @@ Tests: `pytest tasks/cotter-pin-clevis/test_cotter_pin_clevis.py` (yam_arena env
 `demo()` in task.py, played open loop by `yam_scripted`: the layout is fixed, so it is a fixed plan and reads
 nothing from the simulator. Right arm only:
 
-1. Fingers 4 mm apart, down astride the long leg's 4 mm extension (the pads start 0.6 mm past the short leg's end,
-   tips 4.5 mm below the legs), then swing round the leg's root toward +y, the trailing pad pushing. The arm lags
-   its command by over a centimetre under the ~4 N this takes, so the commanded 70 degrees bends the leg about 18
-   degrees before the pad slides off its end. That is enough to part the legs.
-2. Down astride the long leg along its length, grip it like pliers and swing it round its root to 100 degrees
-   (commanded), the gripper turning with it. Gripped, the bending moment is taken mostly as a twist at the wrist,
-   which lags far less than a push. The leg ends about 73 degrees out.
+1. Fingers 4 mm apart, down astride the long leg's 4 mm extension (the pads start 3 mm past the short leg's end;
+   the arm sags about 1.3 mm back toward it; tips 4.5 mm below the legs), then slide straight sideways toward +y,
+   the trailing pad pushing the leg's end. The arm lags its command by over 2 cm under the ~4 N this takes; the
+   leg bends until its end swings inside the pad's near edge, about 47 degrees out. The short leg is nudged about
+   9 degrees out the other way as the pad lets go.
+2. Down astride the long leg's outer half (pads from 13 mm out, clear of the short leg's end now), grip it like
+   pliers and swing it round its root to 100 degrees (commanded), the gripper turning with it. It ends about 80
+   degrees out.
 3. The same on the short leg, now free on both sides, toward -y. It ends about 67 degrees out.
 4. Open and move clear.
 
 What we learned building it, and what a policy faces: a closed fingertip pushed sideways against a 1.8 mm wire
-rides up over it (the fingertips' side edges slope); a push far from the root slides off the leg's end as it turns;
-a push near the root needs more force, and the arm's lag grows with it. Gripping the leg works.
+rides up over it (the fingertips' side edges slope); a push far from the root slides off the leg's end as it turns,
+and how far the leg gets before that is sensitive to where the pad lands (pads 2 mm past the short leg's end gave
+16 degrees, 3 mm gave 47); pliers closed across both legs bend both the same way. An earlier version of this task
+stopped each leg's hinge at straight, so a grip that took both legs bent only one; the hinges now turn either way
+and the legs collide, as on a real pin.
 
 Results (Isaac Sim, RTX A6000, `--max-steps 900`):
 
+Angles are each leg's angle to the cotter's axis, + left (+y), - right.
+
 | Run | Seed | Long leg | Short leg | Score |
 |---|---|---|---|---|
-| Demo | 0, 4, 10 | 73.0 deg | 67.4 deg | 1.0 each (success held 1 s at step 715) |
-| `DEMO_LONG_ONLY=1` | 0 | 73.0 deg | 0 | 0.25 |
-| `DEMO_REBEND=1` (straighten the long leg from 73 to 45 deg, bend it out again to 88, then the short leg; `--max-steps 1250` so it can finish) | 0 | 87.9 deg | 67.5 deg | 0 (re-bent) |
+| Demo | 0, 4, 10 | +80.5 deg | -67.3 deg | 1.0 each |
+| `DEMO_SAME_SIDE=1` (grip both legs together, swing them right) | 0 | -66.3 deg | -66.3 deg | 0.25 (same side) |
+| `DEMO_LONG_ONLY=1` | 0 | +80.5 deg | -9.0 deg | 0.25 |
+| `DEMO_REBEND=1` (straighten the long leg from 80 to 52 deg, bend it out again to 80, then the short leg; `--max-steps 1250` so it can finish) | 0 | +80.2 deg | -67.2 deg | 0 (re-bent; the end state alone would score 1.0) |
 | Closed fingertip pushed sideways (earlier versions of the demo) | 0 | under 1 deg, or 18 deg then slid off | 0 | 0 |
 
-The layout does not change with the seed, so the three demo seeds match to 0.1 degree. During the pliers grip the
-long leg is first pulled back from 17.6 to 8.7 degrees (the gripper closes slightly off-centre); that is under the
-30 degrees after which bending back counts as a re-bend.
+The layout does not change with the seed, so the three demo seeds match.
 
-Dream-1 (seed 0, 900 steps): 0.0. Both arms stay near their bases, folded low, and never reach the clevis; the
+Dream-1 (seed 0, 900 steps, on this version): 0.0. Both arms stay near their bases and never reach the clevis; the
 legs stay straight.
 
 ## Real-world trial
@@ -134,7 +145,12 @@ Clamp the stand to the table; the clevis, pin and washer are bolted together and
 2 x 25 zinc-plated steel cotter pins from one box, one per trial; check one per box with a bend test: clamp a leg at its root and hang
 a mass 12.5 mm out. With M_p about 0.08 N m, 0.5 kg (0.06 N m) should leave no permanent bend and 1 kg (0.12 N m)
 should bend it steadily. Push the cotter fully home, legs together and the long leg on the left, before each trial. Score from a
-top-down photo with a protractor overlay. No person is near the robot during a trial. Observers wear safety glasses
+top-down photo taken after the arms are clear, camera square over the clevis pin, with a protractor overlay:
+centre on the leg root (where the legs leave the pin), 0 on the cotter's axis (the line through the eye and the
+clevis pin's centre). Read each leg's angle and which side of that line its tip is on (left or right as seen from
+the robot); success needs one leg 60 degrees or more to the left and the other 60 degrees or more to the right. A
+leg wrapped tight round the pin reads by the side its tip is on. The re-bend latch and the 1 s hold are checked
+from a top-down video of the whole trial (frame by frame, the same protractor overlay). No person is near the robot during a trial. Observers wear safety glasses
 (a leg could snap off a brittle cotter); the forces involved are under 15 N.
 
 Reset: pull the cotter out with pliers and discard it (a bent cotter is not reused), push a new one home.
@@ -159,8 +175,8 @@ industrial machinery mechanics (O*NET 49-3041, 49-3042, 49-9041) and for aircraf
 
 Approximate. Isaac Sim (PhysX), 240 Hz physics, 20 Hz control. The clevis, pin, washer, rod end, stand and the
 cotter's eye and shank are one fixed body; the cotter cannot be pulled out of its hole (a real one could, with
-pliers). Each leg is a rigid 0.9 x 1.8 mm box on a revolute joint at its root (where it leaves the pin), limited to
-0-100 degrees; real legs bend over a short length, not at a point. The joint's implicit drive has the leg's elastic
+pliers). Each leg is a rigid 0.9 x 1.8 mm box on a revolute joint at its root (where it leaves the pin), free to turn
+-100 to +100 degrees (either way); the two legs collide with each other. Real legs bend over a short length, not at a point. The joint's implicit drive has the leg's elastic
 stiffness, 2.5 N m/rad, and its target is the leg's permanent set, updated every physics step: elastic-perfectly
 plastic with linear hardening, yield moment 0.077 N m rising 25% over 90 degrees. Bending back past yield
 straightens the leg (and latches a re-bend). There is no fatigue cracking, no twisting of a leg about its own axis

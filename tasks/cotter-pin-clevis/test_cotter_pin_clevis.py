@@ -99,6 +99,20 @@ def test_a_slightly_spread_leg_can_be_pushed_back_without_a_rebend_latch():
     assert not leg.rebent and math.degrees(leg.set) < 2.0  # straight again, less springback
 
 
+def test_a_leg_can_be_bent_toward_the_other_side_and_keeps_that_set():
+    leg = Leg(P)
+    s = bend(leg, np.linspace(0, -80, 300))  # pushed toward the other leg's side
+    assert s == pytest.approx(-80 + math.degrees(P.moment_nm(abs(leg.peak)) / P.stiffness), abs=0.05)
+    assert leg.peak == leg.set < 0 and not leg.rebent
+
+
+def test_pushing_a_bent_leg_through_straight_to_the_other_side_latches_rebent():
+    leg = Leg(P)
+    s = bend(leg, np.linspace(0, 40, 200))
+    bend(leg, np.linspace(s, -70, 400))
+    assert leg.rebent and math.degrees(leg.set) < -60
+
+
 # -- scoring -------------------------------------------------------------------------------------------------------
 
 
@@ -111,6 +125,19 @@ def test_score_ladder():
     assert T.score(state(long=95.0, short=95.0, speed=20.0)) == 0.5  # moving
     assert T.score(state(long=95.0, short=95.0)) == 0.75
     assert T.success(state(long=95.0, short=95.0)) and not T.success(state(long=95.0, short=95.0, gap=0.01))
+
+
+def test_both_legs_bent_the_same_way_is_not_success():
+    # bend sense: + away from the other leg. Both to the right (-y): long -70, short +70; both left: long 70, short -70
+    for long, short in ((-70.0, 70.0), (70.0, -70.0), (-95.0, 95.0)):
+        assert T.score(state(long=long, short=short)) == 0.25
+        assert not T.success(state(long=long, short=short))
+
+
+def test_opposite_sides_either_way_round_is_success():
+    assert T.success(state(long=70.0, short=65.0))  # the usual: long leg left, short leg right
+    assert T.success(state(long=-70.0, short=-65.0))  # crossed over: long leg right, short leg left
+    assert T.score(state(long=70.0, short=-30.0)) == 0.25  # short leg only 30 deg, on the long leg's side
 
 
 def test_a_rebent_leg_zeroes_the_trial_whatever_the_end_state():
@@ -141,6 +168,14 @@ def test_the_first_push_lands_past_the_short_legs_end_on_the_long_legs_extension
     x = down.pos[0] - T.PIN_XY[0]
     near, far = x - T.HALF_W, x + T.HALF_W
     assert T.RIG.root_x + T.RIG.short_len < near < T.RIG.root_x + T.RIG.long_len < far
+
+
+def test_the_same_side_cheat_grips_both_legs_and_swings_them_right(monkeypatch):
+    monkeypatch.setenv("DEMO_SAME_SIDE", "1")
+    plan = T.demo()["right"]
+    down = next(w for w in plan if "down astride" in w.label)
+    assert abs(down.pos[1] - T.PIN_XY[1]) < 1e-9  # straddles both legs, which lie either side of the axis
+    assert min(w.yaw for w in plan if w.yaw is not None) == pytest.approx(-math.radians(T.SWING_DEG))
 
 
 def test_the_demo_fits_the_run_limit():

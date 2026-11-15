@@ -18,7 +18,7 @@ import sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 import numpy as np  # noqa: E402
-from cotterkit import CotterRig, LegParams  # noqa: E402
+from cotterkit import SIGN, CotterRig, LegParams  # noqa: E402
 from yam_arena.constants import FINGER_CLOSED  # noqa: E402
 from yam_arena.demo import Waypoint  # noqa: E402
 from yam_arena.task_file import TABLE_TOP  # noqa: E402
@@ -68,39 +68,40 @@ RIG = CotterRig("cotter", pos=(*PIN_XY, TOP + H), size=(0.19, 0.04, H + 0.003), 
 OBJECTS = [RIG]
 
 # -- scoring -------------------------------------------------------------------------------------------------------
-BENT_DEG = 60.0  # each leg bent this far or more from straight (they can only open away from each other)
-STARTED_DEG = 60.0
+BENT_DEG = 60.0  # each leg bent this far or more from the cotter's axis, the two on opposite sides of it
 CLEAR_M = 0.02  # every finger 2 cm or more from the cotter
 STILL_DPS = 5.0  # legs turning slower than this (deg/s)
 
 
-def bent(s, leg: str) -> bool:
-    return s.bend_deg[leg] >= BENT_DEG
+def side_deg(s, leg: str) -> float:
+    """A leg's signed angle to the cotter's axis, seen from above: + to the left (+y), - to the right."""
+    return SIGN[leg] * s.bend_deg[leg]
 
 
 def score(objects) -> float:
     """End of episode. 0 if a leg was ever re-bent (bent back 15 degrees or more after it had been set 30 degrees or
-    more). Otherwise 0.75 both legs bent 60 degrees or more, every finger 2 cm or more from the cotter and the legs
-    still (success, 1.0, once that has held 1 s); 0.5 both legs bent 60 degrees or more but touched or moving; 0.25
-    one leg bent 60 degrees or more; else 0."""
+    more). Otherwise 0.75 both legs 60 degrees or more from the axis on OPPOSITE sides of it, every finger 2 cm or
+    more from the cotter and the legs still (success, 1.0, once that has held 1 s); 0.5 the legs so bent but touched
+    or moving; 0.25 a leg bent 60 degrees or more (including both bent to the same side); else 0."""
     s = objects["cotter"]
     if any(s.rebent.values()):
         return 0.0
-    n = sum(bent(s, leg) for leg in ("long", "short"))
-    if n == 2:
+    a = [side_deg(s, leg) for leg in ("long", "short")]
+    if min(map(abs, a)) >= BENT_DEG and a[0] * a[1] < 0:
         return 0.75 if s.gap_m >= CLEAR_M and s.leg_speed < STILL_DPS else 0.5
-    return 0.25 if n == 1 else 0.0
+    return 0.25 if max(map(abs, a)) >= BENT_DEG else 0.0
 
 
 def success(objects) -> bool:
-    """Both legs bent 60 degrees or more, nothing re-bent, fingers clear, legs still; must hold 1 s."""
+    """Both legs bent 60 degrees or more to opposite sides, nothing re-bent, fingers clear, legs still; hold 1 s."""
     return score(objects) == 0.75
 
 
 # -- demo (yam_scripted plays it open loop) ------------------------------------------------------------------------
 # The layout is fixed, so the demo is a fixed plan; it reads nothing from the simulator. The fingers straddle a leg,
-# 4 mm apart, and the trailing finger's flat inner pad pushes it round its root. (A closed fingertip's outer edges
-# slope, so pushed against a 1.8 mm wire it rides up and over it.) Each finger's tip is 4 mm thick and 15.4 mm wide.
+# 4 mm apart, and the trailing finger's flat inner pad pushes it. (A closed fingertip's outer edges slope, so pushed
+# against a 1.8 mm wire it rides up and over it.) Each finger's tip is 4 mm thick and 15.4 mm wide. Nothing stops a
+# leg bending either way, so a grip that also takes the other leg bends both: every grip must clear the other leg.
 HALF_W = 0.0077
 GAP = 0.004  # fingers this far apart (finger joint target -GAP/2)
 TIP_Z = -0.0045  # finger tip ends 4.5 mm below the cotter's axis, so the legs (1.8 mm tall) meet the flat pads
@@ -108,10 +109,13 @@ PAD_TIP = 0.013  # yam_arena.constants.PAD_TIP_PAST_TCP
 HOVER = 0.06
 ROOT = np.array([RIG.root_x, 0.0])
 SWING_DEG = float(os.environ.get("DEMO_SWING_DEG", 100.0))  # commanded swing: past the 60 deg goal for arm lag
-START_DEG = 70.0  # commanded push on the long leg's extension; the arm lags, and the leg ends about 18 deg out
-OPENED_DEG = 18.0  # where the demo expects the long leg after that push
+PAST = 0.003  # the slide's pads start this far past the short leg's end (the arm sags about 1.3 mm back onto it)
+SLIDE_DY = 0.045  # commanded sideways slide on the long leg's extension; the arm lags by over 2 cm
+OPENED_DEG = 47.0  # where the long leg ends after the slide
+EXT_D = 0.021  # then grip it with the pads 13.3 mm out and beyond: clear of the short leg's end once the long leg is
+# 39 degrees or more out
+SHORT_DEG = 9.0  # the short leg is nudged this far out (toward -y) as the slide lets go
 PINCH_GAP = 0.007  # fingers this far apart going down astride a leg to grip it (tolerates about +-10 deg)
-PRESS = 0.0023  # straddle centre shifted this far toward the push: the trailing pad 0.8 mm into the leg
 
 
 def _world(p_rig, z) -> tuple[float, float, float]:
@@ -123,26 +127,22 @@ def _rot(deg):
     return np.array([[math.cos(a), -math.sin(a)], [math.sin(a), math.cos(a)]])
 
 
-def push(label: str, start_rel, yaw0_deg: float, sweep_deg: float, seconds: float) -> list[Waypoint]:
-    """Down astride a leg at ``start_rel`` (straddle centre relative to the leg root), then swing round the root by
-    ``sweep_deg`` (counter-clockwise +), turning with the leg, the trailing pad pressed into it; then back up."""
-    steps = max(2, int(abs(sweep_deg) / 5))
+def slide(label: str, start_rel, dy: float, seconds: float) -> list[Waypoint]:
+    """Down astride a leg at ``start_rel`` (straddle centre relative to the leg root, fingers along x), then slide
+    straight sideways by ``dy``, the trailing pad pushing the leg's end; then back off and up. The pad's near edge
+    stays past the short leg's end, so it pushes the long leg until that leg's end swings inside it (about 33 deg)."""
     f = -GAP / 2
     p0 = ROOT + start_rel
-    start_rel = start_rel + np.array([0.0, math.copysign(PRESS, sweep_deg)])
+    steps = 10
     out = [
-        Waypoint(2.0, _world(p0, HOVER), f, f"{label}: over the leg", math.radians(yaw0_deg)),
-        Waypoint(1.5, _world(p0, TIP_Z), f, f"{label}: down astride the leg", math.radians(yaw0_deg)),
+        Waypoint(2.0, _world(p0, HOVER), f, f"{label}: over the leg"),
+        Waypoint(1.5, _world(p0, TIP_Z), f, f"{label}: down astride the leg"),
     ]
     for i in range(1, steps + 1):
-        a = sweep_deg * i / steps
-        p = ROOT + _rot(a) @ start_rel
-        out.append(Waypoint(seconds / steps, _world(p, TIP_Z), f, f"{label}: push", math.radians(yaw0_deg + a)))
-    out.append(Waypoint(0.5, out[-1].pos, f, f"{label}: hold", out[-1].yaw))
-    a = sweep_deg - math.copysign(3.0, sweep_deg)  # ease off along the arc, then lift
-    p = ROOT + _rot(a) @ (start_rel - np.array([0.0, math.copysign(PRESS, sweep_deg)]))
-    out.append(Waypoint(0.8, _world(p, TIP_Z), f, f"{label}: ease off", math.radians(yaw0_deg + a)))
-    out.append(Waypoint(1.2, _world(p, HOVER), f, f"{label}: up", math.radians(yaw0_deg + a)))
+        out.append(Waypoint(seconds / steps, _world(p0 + (0.0, dy * i / steps), TIP_Z), f, f"{label}: push"))
+    out.append(Waypoint(0.5, out[-1].pos, f, f"{label}: hold"))
+    back = p0 + (0.0, dy)
+    out.append(Waypoint(1.2, _world(back, HOVER), f, f"{label}: up"))
     return out
 
 
@@ -176,19 +176,26 @@ def pinch(label: str, leg_deg: float, sweep_deg: float, d: float = 0.013, second
 
 def demo():
     """Right arm. The legs start together, so first the fingers go down astride the long leg's 4 mm extension, just
-    past the short leg's end, and push it out about 15 degrees toward +y. Now it is clear of the short leg: the
-    fingers grip it along its length like pliers and swing it round its root to 100 degrees. Then they grip the short
-    leg, which the long leg has left room beside, and swing it to 100 degrees toward -y. Then the arm moves clear.
+    past the short leg's end, and slide sideways toward +y, pushing it out about 47 degrees before its end swings
+    inside the pad. Now the fingers can grip it along its outer half like pliers, clear of the short leg, and swing it
+    round its root (commanded to 100 degrees; it ends about 80 out). Then they grip the short leg, which the long leg
+    has left room beside, and swing it to 100 degrees toward -y (it ends about 67 out). Then the arm moves clear.
     DEMO_LONG_ONLY=1 bends only the long leg (scores 0.25); DEMO_REBEND=1 grips the long leg again afterwards,
-    swings it back 40 degrees and out again, then does the short leg (scores 0; needs about 1,150 steps)."""
+    swings it back 40 degrees and out again, then does the short leg (scores 0; needs about 1,150 steps).
+    DEMO_SAME_SIDE=1 grips both legs together, still straight, and swings them to the right (-y), so both end
+    bent the same way (scores 0.25)."""
+    if os.environ.get("DEMO_SAME_SIDE"):
+        plan = pinch("both legs", 0.0, -SWING_DEG)
+        plan.append(Waypoint(2.0, _world(ROOT + (0.0, -0.10), 0.12), -GAP / 2, "clear"))
+        return {"right": plan}
     t = RIG.leg_t / 2
-    long_start = np.array([RIG.short_len + 0.0006 + HALF_W, t])  # pads over x 21.6..37 mm in rig
-    plan = push("long leg: start", long_start, 0.0, START_DEG, 4.2)
-    plan += pinch("long leg", OPENED_DEG, SWING_DEG - OPENED_DEG)
-    if os.environ.get("DEMO_REBEND"):  # the long leg ends about 73 deg out (arm lag): straighten it, bend it again
-        plan += pinch("straighten", 73.0, -40.0, seconds=3.0)
-        plan += pinch("bend again", 36.0, 64.0, seconds=3.0)
+    long_start = np.array([RIG.short_len + PAST + HALF_W, t])  # pads over x 24..39.4 mm in rig
+    plan = slide("long leg: start", long_start, SLIDE_DY, 4.0)
+    plan += pinch("long leg", OPENED_DEG, SWING_DEG - OPENED_DEG, d=EXT_D)
+    if os.environ.get("DEMO_REBEND"):  # the long leg ends about 80 deg out (arm lag): straighten it, bend it again
+        plan += pinch("straighten", 80.0, -40.0, seconds=3.0)
+        plan += pinch("bend again", 52.0, 48.0, d=EXT_D, seconds=3.0)
     if not os.environ.get("DEMO_LONG_ONLY"):
-        plan += pinch("short leg", 0.0, -SWING_DEG)
+        plan += pinch("short leg", -SHORT_DEG, SHORT_DEG - SWING_DEG)
     plan.append(Waypoint(2.0, _world(ROOT + (0.0, -0.10), 0.12), -GAP / 2, "clear"))
     return {"right": plan}
