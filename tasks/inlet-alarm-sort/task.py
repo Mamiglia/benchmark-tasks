@@ -37,6 +37,8 @@ TX, TY = 0.40, 0.0
 W, WALL, FLOOR, H = 0.20, 0.006, 0.01, 0.20     # 20 x 20 cm inside, rim 20 cm up, inside depth 19 cm (7.6 L)
 AREA = W * W                                    # m^2: 1 cm of depth is 400 mL
 LINE = 0.13                                     # fill line / float switch: 13 cm of liquid (5.2 L)
+BAND = 0.005                                    # full credit only within 13 +- 0.5 cm (5.0 to 5.4 L): the
+                                                # concentrate (2 L) is then 37.0 to 40.0 % of the batch, +-4 % of 38.5 %
 RIM = H - FLOOR                                 # 19 cm of liquid: over the rim (overflow)
 LAYER = 0.005                                   # the liquid is drawn in 5 mm layers
 N_LAYERS = round(RIM / LAYER)
@@ -272,14 +274,14 @@ def _score(tank) -> float:
             or _STATE["dropped"]):
         return 0.0
     closed = _STATE.get("lever", 0.0) >= CLOSED_AT
-    at_line = level() >= LINE
-    if at_line and not closed:
+    if level() >= LINE and not closed:
         return 0.0  # the alarm is on and the inlet still runs: it will overflow
-    return round(0.15 * emptied() + (0.4 if closed and at_line else 0.0), 6)
+    in_band = abs(level() - LINE) <= BAND + 1e-9   # below: short (too strong); above: over-diluted
+    return round(0.15 * emptied() + (0.4 if closed and in_band else 0.0), 6)
 
 
 def success(objects) -> bool:
-    """All four bottles emptied into the tank, the level at or above the fill line, the inlet shut, nothing
+    """All four bottles emptied into the tank, the level within 0.5 cm of the fill line, the inlet shut, nothing
     overflowed or spilled; held 1 s."""
     return _score(objects["tank"]) >= 1.0 - 1e-9
 
@@ -287,7 +289,8 @@ def success(objects) -> bool:
 def score(objects) -> float:
     """0 if the tank ever overflowed, more than 10 mL was spilled, a bottle went into the tank or off the table, or
     the tank was moved 2 cm or tipped 5 degrees; 0 too if the level is at the line with the inlet still open.
-    Otherwise 0.15 per bottle emptied into the tank, and 0.4 more for the inlet shut with the level at the line."""
+    Otherwise 0.15 per bottle emptied into the tank, and 0.4 more for the inlet shut with the level within 0.5 cm
+    of the line (12.5 to 13.5 cm)."""
     return _score(objects["tank"])
 
 
@@ -368,6 +371,23 @@ def _push_point(a: float) -> np.ndarray:
     return tips - TIP * PUSH[:, 2]
 
 
+# The right arm first holds its wrist camera over the near side of the tank, looking down across it at the far wall
+# (camera 36 cm up at (42, -14) cm, aimed at the far wall 8 cm up): the liquid's top edge on the far wall moves 3.9
+# pixels per cm of level. It reads the level there before the first pour, then turns the valve when the level it has
+# read, the inlet's known rate and the four bottles still to come add up to the fill line.
+LOOK_AT = np.array([0.4178, -0.1114, TOP + 0.2711])
+LOOK = frame((-0.0684, 0.9113, -0.4059), (0.9972, 0.0745, -0.0007))
+RATE = INFLOW / AREA                            # m/s of level with the inlet open (1 mm/s; set on the real bench)
+BOTTLES_LEVEL = 4 * FILL / AREA                 # the four bottles still to pour: 5 cm
+CLOSE_LAG = float(os.environ.get("CLOSE_LAG", 3.5))  # s of full flow from the decision until the valve is shut
+READ_FROM, READ_TO = 3.2, 9.0                   # s: camera settled at the look pose; before the first bottle is over it
+
+
+def right_look():
+    up = np.array([0.33, -0.25, TOP + 0.40])
+    return [(1.2, up, PUSH, CLOSED, "up"), (1.3, LOOK_AT, LOOK, CLOSED, "look at the tank")]
+
+
 def right_wait():
     p = _push_point(0.0)
     return [(2.5, p + (0, 0, 0.07), PUSH, CLOSED, "wait by the valve")]
@@ -375,7 +395,8 @@ def right_wait():
 
 def right_close():
     p0 = _push_point(0.0)
-    plan = [(1.0, p0 + (0, 0, 0.02), PUSH, CLOSED, "behind the grip"), (0.6, p0, PUSH, CLOSED, "down")]
+    plan = [(0.6, (0.38, -0.20, TOP + 0.36), PUSH, CLOSED, "lift clear of the valve"),
+            (1.0, p0 + (0, 0, 0.02), PUSH, CLOSED, "behind the grip"), (0.6, p0, PUSH, CLOSED, "down")]
     for k in range(1, 7):
         plan.append((0.45, _push_point(math.radians(106) * k / 6), PUSH, CLOSED, "turn the lever"))
     end = _push_point(math.radians(106))
@@ -390,10 +411,65 @@ def lamp_pixels(image) -> int:
     return int(((r > 150) & (g < 90) & (b < 90) & (r - g > 90)).sum())
 
 
+EDGE_COLS = range(114, 205, 6)                  # image columns (of 320) that cross the liquid's far top edge
+# layers = polyval(EDGE_CAL, mean edge row): fitted in the simulator to 42 frames at known levels (2.5 to 11 cm, the
+# arm at the look pose, no bottle pouring); largest error 0.11 layer (0.6 mm)
+EDGE_CAL = (-0.002933, -0.100075, 44.246297)
+
+
+def layers_seen(image) -> float | None:
+    """The liquid's height in layers (5 mm) from the right wrist camera at the look pose: the mean image row of the
+    blue edge's top in 16 columns, mapped through a quadratic calibrated in the simulator at known levels (see
+    README). None if the edge is hidden in more than a quarter of the columns."""
+    im = np.asarray(image)[..., :3].astype(np.int16)
+    w = im.shape[1]
+    r, g, b = im[..., 0], im[..., 1], im[..., 2]
+    blue = (b > 120) & (b - r > 60) & (b - g > 20)
+    rows = [int(np.argmax(blue[:, c])) for c in (round(u * w / 320) for u in EDGE_COLS) if blue[:, c].any()]
+    if len(rows) < 0.75 * len(EDGE_COLS):
+        return None
+    row = float(np.mean(rows)) * 320 / w
+    return float(np.polyval(EDGE_CAL, row))
+
+
+class LevelReader:
+    """The level from the layers seen over time. The drawn level is rounded to 5 mm, so a new layer appears when
+    the level passes half a layer above the last one: that moment fixes the level to the mm. Before one is seen,
+    the level is taken as the layer count (within 2.5 mm)."""
+
+    def __init__(self):
+        self.ref, self.n, self.pending = None, None, (None, 0, 0.0)
+
+    def update(self, seen: float, t: float) -> None:
+        """A reading at time ``t``. A count is taken once seen in 3 frames in a row: the first one as the level
+        (within 2.5 mm), later only one layer more than the last, as the moment the level passed half a layer."""
+        n = int(round(seen))
+        if self.n is not None and n != self.n + 1:
+            self.pending = (None, 0, 0.0)
+            return
+        k, c, t0 = self.pending
+        self.pending = (n, c + 1, t0) if k == n else (n, 1, t)
+        if self.pending[1] >= 3:
+            self.ref = (n * LAYER if self.n is None else (n - 0.5) * LAYER, self.pending[2])
+            self.n, self.pending = n, (None, 0, 0.0)
+
+    def level(self, t: float) -> float | None:
+        """Level at time ``t`` with the inlet open since the reading (and no bottle poured yet)."""
+        return None if self.ref is None else self.ref[0] + RATE * (t - self.ref[1])
+
+
+def close_now(reader: LevelReader, t: float) -> bool:
+    """Shut when the level now, the inlet's run until the valve is shut and the four bottles reach the line."""
+    lv = reader.level(t)
+    return lv is not None and lv + RATE * CLOSE_LAG + BOTTLES_LEVEL >= LINE
+
+
 class Controller:
-    """Closed loop on the top camera: the left arm pours the bottles one after another; the right arm waits by the
-    valve and turns it shut once it has seen the lamp lit in 3 frames in a row. Cheats (DEMO_CHEAT): ``ignore``
-    never shuts the valve, ``first`` shuts it before pouring, ``timed`` shuts it at a fixed 45 s."""
+    """Closed loop on the cameras. The left arm pours the bottles one after another. The right arm looks at the tank
+    with its wrist camera, reads the level before the first pour and turns the valve shut when that level, the
+    inlet's rate and the four bottles add up to the fill line. Cheats (DEMO_CHEAT): ``ignore`` never shuts the
+    valve, ``first`` shuts it before pouring, ``timed`` shuts it at a fixed 45 s, ``lamp`` shuts it when the lamp
+    lights in the top camera (the line reached, with bottles still to pour)."""
 
     def __init__(self, bases, dt, cheat=""):
         from yam_arena.demo import ArmPlan, Waypoint
@@ -402,8 +478,9 @@ class Controller:
         self.dt, self.t, self.cheat = float(dt), 0.0, cheat
         self.bases = bases
         self.left = ArmPlan(self._wps(left_plan()), bases["left"])
-        self.right = ArmPlan(self._wps(right_wait()), bases["right"])
+        self.right = ArmPlan(self._wps(right_wait() if cheat == "lamp" else right_look()), bases["right"])
         self.right_t0, self.closing, self.seen, self.end_t = 0.0, False, 0, None
+        self.reader = LevelReader()
         if cheat == "first":
             self._start_close()
 
@@ -414,15 +491,29 @@ class Controller:
         q = self.right.q.copy()
         self.right = self.ArmPlan(self._wps(right_close()), self.bases["right"], q_start=q, finger_start=CLOSED)
         self.right_t0, self.closing = self.t, True
+        if os.environ.get("TANK_DEBUG"):
+            print(f"[demo] t={self.t:.2f} closing, level read {self.reader.level(self.t)}", flush=True)
 
     def act(self, observation):
         from inspect_robots_yam.packing import pack
 
         if not self.closing:
-            seen = lamp_pixels(observation.images["top_cam"]) >= 12
-            self.seen = self.seen + 1 if seen else 0
-            if (self.cheat == "" and self.seen >= 3) or (self.cheat == "timed" and self.t >= 45.0):
-                self._start_close()
+            if self.cheat == "lamp":
+                self.seen = self.seen + 1 if lamp_pixels(observation.images["top_cam"]) >= 12 else 0
+                if self.seen >= 3:
+                    self._start_close()
+            elif self.cheat == "timed":
+                if self.t >= 45.0:
+                    self._start_close()
+            elif self.cheat != "ignore":
+                if READ_FROM <= self.t <= READ_TO:
+                    n = layers_seen(observation.images["right_cam"])
+                    if n is not None:
+                        self.reader.update(n, self.t)
+                    if os.environ.get("TANK_DEBUG"):
+                        print(f"[demo] t={self.t:.2f} layers={n}", flush=True)
+                if close_now(self.reader, self.t):
+                    self._start_close()
         if self.cheat == "first":
             t_left = max(0.0, self.t - (self.right.duration + 0.5))
         else:

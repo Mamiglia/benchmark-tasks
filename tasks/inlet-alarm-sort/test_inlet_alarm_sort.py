@@ -123,14 +123,58 @@ def test_a_bottle_dropped_into_the_tank_scores_zero():
     assert task._STATE["in_tank"] and task.score(objects(lever=math.pi / 2)) == 0.0
 
 
-def test_full_score_needs_four_bottles_line_and_shut_valve():
+def pour_all(skip=()):
     for n in task.BOTTLE_NAMES:
-        pour_over_tank(n, steps=120)
-    task._STATE["volume"] = 0.135 * task.AREA
-    assert task.score(objects(lever=0.0)) == 0.0  # at the line, inlet still running
-    assert task.success(objects(lever=math.radians(88)))
-    task._STATE["volume"] = 0.125 * task.AREA  # shut early: short of the line
-    assert task.score(objects(lever=math.radians(88))) == pytest.approx(0.6)
+        if n not in skip:
+            pour_over_tank(n, steps=120)
+
+
+SHUT = math.radians(88)
+
+
+@pytest.mark.parametrize("cm,lever,want", [
+    (13.0, SHUT, 1.0),
+    (12.55, SHUT, 1.0), (12.45, SHUT, 0.6),     # just inside / outside the band's lower edge: short of the line
+    (13.45, SHUT, 1.0), (13.55, SHUT, 0.6),     # just inside / outside the upper edge: over-diluted
+    (15.8, SHUT, 0.6),                          # the old "anywhere below the rim" full score
+    (12.8, 0.0, 0.6),                           # in the band, valve open, below the line: no credit for the valve
+    (13.2, 0.0, 0.0),                           # in the band, valve open, lamp on: it will overflow
+    (13.2, math.radians(80), 0.0),              # valve nearly shut but still passing water
+])
+def test_final_level_band(cm, lever, want):
+    pour_all()
+    task._STATE["volume"] = cm / 100 * task.AREA
+    assert task.score(objects(lever=lever)) == pytest.approx(want)
+    assert task.success(objects(lever=lever)) == (want == 1.0)
+
+
+def test_a_bottle_not_emptied_caps_the_score():
+    pour_all(skip=("bottle_4",))
+    task._STATE["volume"] = 0.13 * task.AREA
+    assert task.emptied() == 3
+    assert task.score(objects(lever=SHUT)) == pytest.approx(0.85)
+    assert not task.success(objects(lever=SHUT))
+
+
+def test_level_reader_fixes_the_level_at_a_new_layer():
+    r = task.LevelReader()
+    r.update(14.4, 3.15)                       # a frame with the arm still moving: not taken
+    for t in (3.2, 3.25, 3.3):
+        r.update(12.1, t)                      # 6.0 cm drawn, 3 frames: the level within 2.5 mm
+    assert r.level(3.2) == pytest.approx(0.060)
+    for t in (4.0, 4.05, 4.1):                 # 13 layers seen 3 frames in a row: the level passed 6.25 cm at 4.0 s
+        r.update(12.9, t)
+    assert r.level(5.0) == pytest.approx(0.0625 + task.RATE * 1.0)
+    r.update(15.0, 5.5)                        # a jump of two layers is not believed
+    r.update(15.0, 5.55)
+    r.update(15.0, 5.6)
+    assert r.level(5.0) == pytest.approx(0.0625 + task.RATE * 1.0)
+    r2 = task.LevelReader()
+    for t in (3.2, 3.25, 3.3):
+        r2.update(12, t)
+    r2.update(13, 4.0)
+    r2.update(12, 4.05)                        # a one-frame flicker is not a new layer
+    assert r2.level(4.0) == pytest.approx(0.060 + task.RATE * 0.8)
 
 
 def test_overflow_latches():
@@ -164,17 +208,19 @@ def plan_of(wps, base):
     return ArmPlan([Waypoint(d, tuple(p), f, label, r) for d, p, r, f, label in wps], base)
 
 
-def replay(start_seed=0, cheat="", close_s=4.5, end=120.0):
+def replay(start_seed=0, cheat="", lag=task.CLOSE_LAG, end=120.0):
     """The demo's left-arm plan with the bottle carried rigidly from the grip to the set-down, and the valve shut
-    ``close_s`` after the lamp has been on for 3 frames (the right arm's turn), as the Controller would."""
+    ``lag`` s after the Controller decides to shut it. The right arm's camera is modelled as reading the drawn
+    layer count (the level rounded to 5 mm) from READ_FROM to READ_TO."""
     tankkit.SEED = start_seed
     task._reset_state()
     left = plan_of(task.left_plan(), (0.0, 0.305, 0.75))
     dt, t, idx = 0.05, 0.0, 0
     rest = at_rest()
-    held, seen, shut_at = None, 0, (0.0 if cheat == "first" else None)
+    held, seen, shut_at = None, 0, (lag if cheat == "first" else None)
     lead = 6.0 if cheat == "first" else 0.0
     cycle = sum(w[0] for w in task._pour(0, 0))
+    reader = task.LevelReader()
     while t < end:
         tl = t - lead
         pos, rot, finger, label = left.target(max(0.0, tl))
@@ -189,21 +235,29 @@ def replay(start_seed=0, cheat="", close_s=4.5, end=120.0):
             rest[name] = S(centre, np.asarray(tankkit.matrix_to_quat(r_b)))
         elif held == name:
             held = None
+        if shut_at is None:
+            if cheat == "" and task.READ_FROM <= t <= task.READ_TO:
+                reader.update(int(round(task.level() / task.LAYER)), t)
+            decide = ((cheat == "" and task.close_now(reader, t)) or (cheat == "timed" and t >= 45.0)
+                      or (cheat == "lamp" and seen >= 3))
+            if decide:
+                shut_at = t + lag
         lever = math.pi / 2 if (shut_at is not None and t >= shut_at) else 0.0
         o = {"tank": tank(lever), **rest}
         task.advance(o, dt)
         seen = seen + 1 if task._STATE["lamp"] else 0
-        if shut_at is None and ((cheat == "" and seen >= 3) or (cheat == "timed" and t >= 45.0)):
-            shut_at = t + close_s
         t += dt
     return task.score(o), task._STATE
 
 
 @pytest.mark.parametrize("seed", range(8))
-def test_demo_reaches_full_score_from_every_start_level(seed):
-    s, st = replay(seed)
-    assert s == 1.0, (seed, st)
-    assert st["alarm_t"] is not None and st["spilled"] == 0.0
+@pytest.mark.parametrize("lag_error", (-1.0, 0.0, 1.0))
+def test_demo_reaches_full_score_from_every_start_level(seed, lag_error):
+    """Full score from every start level, also when the valve takes 1 s more or less to shut than the demo
+    assumes."""
+    s, st = replay(seed, lag=task.CLOSE_LAG + lag_error)
+    assert s == 1.0, (seed, lag_error, task.level(), st)
+    assert st["spilled"] == 0.0
 
 
 def test_cheats_fail():
@@ -211,13 +265,16 @@ def test_cheats_fail():
     ignore = [replay(s, "ignore")[0] for s in seeds]
     first = [replay(s, "first")[0] for s in seeds]
     timed = [replay(s, "timed")[0] for s in seeds]
+    lamp = [replay(s, "lamp")[0] for s in seeds]
     assert ignore == [0.0, 0.0, 0.0]
-    assert max(first) <= 0.6 + 1e-9 and min(first) < 1.0
-    assert min(timed) < 1.0
+    assert max(first) <= 0.6 + 1e-9
+    assert max(timed) <= 0.6 + 1e-9
+    assert max(lamp) <= 0.6 + 1e-9                 # shut at the lamp, then the rest poured: over-diluted
 
 
 def test_demo_poses_are_reachable():
-    for wps, base in ((task.left_plan(), (0.0, 0.305, 0.75)), (task.right_close(), (0.0, -0.305, 0.75))):
+    for wps, base in ((task.left_plan(), (0.0, 0.305, 0.75)), (task.right_close(), (0.0, -0.305, 0.75)),
+                      (task.right_look(), (0.0, -0.305, 0.75))):
         for d, p, r, f, label in wps:
             q, pe, re = ik.solve(np.asarray(p, float), ik.matrix_to_quat_xyzw(r), np.array([0, 1, 1, -0.6, 0, 0.0]),
                                  base_pos=np.array(base), iters=300)
