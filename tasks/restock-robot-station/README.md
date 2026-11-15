@@ -69,12 +69,20 @@ what is printed. A real trial plays the same table on the real left arm.
 
 ## Scoring
 
-The score is 1/5 for each of the five tray blanks that meets both conditions:
+The score is 1/5 for each of the five tray blanks that meets all three conditions:
 
-1. At one of the loader's visits, at the moment its fingers had closed, the blank stood in the nest's pocket, and
-   the right gripper's tool point was at least 8 cm (horizontally) from the nest's centre.
-2. At the end of the trial, the blank is in the chute: its centre is inside the chute's inner walls and less than 14 cm
-   above the table (resting on the chute floor or on other blanks).
+1. At one of the loader's visits, at the moment its fingers had closed, the blank stood seated and upright in the
+   nest's pocket, it was the only supplied blank there, and the right gripper's tool point was at least 8 cm
+   (horizontally) from the nest's centre. Seated and upright means: its whole 30 mm footprint inside the 40 mm pocket
+   (centre within 7 mm of the pocket centre on each axis), its centre within 4 mm of the height of a blank standing on
+   the table, and its axis within 10 degrees of vertical. A blank caught on the rim, lying on its side or leaning on a
+   wall does not count.
+2. The loader carried that blank into the chute itself: while its fingers held it (from the close to the moment
+   they open over the chute, 2.9 s), the blank's centre stayed within 4 cm of the loader's tool point, and 0.7 s
+   after they opened the blank was in the chute. A blank the loader dropped, or that the right arm took off it or put
+   in the chute itself, does not count.
+3. At the end of the trial, the blank is still in the chute: its centre is inside the chute's inner walls and less
+   than 14 cm above the table (resting on the chute floor or on other blanks).
 
 The blank that starts in the nest never counts. The score is **0** if the two arms touched at any time in the trial,
 or if two blanks ever lay in the nest's pocket at once. Both conditions are latched, so recovering does not undo
@@ -87,13 +95,15 @@ them. The trial succeeds, and stops after 1 s, once all five count.
 | A visit finds the nest empty, or the right hand still at the nest | That visit is lost. Blanks are capped at the remaining visits |
 | A blank is set on an occupied nest | 0 |
 | The arms touch at any time | 0 |
-| A blank is put into the chute some other way | Nothing. It was never taken from the nest by the loader |
+| A blank is set down on the pocket rim, on its side or tilted | That visit is lost, even if the loader carries the blank off |
+| A blank is put into the chute some other way, for example by the right arm after the loader's grip slipped | Nothing. The loader did not carry it there |
 
 Measured on a real cell with simple tools, from the top camera video (or a phone video from above):
 
 | Check | Tool |
 |---|---|
-| At each visit, when the loader's fingers close: one supplied blank in the pocket; the right gripper's tip 8 cm or more from the nest centre | Video frame, and a tape mark 8 cm round the nest |
+| At each visit, when the loader's fingers close: one supplied blank standing upright, fully down in the pocket; the right gripper's tip 8 cm or more from the nest centre | Video frame from the side and from above, and a tape mark 8 cm round the nest |
+| The loader's fingers carried that blank all the way and let it fall into the chute | Video |
 | Never two blanks in the pocket at once | Video |
 | The arms never touched | Video. Both arms log joint currents, and a contact shows as a spike |
 | Blanks in the chute at the end (resting inside its walls, on the floor or on other blanks) | Count them |
@@ -136,17 +146,18 @@ lets go and leaves.
 
 | Run | Score |
 |---|---|
-| Demo, seed 0 | **1.0** (success at 74 s; all five visits after the first found a supplied blank) |
+| Demo, seed 0 | **1.0** (success at 75 s; all five visits after the first found a supplied blank, seated, and the loader carried each one into the chute) |
 | Demo, seed 4 | **1.0** (success at 79 s) |
-| Demo, seed 10 | **1.0** (success at 71 s) |
+| Demo, seed 10 | **1.0** (success at 72 s) |
 | `DEMO_CHEAT=idle`: never moves (seed 0) | **0**: the loader took the preloaded blank at its first visit and found the nest empty at the other five |
 | `DEMO_CHEAT=timed`: sets a blank down every 13 s (the mean interval), without looking (seed 4) | **0**: at 22 s it reached in while the loader was at the nest and the arms touched |
 | `DEMO_CHEAT=rush`: watches the nest but not the loader (seed 0) | **0**: it saw the loader's black gripper over the nest as "empty" and the arms touched at 6 s |
-| Dream-1, seed 0 | **0**: 2,000 steps. The right arm hovered over the blank tray and never closed on a blank. The loader took the preloaded blank and then found the nest empty five times |
+| Dream-1, seed 0 | **0**: 2,000 steps. The right arm hovered over the blank tray and never moved a blank. The loader took the preloaded blank and then found the nest empty five times |
 
 Unit tests (no Isaac Sim): `pytest test_restock_robot_station.py`. They cover the schedule, holding still (0), the
 preloaded blank (never counts), a missed visit, double loading, blanks put straight in the chute, the hand left at
-the nest, and arm contact.
+the nest, arm contact, a blank caught on the nest rim, a blank lying on its side in the pocket, the seating limits,
+and a blank the right arm puts in the chute after the loader's grip slipped.
 
 ## Fidelity
 

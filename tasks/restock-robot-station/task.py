@@ -85,7 +85,7 @@ CELL = Cell(
     table_z=TOP, nest_xy=NEST_XY, nest_half=NEST_IN / 2,
     chute_inner=(CHUTE_XY[0] - CHUTE_IN / 2, CHUTE_XY[0] + CHUTE_IN / 2, CHUTE_XY[1] - CHUTE_IN / 2,
                  CHUTE_XY[1] + CHUTE_IN / 2),
-    chute_wall_h=CHUTE_H, blank_h=BLANK_H, blanks=BLANKS, preload=PRELOAD,
+    chute_wall_h=CHUTE_H, blank_h=BLANK_H, blank_r=BLANK_R, blanks=BLANKS, preload=PRELOAD,
     home=(0.20, 0.28, TOP + 0.15), first_close=(5.0, 6.5), gap=(10.0, 16.0),
 )
 configure(CELL)
@@ -99,9 +99,10 @@ def _blanks(objects) -> dict:
 
 
 def score(objects) -> float:
-    """1/5 for each of the five tray blanks that the other arm found standing in the nest at one of its visits
-    (the right gripper at least 8 cm from the nest when it closed) and that is now in the chute. The blank that
-    started in the nest earns nothing. 0 if the two arms ever touched, or if two blanks ever lay in the nest at once.
+    """1/5 for each of the five tray blanks that the other arm found seated upright in the nest's pocket at one of
+    its visits (the right gripper at least 8 cm from the nest when it closed), that it then carried into the chute in
+    its own gripper, and that is still in the chute. The blank that started in the nest earns nothing. 0 if the two
+    arms ever touched, or if two blanks ever lay in the nest at once.
     """
     return monitor().score(_blanks(objects))
 

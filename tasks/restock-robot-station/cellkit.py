@@ -10,7 +10,8 @@ yam_arena gives a policy both arms. This module hooks yam_arena (without modifyi
 - Before every PHYSICS step (240 Hz, a wrapper on ``InteractiveScene.write_data_to_sim``) PhysX contact reports
   between every link of the right arm and every link of the left arm are read; any contact latches ``touched``.
 - ``yam_arena.scene.object_states`` feeds each control step's blank positions and the right gripper's tool point to
-  the :class:`Monitor`, which records which supplied blank lay in the nest each time the loader closed on it.
+  the :class:`Monitor`, which records which supplied blank stood seated in the nest each time the loader closed on
+  it, and whether the loader's own gripper then carried that blank into the chute.
 - ``yam_arena.scripted.YamScriptedPolicy`` runs the task module's ``demo_controller`` closed loop.
 - ``reset(..., seed=S)`` rebuilds the loader's program for seed S and clears the monitor.
 
@@ -43,6 +44,7 @@ class Cell:
     chute_inner: tuple[float, float, float, float]  # x0, x1, y0, y1
     chute_wall_h: float
     blank_h: float
+    blank_r: float
     blanks: tuple[str, ...]  # the five the controlled arm must supply
     preload: str  # the blank in the nest at the start; never credited
     home: tuple[float, float, float]  # the loader's waiting pose (tool point)
@@ -50,6 +52,10 @@ class Cell:
     gap: tuple[float, float]  # each later cycle starts this long after the one before (s), drawn per cycle
     cycles: int = 6
     clear_m: float = 0.08  # the right tool point must be this far (xy) from the nest when the loader closes
+    seat_xy: float = 0.002  # seated: the blank's footprint inside the pocket walls, to this much (m)
+    seat_dz: float = 0.004  # seated: its centre within this of standing on the table (m)
+    seat_tilt_deg: float = 10.0  # seated: its axis within this of vertical
+    carry_m: float = 0.04  # carried: the blank's centre within this of the loader's tool point (m)
 
 
 # The loader's cycle, relative to the moment its fingers have closed in the nest (s).
@@ -67,6 +73,8 @@ GRIP_DZ = 0.030  # tool point above the table when it grips a blank in the nest
 OVER_DZ = 0.13  # tool point above the table over the nest
 CHUTE_OVER_DZ = 0.16  # ... and over the chute (the held blank clears its 10 cm walls by 3 cm)
 DROP_DZ = 0.085  # tool point above the table when it lets go in the chute (blank bottom 4.5 cm below the rim)
+HOLD_S = LIFT_S + CARRY_S + LOWER_S  # after the close, the loader holds the blank this long, until it opens
+SETTLE_S = HOLD_S + OPEN_S + 0.3  # ... and the released blank has settled in the chute by this long after the close
 
 
 def schedule(seed: int, cell: Cell) -> tuple[float, ...]:
@@ -120,6 +128,8 @@ class Monitor:
     touched: bool = False  # the two arms touched at some point
     double: bool = False  # two blanks lay in the nest at once at some point
     recorded: list = field(default_factory=list)  # per cycle: the supplied blank the loader closed on, or None
+    loaded: list = field(default_factory=list)  # per cycle: None (pending), True (the loader carried the recorded
+    # blank into the chute in its own gripper), False (it did not)
     t: float = 0.0
 
     def reset(self, closes=None) -> None:
@@ -127,6 +137,7 @@ class Monitor:
             self.closes = tuple(closes)
         self.touched = self.double = False
         self.recorded = [None] * len(self.closes)
+        self.loaded = [None] * len(self.closes)
         self.t = 0.0
 
     def in_nest(self, pos) -> bool:
@@ -135,6 +146,17 @@ class Monitor:
         return bool(abs(pos[0] - c.nest_xy[0]) <= m and abs(pos[1] - c.nest_xy[1]) <= m
                     and pos[2] < c.table_z + c.blank_h + 0.005)
 
+    def seated(self, pos, quat_xyzw) -> bool:
+        """Standing upright on the table inside the pocket: footprint within the walls, centre at standing height,
+        axis near vertical. A blank on the rim, lying on its side or leaning on a wall fails."""
+        c = self.cell
+        m = c.nest_half - c.blank_r + c.seat_xy
+        x, y, _, _ = quat_xyzw
+        up = 1 - 2 * (x * x + y * y)  # z component of the blank's axis
+        return bool(abs(pos[0] - c.nest_xy[0]) <= m and abs(pos[1] - c.nest_xy[1]) <= m
+                    and abs(pos[2] - (c.table_z + c.blank_h / 2)) <= c.seat_dz
+                    and up >= np.cos(np.radians(c.seat_tilt_deg)))
+
     def in_chute(self, pos) -> bool:
         """Centre within the chute's inner walls, and low enough to be resting in it or on the blanks already
         there (under wall height plus one blank)."""
@@ -142,9 +164,10 @@ class Monitor:
         x0, x1, y0, y1 = c.chute_inner
         return bool(x0 <= pos[0] <= x1 and y0 <= pos[1] <= y1 and pos[2] < c.table_z + c.chute_wall_h + c.blank_h)
 
-    def update(self, t: float, blanks: dict, right_tcp, touch: bool) -> None:
-        """``blanks``: name -> centre position of every blank (preload included); ``right_tcp``: the controlled
-        gripper's tool point; ``touch``: arm-to-arm contact since the last update."""
+    def update(self, t: float, blanks: dict, quats: dict, right_tcp, left_tcp, touch: bool) -> None:
+        """``blanks``: name -> centre position of every blank (preload included); ``quats``: name -> orientation
+        (x, y, z, w); ``right_tcp`` / ``left_tcp``: the controlled gripper's and the loader's tool points;
+        ``touch``: arm-to-arm contact since the last update."""
         self.t = t
         self.touched |= bool(touch)
         inside = [n for n, p in blanks.items() if self.in_nest(p)]
@@ -155,12 +178,21 @@ class Monitor:
             if self.recorded[i] is None and tc <= t < tc + 0.5:
                 self.recorded[i] = "-"  # the loader came; "-": it found no supplied blank it could take
                 supplied = [n for n in inside if n != self.cell.preload]
-                if len(supplied) == 1 and clear:
+                if len(supplied) == 1 and clear and self.seated(blanks[supplied[0]], quats[supplied[0]]):
                     self.recorded[i] = supplied[0]
+            n = self.recorded[i]
+            if n in (None, "-") or self.loaded[i] is not None:
+                continue
+            if tc < t <= tc + HOLD_S:  # the loader's fingers hold it: it must move with them
+                if np.linalg.norm(np.asarray(blanks[n]) - np.asarray(left_tcp)) > self.cell.carry_m:
+                    self.loaded[i] = False
+            elif t >= tc + SETTLE_S:  # it let go over the chute: the blank must be in it
+                self.loaded[i] = self.in_chute(blanks[n])
 
     def credited(self, blanks: dict) -> set:
-        """Supplied blanks the loader found in the nest at one of its cycles and that are now in the chute."""
-        return {n for n in self.recorded if n not in (None, "-") and self.in_chute(blanks[n])}
+        """Supplied blanks the loader found seated in the nest at one of its cycles, carried into the chute in its own
+        gripper, and that are still in the chute."""
+        return {n for n, ok in zip(self.recorded, self.loaded) if ok and self.in_chute(blanks[n])}
 
     def score(self, blanks: dict) -> float:
         if self.touched or self.double:
@@ -207,7 +239,7 @@ class _Runtime:
         view = PhysxManager.get_physics_sim_view()
         self.contact = view.create_rigid_contact_view(right, filter_patterns=[left] * len(right),
                                                       max_contact_data_count=64 * len(right) * len(left))
-        self.grip = base.scene["right_robot"].find_bodies("gripper")[0][0]
+        self.grip = {a: base.scene[f"{a}_robot"].find_bodies("gripper")[0][0] for a in ("right", "left")}
         self.origin = _np(base.scene.env_origins)[0]
         self.dt = float(base.physics_dt)
         self.touch = False
@@ -220,10 +252,10 @@ class _Runtime:
             self.touch = True
             self.peak = max(self.peak, n)
 
-    def right_tcp(self) -> np.ndarray:
+    def tcp(self, arm: str) -> np.ndarray:
         from yam_arena.constants import TCP_OFFSET
 
-        pose = _np(self.base.scene["right_robot"].data.body_link_pose_w)[0, self.grip]
+        pose = _np(self.base.scene[f"{arm}_robot"].data.body_link_pose_w)[0, self.grip[arm]]
         x, y, z, w = pose[3:7]
         axis = np.array([2 * (x * z + w * y), 2 * (y * z - w * x), 1 - 2 * (x * x + y * y)])
         return pose[:3] - self.origin + axis * TCP_OFFSET[2]
@@ -258,13 +290,23 @@ def _patch_scene(scene) -> None:
         out = object_states(environment, names)
         cell, base = _STATE["cell"], environment.unwrapped
         rt = _runtime(base)
-        blanks = {n: out[n].pos for n in (*cell.blanks, cell.preload)}
+        names = (*cell.blanks, cell.preload)
+        blanks, quats = {n: out[n].pos for n in names}, {n: out[n].quat_xyzw for n in names}
         touch, rt.touch = rt.touch, False
         mon = _STATE["monitor"]
-        mon.update(_STATE.get("t", 0.0), blanks, rt.right_tcp(), touch)
+        right, left = rt.tcp("right"), rt.tcp("left")
+        mon.update(_STATE.get("t", 0.0), blanks, quats, right, left, touch)
+        if _DEBUG:
+            for i, tc in enumerate(mon.closes):
+                n = mon.recorded[i]
+                if n not in (None, "-") and tc <= mon.t < tc + SETTLE_S + 0.05 and round(mon.t * 20) % 4 == 0:
+                    q = quats[n]
+                    print(f"[cell] visit {i} {n} t {mon.t:5.2f} pos {np.round(blanks[n], 4).tolist()} "
+                          f"up {1 - 2 * (q[0] ** 2 + q[1] ** 2):.4f} to loader "
+                          f"{np.linalg.norm(blanks[n] - left):.4f} loaded {mon.loaded[i]}", flush=True)
         if _DEBUG and round(mon.t * 20) % 20 == 0:
             print(f"[cell] t {mon.t:5.1f} touched {mon.touched} (peak {rt.peak:.2f}) double {mon.double} "
-                  f"recorded {mon.recorded} tcp {np.round(rt.right_tcp(), 3)} in nest "
+                  f"recorded {mon.recorded} loaded {mon.loaded} tcp {np.round(right, 3)} in nest "
                   f"{[(n, np.round(p, 3).tolist()) for n, p in blanks.items() if mon.in_nest(p)]}", flush=True)
             if round(mon.t * 20) % 200 == 0:
                 print(f"[cell] blanks {[(n, np.round(p, 3).tolist()) for n, p in blanks.items()]}", flush=True)
