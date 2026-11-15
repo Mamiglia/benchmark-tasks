@@ -19,5 +19,5 @@
   "reset_notes": "Drain the tank to the seed's start level (README table), refill the four bottles to 500 mL and stand them on their marks, turn the lever back along the pipe (open) and start the trial with the water running. Real trials use tap water dyed blue for the concentrate.",
   "fidelity": "Approximate. No fluid simulation: code tracks each bottle's contents and the tank's volume. A tilted bottle pours what it cannot hold below its mouth's lowest edge, at most 100 mL/s, landing in the tank only if that edge is over the opening. Bottle mass stays 0.54 kg as it empties. Level drawn as 5 mm layers, inlet stream as a bar, lamp a box lit at the line. Valve: damped revolute joint, flow linear in lever angle. Only the tank's back wall is drawn.",
   "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seeds 0, 4 and 10)",
-  "media": "M-S5EDDC"
+  "media": "M-48USU5"
 }
