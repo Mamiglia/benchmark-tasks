@@ -19,5 +19,5 @@
   "reset_notes": "A creased cup is used up: replace it with a fresh cup filled to the same mass. Fill masses for other seeds are listed in the README (CUPS_SEED); weigh each cup after filling. Stand the cups back on their taped marks.",
   "fidelity": "Approximate. Each cup wall is 8 rigid panels on radial spring slides (about 1,000 N/m under a pad), so a grip visibly presses it in. PhysX cannot buckle a shell: when the measured pad force exceeds the cup's buckling force (1.5 N + 34 N/kg x fill) for 12.5 ms, the panels take a dented rest position, as a creased cup stays dented. Wall stiffness does not depend on fill. Fill is a rigid mass; pad friction about 0.33; tray fixed. Details in README.",
   "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seed 0; also 1.0 on seeds 4 and 10)",
-  "media": "M-CF4S2K"
+  "media": "M-JQRK8V"
 }
