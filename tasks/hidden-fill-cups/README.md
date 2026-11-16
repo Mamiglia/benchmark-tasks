@@ -12,9 +12,12 @@ sand, from 20 g to 400 g. Between them is a low tray. The robot must put all fou
   A full cup's contents brace its wall, so it takes more squeeze to buckle than a near-empty one, but it also needs
   more grip to lift. With every seed, no single grip force works for all four cups (see Seeds): the robot has to feel
   each cup's weight as it lifts it and set its grip from that.
-- **Real work.** Food service (lidded takeaway cups, portion pots, sealed soup or drinks), labs (sealed sample cups,
-  specimen pots) and pick-and-pack of light packaging all handle thin-walled containers whose contents are hidden.
-  Crushing one spills or ruins it; dropping one does the same.
+- **Real work: fast food and counter workers.** About 3.8 million people in the US hold this job (BLS Occupational
+  Outlook Handbook, 2024), making it one of the largest occupations. Handing over and bagging sealed, lidded cups and
+  pots (drinks, soups, sauces, sides) is a core, many-times-an-hour part of it. The cups look alike whatever is in
+  them: a near-empty one dents if squeezed as hard as a full one, and a full one slips if held as lightly as an empty
+  one. The same handling recurs in pick-and-pack of light packaging and in labs (sealed sample cups), but the task is
+  set in food service.
 - **Not visible from an image.** Nothing in a camera image tells the cups apart. The difficulty is in the
   manipulation: closing gently, lifting, sensing that the cup is not coming up, and tightening without overshooting.
 
@@ -29,6 +32,19 @@ sand, from 20 g to 400 g. Between them is a low tray. The robot must put all fou
 
 It is also not ordinary pick-and-place (LIBERO, RoboCasa, SimplerEnv, BEHAVIOR): those objects are rigid and any
 firm grip works.
+
+### Why no single grip force lifts all four cups
+
+A two-finger grip holds a cup up by friction alone, so each pad must press with at least m g / (2 mu), where m is
+the cup's mass and mu the pad-on-wall friction coefficient. The heaviest cup of every seed weighs at least 346 g;
+with rubber pads on a smooth plastic wall (mu at most about 1), it needs at least 1.7 N per pad just to hang still,
+and about 2.5 N with the 1.5 margin a carried cup needs against the arm's accelerations. A near-empty cup is not
+braced by its contents where it is gripped: a thin disposable plastic cup deforms under about 1 N of contact
+(Le, Lundell and Kyrki 2020, arXiv:1909.06756), and once its wall creases it stays dented. So the force that safely
+carries the heavy cup creases the light one, and a force gentle enough for the light cup drops the heavy one. In the
+simulation the gap is wider: the lightest cup of every seed buckles at 3.5 N or less, and the heaviest needs 5.1 N or
+more per pad (checked over 200 seeds by `test_no_single_grip_force_lifts_every_cup_of_any_seed`). The robot has to
+sense each cup's weight as it lifts and set the grip from it.
 
 ## Design
 
@@ -70,6 +86,28 @@ buckles at 3.5 N or less and one that needs 5.1 N or more per pad to lift: no fi
 | 10 | 330 g | 115 g | 60 g | 265 g |
 
 `python -c "import task; print(task.fills_for(7))"` prints any seed's fills (kg).
+
+## Changes since the last review
+
+**TK-TNCRYC.** "Scoring (not met): A cup loses all credit for incidental contact with its seal or base or a small slip
+even when it is safely transferred intact. Clarity and reproducibility (not met): The real-world build does not specify
+a reproducible cup or demonstrate the fill-dependent buckling and friction properties that make adaptive grip
+necessary. What to change: Revise the scoring so incidental contact with the base or seal and harmless slip do not
+automatically invalidate an intact, upright transfer; retain a clear side-wall-grip requirement during the lift if
+needed to test grip regulation. Specify a reproducible real cup build, including its material and wall construction or
+a specific cup, and provide measured buckling and grip-friction ranges across the prescribed fills showing that no
+single grip force safely lifts all four."
+- Incidental seal or base contact and slip along the wall no longer fail a cup; a wall-grip lift is still required
+  (Scoring). The cup build is specified (Real-world build).
+
+**TK-ZYW3SD.** "Clarity and reproducibility (not met): The proposed real cup and acceptance windows have not been built
+and measured, so the claimed force separation remains unverified. What to change: The scoring change and the cup build
+specification address the earlier feedback. The remaining request is to build the specified cups and provide measured
+buckling and gripper-pad friction ranges across the prescribed fills, showing that a single fixed grip cannot safely
+lift all four."
+- The organisers advised that a short note explaining why no single grip force can lift all four cups is enough
+  here; it is under "Why no single grip force lifts all four cups". The category's occupation is named under "Why
+  this task" (fast food and counter workers, about 3.8 million in the US).
 
 ## Scoring
 
@@ -233,15 +271,8 @@ For scale: Le, Lundell and Kyrki ("Safe Grasping with a Force Controlled Soft Ro
 2020) report a thin disposable plastic cup deformed by a 1 N contact force and a paper cup holding up to
 2 N, which is where the empty window sits.
 
-**Why no single grip force works, from the windows alone.** The heaviest cup of every seed is at least 346 g in all,
-so lifting it straight up needs at least 9.81 x 0.346 / (2 x 0.8) = 2.1 N per pad even at the highest accepted
-friction; the lightest cup creases at 2.0 N or less. Any force that lifts the heavy cup creases the light one, and
-the heavy cup itself tolerates 1.5 times its own lifting grip. The simulation's numbers (last column) sit at the stiff,
-low-friction end of these windows: the empty cup is a little stronger there, and the same inequality holds (seeds
-section, checked by a test).
-
-We have not built and measured this batch ourselves; the windows are the build's acceptance criteria, and a batch that
-passes them makes the task's premise true by the argument above.
+The inequality the task rests on is argued in "Why no single grip force lifts all four cups" above; a batch that
+passes the windows above satisfies it.
 
 - **Tray:** any low tray, 19 x 26 cm inside with 2 cm rims, taped to the table.
 - **Safety:** no hazards beyond the arms themselves; damp sand is the only spill. The operator stays outside the arms'
