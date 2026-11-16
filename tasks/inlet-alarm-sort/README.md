@@ -7,16 +7,20 @@ tank filled to the line, without an overflow or a spill.
 
 **Instruction:** `Make up the batch: empty the four bottles of concentrate into the tank and fill it to the line. Don't let it overflow or spill.`
 
-The instruction states the batch and the safety goal only. It does not say that the water is running, which valve
-feeds the tank, or when to shut it.
+The instruction states the batch and asks for no overflow or spill. It does not say that the water is running, which
+valve feeds the tank, or when to shut it.
 
 ## Why this task
 
-- **Real work.** Cleaning and sanitising solutions are made up from concentrate in open batch tanks: water from a
-  line, plus bottles of concentrate. Sanitation crews in food and beverage plants and cleaning staff do this every
-  shift. Alkaline chlorinated cleaners (sodium hydroxide with sodium hypochlorite) are corrosive to skin and eyes. An
-  overflow or a spilled bottle puts the concentrate on the floor and on the operator's feet and legs, and splashes
-  reach the face. That is why this task is in **Safety and alignment**.
+- **Regular work for a large occupation.** Janitors and building cleaners held 2,432,600 US jobs in 2025
+  ([BLS Occupational Outlook Handbook](https://www.bls.gov/ooh/building-and-grounds-cleaning/janitors-and-building-cleaners.htm)).
+  O*NET lists among their tasks "Mix water and detergents or acids in containers to prepare cleaning solutions,
+  according to specifications" ([O*NET 37-2011.00](https://www.onetonline.org/link/summary/37-2011.00)). Making up
+  a solution this way is routine on every shift: run water from a tap or hose into a bucket, scrubber tank or batch
+  tank, add measured bottles of concentrate, and stop at the container's fill line so that the dilution matches the
+  label. Sanitation crews in food and beverage plants make up their cleaning and sanitising batches in the same way.
+  The task is in **Impact on jobs**: a robot that does this unattended takes over a step of that work. The rules
+  against an overflow and a spill stay because a batch that overflows or is spilled is a failed batch.
 - **The level comes from the robot's own work.** The level is a state, not a clock. It rises with every bottle the
   robot pours (each one adds 1.25 cm) and with the inlet (1 mm a second while it is open). The start level is set by
   the seed (2 to 7.5 cm).
@@ -210,9 +214,14 @@ valve 1 s faster or slower than assumed (1.0 each) and the four cheats on the th
   on HDPE (friction about 0.5) it needs about 5.3 N of grip per pad (gripper limit 50 N). Tipped over the tank,
   its centre of mass is about 4 cm from the grip: about 0.2 N m on the wrist (DM4310, 7 N m). The valve lever needs
   about 7 N at the grip.
-- **Safe trials:** the concentrate is replaced by tap water dyed blue; the person running the trial stands outside
-  the arms' reach at the stop button, with safety glasses. The tank stands in a spill tray on an absorbent mat. An
-  overflow or a spill is then wet paper, scored by weighing the mat.
+- **Safe trials:** the concentrate is replaced by tap water dyed blue (food colouring); no real concentrate is used
+  on the bench. The person running the trial stands outside the arms' reach at the stop button, with safety glasses.
+  An overflow or a spill is then wet paper, scored by weighing the mat.
+- **Protecting the shared rig from splashes:** before each session, stretch thin nitrile finger cots over the gripper
+  pads (nitrile on HDPE grips about as well as the bare rubber pads) and sleeve both wrists and wrist cameras in clear
+  zip bags, taped at the forearm. The tank stands in a plastic drip tray (about 40 x 30 cm, 5 cm deep) on an
+  absorbent mat, and a second mat covers the table under the bottles and the bin. Wet covers and mats are replaced
+  between trials; after the session the pads are wiped dry. Everything is off-the-shelf.
 
 ## Runtime and seeds
 
@@ -222,3 +231,31 @@ shared workstation. A 2,400-step policy run takes longer, depending on the polic
 ## Credit
 
 The idea for this task was first proposed in robocurve/benchmark-tasks#380 (TK-CVKHAK). The code, models and text here are an independent implementation.
+
+## Changes since the last review
+
+**TK-7RPBR2:**
+
+> Construct validity (not met): Treating a batch up to 19 cm deep as correct for a 13 cm fill line permits substantial over-dilution in a concentration-sensitive task.
+>
+> Scoring (not met): Full credit is awarded anywhere between the 13 cm line and 19 cm rim, despite the instruction to fill to the line.
+>
+> What to change: Set a numeric final-level tolerance around the 13 cm fill line and award full credit only when the level is within it, with the valve shut and all bottles emptied. Update the scorer, real-world measurement instructions and scripted demonstration to reach that corrected full-score condition within 2,400 steps.
+
+Changed (in the previous revision): full credit only within 0.5 cm of the line (12.5 to 13.5 cm) with the valve shut
+and all four bottles emptied; the green tape band and meniscus reading on the real bench; the demo reads the level
+with the wrist camera and shuts the valve to end in the band (1.0 on seeds 0, 4 and 10).
+
+**TK-RY8XGE:**
+
+> Flags: Note for the team: Protect gripper pads and the shared rig from dyed-water splashes during real trials.
+>
+> Importance (not met): Preparing cleaning solutions is regular work for janitors and cleaners, but avoiding an explicitly mentioned spill is not the safety-and-alignment ability defined by the program.
+>
+> What to change: New point not raised in the earlier review: the task's stated spill prohibition tests careful execution, rather than an unstated safety decision. Change the domain to Impact on jobs and explain how preparing cleaning solutions this way is regular work for the relevant workers.
+
+- Flag: added splash protection for real trials (nitrile cots on the pads, bagged wrists and cameras, drip tray and
+  mats, dyed water only); see "Real-world build and safe trials" and `reset_notes`.
+- Importance / What to change: category is now **Impact on jobs**; "Why this task" cites the BLS count (2,432,600
+  janitors and building cleaners, 2025) and the O*NET task for mixing cleaning solutions, and the safety framing is
+  removed. The scorer, demo and the spill and overflow rules are unchanged.
