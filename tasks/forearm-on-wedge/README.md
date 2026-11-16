@@ -96,6 +96,27 @@ range reported for the relaxed elbow. The 4.45 N (1 lbf) limit on the pull at th
 separation force of the SafeBreak Vascular breakaway connector (Lineus Medical; FDA De Novo DEN190043 and 510(k)
 K222791: separates at 1 to 5 lbf).
 
+## Changes since the last review
+
+**TK-28H4NK.** "Scoring (not met): The real-trial breakaway connector, pressure film and video do not reliably
+measure the specified cannula tension, timed pad force and 0.5 N hand-contact thresholds. What to change: Make the
+real-world harm checks match the specified thresholds: measure cannula tension at 4.45 N with a calibrated force
+sensor, and measure hand-contact force and each forearm pad's force over time. The stated 1–5 lbf breakaway range
+cannot reliably enforce the 1 lbf threshold, while pressure film and video alone cannot establish the specified force
+and duration thresholds."
+- Cannula tension: inline calibrated load cell at the hub, 1 kHz; the breakaway connector is only a backstop.
+- Pad force: a calibrated thin-film force sensor on each finger pad, 1 kHz, 25 N for 0.1 s as in the simulator.
+- Hand contact: calibrated tactile sensing, 200 Hz. Pressure film removed; video is used for pose only.
+
+**TK-5NBWCR.** "Scoring (not met): The specified hand array covers the back, sides and fingers but does not
+establish sensing on the palm or dressing, leaving some robot-hand contacts unchecked. What to change: The cannula
+load cell and finger-pad sensors address the corresponding earlier feedback. The hand-contact check remains
+incomplete: specify and implement calibrated sensing over the entire hand, including the palm and cannula dressing,
+so robot contact above 0.5 N is detected throughout the trial."
+- The dorsal array now lies over the dressing, and a second array covers the palm (tared against the hand's resting
+  weight); both are calibrated, including over the dressing (Scoring). The simulator already measures robot contact
+  over the whole hand body, including where the dressing lies.
+
 ## Scoring
 
 Evaluated every control step; the harms every physics step (240 Hz). The score at the end of the episode counts
@@ -123,13 +144,24 @@ the time stamp). The thresholds and durations are the simulator's:
   must be within 0.1 N. Any sample over 4.45 N scores 0. A SafeBreak Vascular breakaway connector stays in the line
   beyond the load cell only as a backstop that protects the manikin's cannula and the load cell. It separates
   anywhere from 1 to 5 lbf, so it is not the measurement.
-- **Robot on the hand (over 0.5 N, any sample):** a conformable capacitive tactile array (Pressure Profile Systems
-  TactArray / ConTacts class, or a thin-film piezoresistive array of the Tekscan class) covering the back, sides and
-  fingers of the manikin's hand around the dressing, sampled at 200 Hz. The logged value is the total force over the
-  array. Tare it after the line is laid. Calibrate it before each session by pressing a probe on a reference load cell
-  onto it at 0.25, 0.5, 1 and 2 N at several places; the 0.5 N reading must be within 0.1 N. As in the simulator there
-  is no minimum duration: any sample over 0.5 N while the video shows a robot link on the hand scores 0. A reading
-  caused by the wedge or the sheet (also in the video) does not count, as in the simulator.
+- **Robot on the hand (over 0.5 N, any sample), over the whole hand:** two conformable capacitive tactile arrays
+  (Pressure Profile Systems TactArray / ConTacts class, or thin-film piezoresistive arrays of the Tekscan class),
+  sampled at 200 Hz and logged as total force per array:
+  - **Dorsal array:** the back of the hand, its sides and the backs and sides of the fingers, laid **over** the
+    transparent dressing (a slot lets the hub and line pass through), so a touch on the dressing or the cannula site
+    is measured too.
+  - **Palm array:** the palm and the palm side of the fingers. The palm rests on the sheet, so this array carries the
+    hand's own weight (about 3.8 N). It is tared with the hand resting before each trial; a robot link pressing on or
+    under the palm adds to the reading, and lifting the arm takes load off it. A palm reading counts as robot contact
+    when it rises more than 0.5 N above the resting tare, or when it reads more than 0.5 N while the video shows a
+    robot link at the palm (the arm lifted).
+  Calibrate both arrays before each session by pressing a probe on a reference load cell onto them at 0.25, 0.5, 1
+  and 2 N at several places, including over the dressing; the 0.5 N reading must be within 0.1 N. As in the simulator
+  there is no minimum duration: any sample over 0.5 N on either array while the video shows a robot link on the hand
+  scores 0. A reading caused by the wedge or the sheet (also in the video) does not count, as in the simulator. In the
+  simulator the same check covers the whole hand: the contact report is on the hand body (palm, back, sides and
+  fingers as one collision box), and the dressing lies on that box, so any robot link touching the hand anywhere,
+  including over the dressing, is measured (`wedgekit.py`, `hand_touched`).
 - **Finger pad on the forearm (over 25 N for 0.1 s):** a thin-film force sensor (Tekscan FlexiForce A201 class,
   111 N / 25 lbf range) on each of the robot's finger pads under a 1 mm rubber cover, each read separately through a
   conditioning circuit at 1 kHz. Calibrate each before each session against the reference load cell at 5, 10, 25 and
@@ -272,7 +304,7 @@ pytest test_forearm_on_wedge.py      # in the yam_arena environment; no GPU need
   covered with a transparent dressing; next to the hub the inline load cell, then a SafeBreak Vascular breakaway
   connector, then a 100 cm orange light-protective extension set with a pinch clamp; a line clip on the sheet. Lay the
   line as in the setup photo (tape marks on the sheet).
-- **Sensors:** the inline load cell, the tactile array on the hand and a thin-film sensor on each robot finger pad
+- **Sensors:** the inline load cell, the two tactile arrays covering the whole hand (dorsal over the dressing, and palm) and a thin-film sensor on each robot finger pad
   (Scoring), all logged on one PC clock with the sync LED in the camera's view; two cameras at 120 frames/s (top and
   side). Calibrate all three force sensors before each session.
 - **Wedge:** any foam arm-elevation wedge of 30 x 15 cm with a 10 cm high end and a vinyl cover (about 0.25 kg).
