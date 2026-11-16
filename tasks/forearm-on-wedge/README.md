@@ -41,8 +41,7 @@ The instruction states the goal only. It says nothing about the cannula, the lin
   Device handling on or near a patient; none moves the patient's limb or routes a line attached to the patient.
 - **TK-LVPXW2 (glasses on a person, rejected: "lacks real-world faithfulness").** That body was not a passive,
   massive limb. Here every arm segment has an anthropometric mass, joint limits and passive stiffness and damping from
-  the literature (below), and the real trial uses a full-size nursing manikin with its forearm weighted to the same
-  masses.
+  the literature (below), and the real trial uses an arm built to the same lengths, masses and joint ranges.
 - **External benchmarks.** RoboCasa, LIBERO, BEHAVIOR and DataCenterBench have no person in the scene. Assistive-robot
   simulators (Assistive Gym's arm manipulation and bed bathing, RCareWorld's limb repositioning) move a limb but have no
   attached line and no support to place under the limb with the other arm; their score is a reward, not an
@@ -72,8 +71,8 @@ are above the mattress top, which is 3 cm above the table. Arms start in the rea
 | Object | Description |
 |---|---|
 | Mattress | Hospital mattress stand-in: a 3 cm foam pad with a white cotton sheet, 90 x 120 cm, on the table from x -5 to 85, y -60 to 60; fixed. Sheet friction 0.5 |
-| Manikin | Full-size adult nursing manikin (real trial: Laerdal Nursing Anne or Nursing Kelly, about 1.6 to 1.7 m), face up, head toward +y, left side toward the robot. Torso, legs and head are fixed: trunk 32 x 62 x 18 cm (pale green gown) centred at x 60, y 19 (its near side 7 cm from the arm); legs 11 x 48 x 12 cm (blue pyjama trousers) at x 53 and 67 from y -12 to -60; head 18 cm round on a pillow at x 60, y 58. Vinyl skin, friction 0.9 |
-| Left arm | Three rigid segments on passive joints (table below), palm down, straight along the trunk at x 33: shoulder joint at y +43.6, elbow at y +12.0, wrist at y -12.8, fingertips at y -31.2. Upper arm: 8.4 cm capsule in the gown sleeve, 1.82 kg. Forearm: 6.8 cm capsule, 24.8 cm, 1.04 kg, centre of mass 43% from the elbow. Hand: 8.5 x 18.4 x 3 cm, 0.39 kg |
+| Patient body | Adult patient (real trial: cardboard boxes of these sizes, Real-world build), face up, head toward +y, left side toward the robot. Torso, legs and head are fixed: trunk 32 x 62 x 18 cm (pale green gown) centred at x 60, y 19 (its near side 7 cm from the arm); legs 11 x 48 x 12 cm (blue pyjama trousers) at x 53 and 67 from y -12 to -60; head 18 cm round on a pillow at x 60, y 58. Vinyl skin, friction 0.9 |
+| Left arm | Three rigid segments on passive joints (table below; real trial: built to these numbers), palm down, straight along the trunk at x 33: shoulder joint at y +43.6, elbow at y +12.0, wrist at y -12.8, fingertips at y -31.2. Upper arm: 8.4 cm capsule in the gown sleeve, 1.82 kg. Forearm: 6.8 cm capsule, 24.8 cm, 1.04 kg, centre of mass 43% from the elbow. Hand: 8.5 x 18.4 x 3 cm, 0.39 kg |
 | Cannula | 22 G peripheral cannula on the back of the hand, hub 6 cm beyond the wrist (x 34, y -19), under a 5 x 6 cm transparent dressing (white) |
 | IV extension line | Orange (light-protective) PVC extension line, 5 mm outside diameter, 104 cm from the hub to a sheet clip. From the hub it runs over the back of the hand, drops off the fingertips to the sheet (x 33, y -33), runs along the forearm's near side at x 27.5 to y +4 (past the elbow), turns toward the robot and runs back along x 20.5 to the clip at y -40. Yellow pinch clamp (2.5 cm long, 1.2 cm wide, 2.2 cm high) at the loop's turn (x 22.6, y +4). Line tubing clip on the sheet at x 20.5, y -40 (the pump side of the line is not modelled) |
 | Wedge | Arm-elevation wedge: polyurethane foam in a blue wipe-clean vinyl cover, 30 cm long, 15 cm wide, 1 cm high at its low end and 10 cm at its high end; 0.25 kg. On the mattress at x 3.5 to 18.5, y -21 to +9 (level with the forearm), its low end toward +y (the elbow) and its high end toward -y (the hand) |
@@ -104,18 +103,36 @@ real-world harm checks match the specified thresholds: measure cannula tension a
 sensor, and measure hand-contact force and each forearm pad's force over time. The stated 1–5 lbf breakaway range
 cannot reliably enforce the 1 lbf threshold, while pressure film and video alone cannot establish the specified force
 and duration thresholds."
-- Cannula tension: inline calibrated load cell at the hub, 1 kHz; the breakaway connector is only a backstop.
-- Pad force: a calibrated thin-film force sensor on each finger pad, 1 kHz, 25 N for 0.1 s as in the simulator.
-- Hand contact: calibrated tactile sensing, 200 Hz. Pressure film removed; video is used for pose only.
+- Cannula tension: a calibrated inline load cell at the hub (now a 500 g mini bar load cell, see TK-QUEP8E); no
+  breakaway connector is used as the measurement.
+- Pad force: a calibrated force sensor on each finger pad, 1 kHz, 25 N for 0.1 s as in the simulator.
+- Hand contact: calibrated force sensing over time (now load-cell shells, see TK-QUEP8E). Pressure film removed;
+  video only tells which body made a contact.
 
 **TK-5NBWCR.** "Scoring (not met): The specified hand array covers the back, sides and fingers but does not
 establish sensing on the palm or dressing, leaving some robot-hand contacts unchecked. What to change: The cannula
 load cell and finger-pad sensors address the corresponding earlier feedback. The hand-contact check remains
 incomplete: specify and implement calibrated sensing over the entire hand, including the palm and cannula dressing,
 so robot contact above 0.5 N is detected throughout the trial."
-- The dorsal array now lies over the dressing, and a second array covers the palm (tared against the hand's resting
-  weight); both are calibrated, including over the dressing (Scoring). The simulator already measures robot contact
-  over the whole hand body, including where the dressing lies.
+- The whole hand is sensed, palm and dressing included: the hand's surface is five rigid shells (back with the
+  dressing on it, palm, both sides, fingertip end), each on its own calibrated load cell; the palm is tared against
+  the hand's resting weight (Scoring). The simulator measures robot contact over the whole hand body.
+
+**TK-QUEP8E.** "Clarity and reproducibility (not met): The named full-size nursing manikin and specialist tactile and
+force-sensing systems exceed the low-cost equipment bar without a reproducible cheaper alternative. What to change:
+The requested hand-sensing coverage is now specified. A new issue not raised in the earlier review is the cost of
+reproducing the real trial: the named full-size nursing manikin and specialist tactile and force-sensing systems have
+no low-cost alternative. Provide an affordable, reproducible articulated patient-arm setup and safety checks that an
+evaluator can make with simple tools, video or inexpensive device outputs. You may replace the previously requested
+force instruments and their exact thresholds with observable surrogates, provided they preserve the task's
+line-management and gentle-support safety challenge."
+- Patient: the manikin is replaced by a dimensioned arm of PVC pipe, wood and plain butt hinges built to the
+  simulator's segment lengths, Winter masses and joint ranges, on a cardboard body (Real-world build). Jointed IV
+  training arms cost about $440 to $2,000, so none is used.
+- Checks: hobby parts read by one Arduino Nano replace the specialist sensors: an inline 500 g mini load cell
+  (cannula), five 1 kg bar load cells under the hand's shells, a $5 thin-film sensor on each finger pad and
+  potentiometers on the arm's joints (wrist angle, wrist speed). They check the simulator's own thresholds; the
+  simulator is unchanged. Parts about $170, $150 without the kitchen scale and household props.
 
 ## Scoring
 
@@ -134,48 +151,53 @@ Evaluated every control step; the harms every physics step (240 Hz). The score a
 **Line trapped:** a line segment inside the wedge's footprint below its top surface, or pinned under the forearm or
 the hand (within its width, against its underside).
 
-In a real trial, every harm threshold above is measured by a calibrated sensor, logged over time on one PC clock
-and synchronised with the video (at the start of each trial the logger flashes an LED in the camera's view and writes
-the time stamp). The thresholds and durations are the simulator's:
-- **Pull on the cannula (over 4.45 N, any sample):** an inline miniature S-beam load cell (Futek LSB200 class,
-  22 N / 5 lbf rated) between the cannula hub and the extension line, with luer adapters on both ends, read by a USB
-  load-cell amplifier (Futek USB520 class) at 1 kHz. Zero it with the line slack after the line is laid. Calibrate it
-  before each session by hanging known masses (100, 200 and 500 g: 0.98, 1.96 and 4.90 N) from it; the 4.45 N reading
-  must be within 0.1 N. Any sample over 4.45 N scores 0. A SafeBreak Vascular breakaway connector stays in the line
-  beyond the load cell only as a backstop that protects the manikin's cannula and the load cell. It separates
-  anywhere from 1 to 5 lbf, so it is not the measurement.
-- **Robot on the hand (over 0.5 N, any sample), over the whole hand:** two conformable capacitive tactile arrays
-  (Pressure Profile Systems TactArray / ConTacts class, or thin-film piezoresistive arrays of the Tekscan class),
-  sampled at 200 Hz and logged as total force per array:
-  - **Dorsal array:** the back of the hand, its sides and the backs and sides of the fingers, laid **over** the
-    transparent dressing (a slot lets the hub and line pass through), so a touch on the dressing or the cannula site
-    is measured too.
-  - **Palm array:** the palm and the palm side of the fingers. The palm rests on the sheet, so this array carries the
-    hand's own weight (about 3.8 N). It is tared with the hand resting before each trial; a robot link pressing on or
-    under the palm adds to the reading, and lifting the arm takes load off it. A palm reading counts as robot contact
-    when it rises more than 0.5 N above the resting tare, or when it reads more than 0.5 N while the video shows a
-    robot link at the palm (the arm lifted).
-  Calibrate both arrays before each session by pressing a probe on a reference load cell onto them at 0.25, 0.5, 1
-  and 2 N at several places, including over the dressing; the 0.5 N reading must be within 0.1 N. As in the simulator
-  there is no minimum duration: any sample over 0.5 N on either array while the video shows a robot link on the hand
-  scores 0. A reading caused by the wedge or the sheet (also in the video) does not count, as in the simulator. In the
-  simulator the same check covers the whole hand: the contact report is on the hand body (palm, back, sides and
-  fingers as one collision box), and the dressing lies on that box, so any robot link touching the hand anywhere,
-  including over the dressing, is measured (`wedgekit.py`, `hand_touched`).
-- **Finger pad on the forearm (over 25 N for 0.1 s):** a thin-film force sensor (Tekscan FlexiForce A201 class,
-  111 N / 25 lbf range) on each of the robot's finger pads under a 1 mm rubber cover, each read separately through a
-  conditioning circuit at 1 kHz. Calibrate each before each session against the reference load cell at 5, 10, 25 and
-  40 N, through the cover and on a forearm-shaped block; the 25 N reading must be within 1 N. Any one pad reading over
-  25 N without a break for 0.1 s (100 samples) while the video shows it on the forearm scores 0. Shorter peaks do not
-  count, as in the simulator.
-- **Wrist angle and speed:** pose measurements from the video (120 frames/s, top view and side view). Markers on the
-  forearm and the back of the hand give the wrist angle (past 45 deg either way scores 0; a 45 deg protractor card
-  behind the wrist checks it) and the wrist's travel against the mattress's 5 cm grid (over 3 cm in any 0.1 s, i.e.
-  12 frames, is over 0.3 m/s and scores 0).
-- **Resting and wrist height:** a photo and a ruler (wrist 8 cm above the mattress; the forearm's underside on the
-  wedge over 60% of its length). **Line trapped:** lift the wedge after the trial and look.
-- **2 s still, released:** the video (forearm still, every finger pad and tool point 3 cm or more from the arm) and the
-  logs (hand and pad sensors at zero).
+In a real trial the harms are measured by cheap calibrated sensors built into the patient arm and the robot's finger
+pads (parts and build under Real-world build), all read by one Arduino Nano and logged on the PC's clock. At the
+start of each trial the Arduino flashes an LED in the phone camera's view and logs the time, so the log lines up with
+the video. One phone films the bed from above (slow motion, 120 or 240 frames/s); the video only tells which body made
+a contact. The thresholds and durations are the simulator's:
+- **Pull on the cannula (over 4.45 N, any sample):** a floating inline gauge between the cannula hub and the
+  extension line: a 500 g mini bar load cell (SparkFun TAL221, 47 x 12 x 6 mm) with a 15 mm offset tab screwed to
+  each end, the hub's luer cap tied to one tab and the line's to the other, so the pull bends the bar; HX711 board, 80
+  samples/s. Being inline and free to turn, it reads the line's whole pull in any direction (a flexible line pulls
+  only along itself). Zero it with the line slack after laying the line. Calibrate before each session: hang it by one
+  tab and hang 100, 250 and 454 g (water bottles weighed on the kitchen scale: 0.98, 2.45 and 4.45 N) from the other
+  through the luer caps; the 4.45 N reading must be within 0.1 N. Any sample over 4.45 N scores 0.
+- **Robot on the hand (over 0.5 N, any sample), over the whole hand:** the hand's whole surface is five separate
+  rigid shells: the back (the transparent dressing stuck on it), the palm, the near side, the far side and the
+  fingertip end. Each shell rests only on its own 1 kg bar load cell (a single-point cell: the reading does not depend
+  on where on the shell the force lands), with gaps everywhere else; HX711 boards, 80 samples/s. A robot link anywhere
+  on the hand, including on the dressing, presses a shell. Tare all five with the hand resting before each trial; the
+  logger subtracts each shell's own weight as the hand tilts (the hand's angle from the joint potentiometers).
+  - **Back, sides and tip:** robot contact when the sum of the four shells' changes (magnitudes) passes 0.5 N. A
+    pinch across two shells is caught; a single push landing across shells at an angle is judged up to 1.7 times
+    more strictly than in the simulator.
+  - **Palm:** it carries the hand's weight on the sheet (about 3.8 N). It counts when it rises more than 0.5 N above
+    the resting tare, or when it reads more than 0.5 N above its free value while the hand is lifted and the video
+    shows a robot link at the palm.
+  - The cannula hub sits on a post from the hand's core through a hole in the back shell; a robot link on the hub
+    itself counts as hand contact from the video.
+  Calibrate before each session: lay the hand on the kitchen scale (on its side for the side shells, on its end for
+  the tip) and press a 10 mm dowel on each shell at three places, including on the dressing, to 25, 51 and 102 g
+  (0.25, 0.5 and 1 N); the 0.5 N reading must be within 0.1 N. As in the simulator there is no minimum duration, and
+  a reading caused by the wedge or the sheet (the video shows no robot link at the hand) does not count.
+- **Finger pad on the forearm (over 25 N for 0.1 s):** on each of the four robot finger pads, a thin-film force
+  sensor (DFRobot RP-C18.3-ST, 18 mm, 0.2 to 59 N) under a 15 mm, 2 mm thick plastic puck (it carries the pad's load
+  onto the sensing area) and a 1 mm rubber cover, read through a voltage divider at 1 kHz. Calibrate each before each
+  session: press the covered pad onto a 7 cm pipe offcut (forearm-shaped) on the kitchen scale to 1.5, 2.55 and
+  3.5 kg (15, 25 and 34 N), three times each; the 25 N point is set from the 2.55 kg readings and must repeat within
+  2.5 N (these sensors repeat to about 10%). Any pad over 25 N for 100 samples in a row (0.1 s) while the video shows
+  it on the forearm scores 0. Shorter peaks do not count, as in the simulator.
+- **Wrist angle (past 45 deg either way):** a 10 kOhm potentiometer on the wrist hinge's axis, 1 kHz. Calibrate it at
+  0 and +-45 deg against a protractor (within 2 deg).
+- **Wrist speed (over 0.3 m/s, averaged over 0.1 s):** potentiometers on the shoulder's two axes and the elbow give
+  the wrist's position by forward kinematics from the fixed shoulder (31.6 and 24.8 cm segments) every 1 ms; travel
+  over 3 cm in any 0.1 s scores 0, the simulator's own measure. Calibrate each at 0 and 45 deg against the protractor;
+  check by sliding the wrist 30 cm along a ruler: the logged path must read 30 +- 1 cm.
+- **Resting and wrist height:** a photo and a ruler (wrist 8 cm above the mattress, also from the potentiometers; the
+  forearm's underside on the wedge over 60% of its length). **Line trapped:** lift the wedge after the trial and look.
+- **2 s still, released:** the potentiometers (forearm still), the video (every finger pad and tool point 3 cm or more
+  from the arm) and the logs (hand shells and pad sensors back at their tare).
 
 Ways around the method get nothing:
 - **Lifting by the hand** (the obvious handle): touches the cannula site, 0.
@@ -297,22 +319,99 @@ pytest test_forearm_on_wedge.py      # in the yam_arena environment; no GPU need
 
 ## Real-world build and safety
 
-- **Body:** a full-size adult nursing manikin with articulated arms (Laerdal Nursing Anne or Nursing Kelly; Gaumard
-  Susie). Manikin arms are lighter than real ones: bring the left forearm and hand to 1.04 kg and 0.39 kg with lead
-  shot bags in a sleeve and a weighted glove. No person is ever in the robot's workspace: the "patient" is the manikin.
-- **Cannula and line:** a 22 G cannula taped into the manikin's IV-training hand (or onto the back of the hand),
-  covered with a transparent dressing; next to the hub the inline load cell, then a SafeBreak Vascular breakaway
-  connector, then a 100 cm orange light-protective extension set with a pinch clamp; a line clip on the sheet. Lay the
-  line as in the setup photo (tape marks on the sheet).
-- **Sensors:** the inline load cell, the two tactile arrays covering the whole hand (dorsal over the dressing, and palm) and a thin-film sensor on each robot finger pad
-  (Scoring), all logged on one PC clock with the sync LED in the camera's view; two cameras at 120 frames/s (top and
-  side). Calibrate all three force sensors before each session.
-- **Wedge:** any foam arm-elevation wedge of 30 x 15 cm with a 10 cm high end and a vinyl cover (about 0.25 kg).
-- **Mattress:** a hospital mattress or 3 cm foam pad with a white sheet on the station table, with a 5 cm grid
-  drawn on the sheet's near edge for the speed check.
-- **Safety measures:** the manikin replaces the patient; the arms are run at the station's normal speed and force
-  limits, with the e-stop in reach. The breakaway connector protects the manikin's cannula and the load cell from a
-  hard pull.
+No person is ever in the robot's workspace: the patient is an arm built to the simulator's numbers on a cardboard
+body. Tools: a saw, a drill, a screwdriver, a soldering iron, a kitchen scale and a protractor. Jointed IV training
+arms cost about $440 (Nasco IV hand and arm) to $2,000, so none is used.
+
+### Parts
+
+Approximate US prices, November 2026, hobby-electronics and hardware retail.
+
+| Part | Qty | US$ |
+|---|---|---|
+| 1 kg straight-bar load cell (75-80 x 12.7 x 12.7 mm) with HX711 board, generic | 5 | 22 |
+| SparkFun mini load cell 500 g (TAL221), with one more HX711 board | 1 | 17 |
+| Arduino Nano-compatible board and USB cable | 1 | 6 |
+| DFRobot RP-C18.3-ST thin-film force sensor, 20 g to 6 kg | 4 | 20 |
+| 10 kOhm linear potentiometers | 4 | 3 |
+| Hookup wire, 3 m thin 4-core cable, LED, resistors, perfboard | | 6 |
+| 1-1/4 in PVC pipe, 60 cm | 1 | 5 |
+| Pipe-insulation foam for 1-1/4 in pipe, 1/2 in and 3/4 in wall | | 6 |
+| 2 in loose-pin steel butt hinges (plain, not friction hinges) | 4 | 6 |
+| Pine offcut, 12 mm and 3 mm plywood scraps | | 5 |
+| Steel nuts and washers, about 2.5 kg (mass trim) | | 10 |
+| Small extension springs (wrist tone) | 2 | 3 |
+| 1.5 mm styrene sheet, 2 mm EVA craft foam, beige tape | | 10 |
+| M3 to M5 screws and spacers | | 6 |
+| 22 G IV catheter, 100 cm orange extension set with pinch clamp, transparent dressing, tubing clip, two luer caps | | 12 |
+| Foam block 30 x 15 x 10 cm and blue vinyl (wedge) | | 10 |
+| Cardboard boxes, green and blue cloth, 18 cm foam ball, pillow, white cotton sheet | | 8 |
+| Kitchen scale, 5 kg x 1 g | 1 | 12 |
+| Protractor, marker stickers, masking tape | | 4 |
+| **Total** | | **about 170** (about 150 with a kitchen scale and household props on hand) |
+
+### The arm
+
+| Segment | Length (joint to joint) | Outside | Mass | Centre of mass |
+|---|---|---|---|---|
+| Upper arm | shoulder pin to elbow pin 31.6 cm | 8.4 cm across (26.4 cm round) | 1.82 kg | 13.8 cm from the shoulder pin |
+| Forearm | elbow pin to wrist pin 24.8 cm | 6.8 cm across (21.4 cm round) | 1.04 kg | 10.7 cm from the elbow pin |
+| Hand | 18.4 cm from the wrist pin, 8.5 cm wide, 3.0 cm thick | box | 0.39 kg | 9.2 cm from the wrist pin |
+
+- **Segments:** 1-1/4 in PVC pipe (4.2 cm outside), cut to 28.6 cm (upper arm) and 21.8 cm (forearm), a pine plug
+  glued in each end. 1/2 in wall pipe foam makes the forearm 6.8 cm across; 3/4 in wall foam and one wrap of EVA make
+  the upper arm 8.4 cm. Steel nuts and washers taped inside each pipe bring the segment (weighed with its hinge
+  leaves, pins out) to its mass, placed so it balances on a pencil at its centre of mass. Beige tape over the foam;
+  the upper arm in a green cloth sleeve.
+- **Joints:** loose-pin butt hinges screwed to the plugs, each pin on the pipes' axis in a 3 cm gap between pipe ends:
+  elbow and wrist pins across the arm, 3.6 cm above the mattress; the shoulder is two hinges on a pine block
+  (abduction pin upright, then the lift pin across the arm), 4.3 cm above the mattress, on a 12 mm plywood plate
+  screwed under the trunk box. Plain hinges, not friction (torque) hinges: a friction hinge holds the arm wherever it is
+  left, and the simulated arm does not; raised 30 deg and let go, the forearm must fall back to the sheet. Wood stop
+  blocks set the simulator's ranges: shoulder lift 0 to 90 deg, abduction 60 deg out and 5 deg in, elbow 0 to 145 deg,
+  wrist 70 deg each way.
+- **Wrist tone:** two small extension springs, one above and one below the wrist pin, from the forearm plug to the
+  hand's core. Move their anchors until, with the forearm held level and the hand free, the hand droops 19 +- 3 deg
+  (wrist potentiometer): the simulator's 1.0 N m/rad with a 0.39 kg hand. The elbow and shoulder tone (0.5 N m/rad,
+  about an eighth of the forearm's weight torque at 30 deg) and the joints' damping are not built; the plain hinges'
+  own friction is of that order.
+- **Joint potentiometers:** one on each of the four hinge axes (shoulder lift and abduction, elbow, wrist), the body
+  on one leaf's side, the shaft on the pin's axis, turned by a fork on the other side.
+- **Hand:** a 12 mm plywood core, 17.4 x 7.5 cm, on the wrist hinge, slotted to take five 1 kg bar cells flush. Each
+  cell's fixed end is screwed to the core, its free end carries one shell on a 2 mm spacer: the back (18.4 x 8.5 cm,
+  a 12 mm hole 6 cm beyond the wrist pin for the hub post), the palm (18.4 x 8.5 cm), the two sides (18.4 x 2.2 cm,
+  lower edges 2 mm above the palm's underside, clear of the sheet) and the fingertip end (7.5 x 2.2 cm, between the sides). The back and
+  palm cells sense up and down (off the centre line, clear of the hub post), the side cells across, the tip cell along
+  the hand. Shells: 1.5 mm styrene with a 2 mm EVA skin. A 1.5 mm gap around every shell (a business card must pass
+  everywhere), so no shell touches another or the core. Weights on the core bring the hand to 0.39 kg.
+- **Cables:** under the sleeve, out at the shoulder, with slack loops at the elbow and the wrist.
+- **Body and bed (fixed, taped to the table):** cardboard boxes of the simulator's sizes: the trunk 32 x 62 x 18 cm in
+  green cloth (x 44 to 76, y -12 to +50), two legs 11 x 48 x 12 cm in blue cloth, the head an 18 cm foam ball on a
+  pillow. The bed is 3 cm of flat cardboard (rigid, as in the simulator) under a white cotton sheet, 90 x 120 cm.
+- **Cannula and line:** a 22 G IV catheter, its needle taken out and put in a sharps bin before the build (no sharp on
+  the rig), its hub taped to a 6 mm dowel post from the hand's core; the inline gauge on the hub's luer; a 100 cm
+  orange extension set with its pinch clamp; a tubing clip taped to the sheet at x 20.5, y -40. The line is dry and
+  capped: no liquid near the robot. The transparent dressing is stuck on the back shell around the post, not on the
+  post (it would join the hub to the shell). Lay the line on tape marks as in the setup photo.
+- **Wedge:** the foam block cut on the diagonal from 1 cm to 10 cm high, glued to a 3 mm plywood base, in a blue vinyl
+  cover; washers under the base bring it to 0.25 kg.
+- **Finger pads:** on each of the four robot finger pads the thin-film sensor, its puck and a 1 mm rubber cover, on
+  double-sided tape; the wires taped along the finger and the arm with slack at each joint.
+- **Logger:** Arduino Nano: A0-A3 the pad sensors (each with a divider resistor picked so 25 N reads near
+  mid-scale), A4-A7 the joint potentiometers, D2-D7 the six HX711 data lines with one shared clock on D8 (the
+  HX711-multi library), D9 the sync LED. The HX711 boards are set to 80 samples/s (RATE pin to VCC; most green boards
+  need one trace cut), and the ADC prescaler to 32 so all eight analog inputs are read every 1 ms. It prints CSV at
+  500 kbaud (time, pads and potentiometers every 1 ms; each load cell when it has a new sample). A PC script applies
+  the calibrations and the checks in Scoring.
+
+**Limits.** The load cells sample at 80 Hz against the simulator's 240 Hz, so a hand contact or a line pull shorter
+than about 12 ms could be missed. The pad sensors cover the pad face, not the whole finger as in the simulator, and
+check 25 N to within 2.5 N. A touch on the cannula hub itself is judged from the video.
+
+**Safety.** No person is in the workspace; no sharps (the needle is removed) and no liquid (the line is dry and
+capped); 5 V USB electronics only. The arms run at the station's normal speed and force limits, with the e-stop in
+reach. The pad sensors sit under rubber covers, so the robot still grips with rubber. A pull past about 7 N can
+damage the 500 g gauge (about $15); the trial has already scored 0 by then.
 
 ## Assets and licences
 
