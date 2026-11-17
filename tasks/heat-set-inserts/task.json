@@ -19,5 +19,6 @@
   "run_limit": "2,400 steps (2 minutes at 20 Hz); the scripted demo needs about 1,350",
   "reset_notes": "Each trial uses a fresh printed bracket and four new inserts (dropped into the holes by hand). Put the iron back in its stand with a heat-resistant glove if needed; the station stays on at 245 C. Seeds (HSI_SEED) set each insert's start height (4.2 to 4.8 mm proud) and the bracket's softness in the simulation.",
   "fidelity": "Approximate. PhysX cannot melt plastic: a rule moves each insert. It sinks only after 2.5 s of the iron pressing on it (pin within 1.5 mm of its axis), then at 0.3 mm/s per N above 1.5 N (bracket softness +-25% by seed). Over 15 N while sinking: forced; iron leaning over 5 deg while sinking: crooked; iron on the bracket 0.5 s: melt mark. Values are estimates from the insert makers' guidance (light steady push, a few s); README gives a kitchen-scale method to measure them. Bracket fixed in place.",
-  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seed 0; also 1.0 on seeds 4 and 10)"
+  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seed 0; also 1.0 on seeds 4 and 10)",
+  "media": "M-3PV3YF"
 }
