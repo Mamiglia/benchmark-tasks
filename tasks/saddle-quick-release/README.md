@@ -138,7 +138,7 @@ Run with the command above (`object_jitter=0`, 20 Hz, 320 x 176 cameras):
 | Scripted demo | 10 | 1.0 | |
 | `DEMO_CHEAT=naive` (lift without opening the lever) | 0 | 0.0 | post held by the collar |
 | `DEMO_CHEAT=short` (lever shut only to 20 degrees, let go) | 0 | 0.0 | lever springs open, post sinks |
-| Dream-1 | 0 | DREAM | |
+| Dream-1 | 0 | 0.0 | full 2,400 steps; reaches toward the saddle, never scores |
 
 The demo's video is 640 x 352 (seed 0, 1.0).
 

@@ -18,5 +18,5 @@
   "run_limit": "2,400 steps (120 s at 20 Hz)",
   "reset_notes": "Open the lever, set the post back with the tape's lower edge at the collar and the saddle turned 12 degrees nose-left (pencil marks on the collar and the post), close the lever. Check the cam nut setting each session (README): about 30 N at the paddle to close, and the post slides down by itself with the lever open.",
   "fidelity": "Approximate. The bike is a fixed body; post and lever are joints of it. No cam contact: each physics step applies a stroke profile (the paddle pushed open up to 30 N at 22 degrees, pulled shut past 12 degrees), 1.5 N sliding friction on the loose post (it sinks under its 2.9 N weight) and 0.03 N m turning friction; below 30 degrees the collar holds the post with a 15 kN/m, 60 N m/rad spring. Details in README.",
-  "scores": "Dream-1 run: TBD; demo: 1.0"
+  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seed 0; also 1.0 on seeds 4 and 10)"
 }
