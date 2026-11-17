@@ -31,7 +31,9 @@ Script.
 6. The right arm lowers the forearm on the same arc onto the wedge, opens, rises and parks.
 
 ``DEMO_CHEAT`` (environment variable) plays a contrast instead: ``hand`` lifts the forearm by the hand (the obvious
-grip) and skips the line; ``noline`` does everything but move the line; ``hold`` keeps holding the forearm at the end.
+grip) and skips the line; ``noline`` does everything but move the line; ``hold`` keeps holding the forearm at the end;
+``steady`` first rests the closed fingertips lightly on the back of the fingers (away from the cannula), ``dressing``
+on the dressing, then plays the demo.
 """
 
 from __future__ import annotations
@@ -54,6 +56,9 @@ HOLD_AT = 0.65  # of the forearm's length from the elbow: the fingers stay 6 cm 
 LIFT_DEG = 42.0  # well above the wedge's 17 deg slope: the wedge slides in under the forearm and the hand
 LOWER_DEG = 12.0  # a little under the wedge's slope (17 deg): the forearm lands on it on the way down
 WEDGE = dict(size=(0.15, 0.30), h=(0.01, 0.10))  # the wedge's model (catalogue dimensions)
+# m: the TCP's target relative to the hand's back (contrasts). Measured in the simulator: contact starts 1 mm below,
+# then about 0.57 N per mm, so 6 mm gives about 3.5 N, a hand resting on the fingers.
+TOUCH_PRESS = float(os.environ.get("DEMO_TOUCH_PRESS", "-0.006"))
 PARK = {"left": np.array([1.2, *READY[1:]]), "right": np.array([-1.2, *READY[1:]])}
 
 
@@ -382,10 +387,33 @@ class Controller:
             a.rot = axis_angle_matrix(np.array([1.0, 0.0, 0.0]), math.radians(d)) @ grip_rotation(self.hold_yaw)
             yield
 
+    def touch_hand(self, sc: Scene):
+        """Contrast: the right arm's closed fingertips rest lightly on the back of the hand for 2 s, then it parks.
+        ``steady``: on the back of the fingers, 15 cm beyond the wrist and 2.5 cm to the near side of the line (which runs
+        along the back of the hand's middle): away from the cannula site, allowed support;
+        ``dressing``: on the dressing 3.5 cm beyond the wrist, just short of the hub and the line, which leaves the hub
+        toward the fingertips (the cannula site: harm). The fingers close across the hand, so they touch a strip about
+        1 cm wide along it."""
+        R, b = "right", self.bed
+        x, y = (sc.x - 0.025, sc.wrist - 0.15) if self.cheat == "steady" else (sc.x, sc.wrist - 0.035)
+        z = b + 0.030 + 0.013 + TOUCH_PRESS  # the pad tips 13 mm past the TCP, the hand's back 3 cm above the bed
+        yaw = grip_yaw((x, y, z), self.arms[R].base, (math.pi / 2, -math.pi / 2))
+        yield from self.move(R, (x, y, b + 0.10), 2.0, g=0.0, yaw=yaw)
+        yield from self.move(R, (x, y, z + 0.01), 1.5)
+        yield from self.move(R, (x, y, z), 1.0)
+        yield from self.wait(2.0)
+        self.report(R, "on the hand")
+        yield from self.move(R, (x, y, b + 0.10), 1.0)
+        yield from self.park(R)
+        sc2 = yield from self.look()
+        return sc2
+
     def run(self):
         L, R, b = "left", "right", self.bed
         yield from self.wait(2.0)  # arms parked out of the view
         sc = yield from self.look()
+        if self.cheat in ("steady", "dressing"):  # gentle contact on the hand, then the full demo
+            sc = yield from self.touch_hand(sc)
         # low end 2 cm short of the elbow (the sleeve's edge is seen a little short of the joint), high end past the wrist
         target = np.array([sc.x, sc.elbow[1] - WEDGE["size"][1] / 2 - 0.02])
         if self.cheat not in ("noline", "hand"):

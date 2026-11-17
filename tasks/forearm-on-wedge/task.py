@@ -126,8 +126,9 @@ def resting(st) -> bool:
 
 
 def score(objects) -> float:
-    """0 if any harm latched during the trial (robot touched the hand; pull on the cannula over 4.45 N; wrist bent
-    past 45 deg; wrist faster than 0.3 m/s; a finger pad pressing the forearm over 25 N for 0.1 s). Otherwise 0.75 resting
+    """0 if any harm latched during the trial (a robot link on the cannula site, i.e. the back of the hand over the
+    dressing or the hub, over 0.5 N; robot force elsewhere on the hand over 10 N for 0.1 s, more than gentle support;
+    pull on the cannula over 4.45 N; wrist bent past 45 deg; wrist faster than 0.3 m/s; a finger pad pressing the forearm over 25 N for 0.1 s). Otherwise 0.75 resting
     on the wedge (60% of the forearm's length on it, wrist 8 cm or more above the mattress), released and still, the
     line not trapped (success, 1.0, once that held 2 s); capped at 0.5 if the line is trapped under the wedge or the
     arm; 0.5 resting but held, touched or moving; 0.3 forearm over the wedge's footprint (60%) but not resting on it;

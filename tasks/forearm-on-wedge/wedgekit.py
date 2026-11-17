@@ -98,7 +98,10 @@ class WardRig(Box):
     sheet_friction: float = 0.5
     line_friction: float = 0.4
     wedge_friction: float = 0.7
-    touch_n: float = 0.5
+    touch_n: float = 0.5  # N: any robot contact on the cannula site
+    site_len: float = 0.11  # cannula site: the back of the hand from the wrist crease to 11 cm beyond it ...
+    site_depth: float = 0.006  # ... within 6 mm of its top face (the hub on it included)
+    support_n: float = 10.0  # N: gentle support elsewhere on the hand, total robot force, sustained 0.1 s
 
     def _check(self) -> None:
         super()._check()
@@ -188,6 +191,24 @@ def wedge_height(spec: WardRig, ly: float) -> float:
     return float(hi + (lo - hi) * t)
 
 
+def on_cannula_site(spec: WardRig, p) -> bool:
+    """A contact point in the hand's frame (origin at the wrist joint, -y toward the fingertips, +z the back of the
+    hand) lies on the cannula site: the back of the hand from the wrist crease to ``site_len`` beyond it (the hub at
+    6.2 cm and its 5 x 6 cm dressing, 3.2 to 9.2 cm, with about 2 cm to spare) and within ``site_depth`` of its top
+    face, or on the hub above it. Anywhere else (palm, sides, fingertip end, back of the fingers) is supporting
+    contact."""
+    top = spec.hand_size[2] - spec.wrist[2]
+    return -spec.site_len <= p[1] <= 0.01 and p[2] >= top - spec.site_depth
+
+
+def hand_contact(spec: WardRig, pts, forces) -> tuple[float, float]:
+    """Robot normal force (N) on the cannula site and on the rest of the hand (supporting contact), from the contact
+    points (hand frame) and their normal forces."""
+    f = np.abs(np.asarray(forces, float).reshape(-1))  # PhysX reports them signed (negative: pushing apart)
+    on = np.array([on_cannula_site(spec, p) for p in pts], bool).reshape(-1)
+    return float(f[on].sum()), float(f[~on].sum())
+
+
 def signed_angle_x(r_parent: np.ndarray, r_child: np.ndarray) -> float:
     """Angle (deg) of the child's -y axis from the parent's, about the parent's x axis; + when the child points up
     (+z of the parent), i.e. wrist extension or elbow flexion for this arm."""
@@ -199,7 +220,8 @@ def signed_angle_x(r_parent: np.ndarray, r_child: np.ndarray) -> float:
 class Latches:
     """Harms latched over the whole trial (set once, never cleared during it)."""
 
-    hand_touched: bool = False  # any robot link on the hand (the cannula site)
+    site_touched: bool = False  # a robot link on the cannula site (back of the hand over the dressing, hub), > 0.5 N
+    hand_pressed: bool = False  # robot force on the rest of the hand over 10 N for 0.1 s (more than gentle support)
     line_pulled: bool = False  # pull on the cannula above the breakaway rating
     wrist_bent: bool = False  # wrist beyond +-45 deg
     too_fast: bool = False  # wrist faster than 0.3 m/s (averaged over 0.1 s): the arm dropped or jerked
@@ -207,7 +229,7 @@ class Latches:
     first: str = ""  # what happened first, for the log
 
     def any(self) -> bool:
-        return self.hand_touched or self.line_pulled or self.wrist_bent or self.too_fast or self.squeezed
+        return self.site_touched or self.hand_pressed or self.line_pulled or self.wrist_bent or self.too_fast or self.squeezed
 
 
 @dataclass(frozen=True)
@@ -435,6 +457,7 @@ def _spawn(prim_path: str, cfg, translation=None, orientation=None, **kwargs):
         c, r = ends[i]
         joint(UsdPhysics.SphericalJoint, f"{prim_path}/line_j{i}", f"line_{i - 1}", f"line_{i}",
               c - r[:, 2] * s.seg_len / 2)
+    PhysxSchema.PhysxContactReportAPI.Apply(stage.GetPrimAtPath(f"{prim_path}/line_0")).CreateThresholdAttr(0.0)
     joint(UsdPhysics.SphericalJoint, f"{prim_path}/line_clip", "clip", f"line_{s.n_seg - 1}", clip_p)
     # the hub spring: a D6 with free rotations and sprung translations (+-3 cm travel)
     c0, r0 = ends[0]
@@ -518,7 +541,8 @@ class _Runtime:
         self.tips = [i for i, n in enumerate(self.link_names) if n.endswith(("tip_left", "tip_right"))]
         filt = [f"{root}/wedge", *links]
         self.contact = {seg: view.create_rigid_contact_view([f"{root}/{seg}"], filter_patterns=[filt],
-                                                             max_contact_data_count=256) for seg in SEGMENTS}
+                                                             max_contact_data_count=256)
+                        for seg in (*SEGMENTS, "line_0")}  # line_0: the hub end of the line, on the back of the hand
         self.dt = float(base.physics_dt)
         self.origin = _arr(base.scene.env_origins)[0]
         start = body_start(spec)
@@ -542,6 +566,7 @@ class _Runtime:
         self.trail: list = []
         self.speed = 0.0
         self.squeeze_steps = 0
+        self.press_steps = 0
 
     def reset(self) -> None:
         cur = self.view.get_transforms()
@@ -567,17 +592,35 @@ class _Runtime:
         P = self.poses()
         # contacts: robot on the arm, finger pads on the forearm, wedge on the arm
         robot, wedge = 0.0, 0.0
+        hp, hr = P["hand"]
         for seg, cv in self.contact.items():
             fm = np.linalg.norm(_arr(cv.get_contact_force_matrix(dt=self.dt)).reshape(-1, 3), axis=1)
             r = float(fm[1:].max(initial=0.0))
+            if seg == "line_0":  # the hub and the line's first 4 cm count as the cannula site
+                if r > s.touch_n:
+                    self._flag("site_touched", f"{self.link_names[int(np.argmax(fm[1:]))]} on the hub, {r:.1f} N")
+                continue
             if r > robot:
                 robot = r
             if r > self.robot_peak:
                 self.robot_peak, self.robot_link = r, f"{seg}<-{self.link_names[int(np.argmax(fm[1:]))]}"
             if seg != "upper":
                 wedge += float(fm[0])
-            if seg == "hand" and r > s.touch_n:
-                self._flag("hand_touched", f"{self.link_names[int(np.argmax(fm[1:]))]} on the hand, {r:.1f} N")
+            if seg == "hand" and r > 0.0:
+                # each contact point's normal force, by robot link (filter 0 is the wedge): on the cannula site, or
+                # supporting contact elsewhere on the hand
+                f, pts, _, _, cnt, first = (_arr(x) for x in cv.get_contact_data(dt=self.dt))
+                f, pts, cnt, first = f.reshape(-1), pts.reshape(-1, 3), cnt.reshape(-1), first.reshape(-1)
+                ks = [k for j in range(1, len(cnt)) for k in range(int(first[j]), int(first[j] + cnt[j]))]
+                site, other = hand_contact(s, [hr.T @ (pts[k] - self.origin - hp) for k in ks], f[ks])
+                if site > s.touch_n:
+                    self._flag("site_touched", f"{self.link_names[int(np.argmax(fm[1:]))]} on the cannula site, "
+                                               f"{site:.1f} N")
+                self.press_steps = self.press_steps + 1 if other > s.support_n else 0
+                if self.press_steps >= 24:  # 0.1 s, as for the forearm
+                    self._flag("hand_pressed", f"robot on the hand over {s.support_n:.0f} N for 0.1 s ({other:.1f} N)")
+            elif seg == "hand":
+                self.press_steps = 0
             if seg == "forearm":
                 pad = float(max((fm[1 + i] for i in self.tips), default=0.0))
                 self.squeeze_steps = self.squeeze_steps + 1 if pad > 25.0 else 0
@@ -585,7 +628,6 @@ class _Runtime:
                     self._flag("squeezed", f"finger pad on the forearm over 25 N for 0.1 s ({pad:.1f} N)")
         self.wedge_n = wedge
         # pull on the cannula: the hub spring's stretch
-        hp, hr = P["hand"]
         c0, r0 = P["line_0"]
         stretch = np.linalg.norm(hp + hr @ self.hub_local - (c0 - r0[:, 2] * s.seg_len / 2))
         self.tension = s.hub_k * float(stretch)

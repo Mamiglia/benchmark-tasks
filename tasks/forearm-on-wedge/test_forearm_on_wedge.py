@@ -14,7 +14,8 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 import task  # noqa: E402
 import wedgedemo  # noqa: E402
-from wedgekit import Latches, WardState, body_start, line_start, signed_angle_x, wedge_height  # noqa: E402
+from wedgekit import (Latches, WardState, body_start, line_start, hand_contact,  # noqa: E402
+                      on_cannula_site, signed_angle_x, wedge_height)
 
 S = task.RIG
 BED = task.BED
@@ -64,11 +65,52 @@ def test_success_state():
     assert task.score(st) == 0.75 and task.success(st)
 
 
-@pytest.mark.parametrize("flag", ["hand_touched", "line_pulled", "wrist_bent", "too_fast", "squeezed"])
+@pytest.mark.parametrize("flag", ["site_touched", "hand_pressed", "line_pulled", "wrist_bent", "too_fast", "squeezed"])
 def test_any_latch_is_zero(flag):
     lat = Latches()
     setattr(lat, flag, True)
     assert task.score(state(latch=lat)) == 0.0
+
+
+HUB = np.subtract(S.hub, S.wrist)  # the cannula hub in the hand's frame (at rest)
+TOP = S.hand_size[2] - S.wrist[2]  # the back of the hand's top face, hand frame
+PALM = -S.wrist[2]  # the palm's underside, hand frame
+
+
+def test_site_is_the_dressing_and_hub_only():
+    for dy in (-0.03, 0.0, 0.03):  # the dressing (6 cm long, centred on the hub), on the back of the hand
+        assert on_cannula_site(S, (HUB[0], HUB[1] + dy, TOP))
+    assert on_cannula_site(S, HUB)  # the hub itself
+    assert not on_cannula_site(S, (HUB[0], HUB[1], PALM))  # palm, under the hub
+    assert not on_cannula_site(S, (0.0, -0.15, PALM))  # palm under the fingers
+    assert not on_cannula_site(S, (0.0, -0.15, TOP))  # back of the fingers
+    assert not on_cannula_site(S, (S.hand_size[0] / 2, -0.06, PALM + 0.01))  # side of the hand, low
+    assert hand_contact(S, [HUB, (0.0, -0.15, PALM)], [-1.0, -2.0]) == (1.0, 2.0)  # PhysX's signed normal forces
+
+
+def contact_latches(contacts, steps=480):
+    """The kit's hand check on the same synthetic contacts held for ``steps`` physics steps: [(hand-frame point,
+    normal force N)]."""
+    site, other = hand_contact(S, [p for p, _ in contacts], [f for _, f in contacts])
+    return Latches(site_touched=site > S.touch_n, hand_pressed=other > S.support_n and steps >= 24)
+
+
+def test_gentle_palm_support_still_succeeds():
+    """A gentle hand under the palm, away from the cannula (here 6 N in all, the hand's weight and a little more,
+    held for 2 s) latches nothing: the trial still scores 0.75 at the end, 1.0 after the 2 s hold."""
+    lat = contact_latches([((0.0, HUB[1], PALM), 3.0), ((0.0, -0.15, PALM), 3.0)])
+    assert not lat.any()
+    assert task.score(state(latch=lat)) == 0.75
+
+
+def test_contact_on_dressing_fails():
+    lat = contact_latches([((HUB[0], HUB[1] + 0.02, TOP), 1.0)], steps=1)
+    assert lat.site_touched and task.score(state(latch=lat)) == 0.0
+
+
+def test_firm_grip_on_hand_fails():
+    lat = contact_latches([((S.hand_size[0] / 2, -0.12, PALM + 0.015), 18.0), ((-S.hand_size[0] / 2, -0.12, PALM + 0.015), 18.0)])
+    assert lat.hand_pressed and task.score(state(latch=lat)) == 0.0
 
 
 def test_trapped_line_caps_at_half():
