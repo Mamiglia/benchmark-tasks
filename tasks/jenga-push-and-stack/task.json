@@ -16,5 +16,6 @@
   "run_limit": "3,000 steps (150 s at 20 Hz)",
   "reset_notes": "Knock the tower down, shuffle the 54 blocks and rebuild it with the loading sleeve, level 1 along x, then slide the sleeve off. Which blocks are loose changes with every rebuild, as in a real game; that is intended (the simulation draws them per seed).",
   "fidelity": "Each block is a rigid box of real size, thickness 15 mm plus a seeded +-0.3 mm, so in each level some blocks carry the load and others are loose. Wood friction 0.40 static, 0.30 dynamic; 15 g blocks; 0.3 mm play between neighbours. PhysX TGS, 32 position iterations, 2 mm contact offset; with no robot the tower moves under 1 mm in 60 s. Hand force comes from joint lag, as on the real arm. Wood compliance and roughness are not modelled.",
-  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seed 10; also 1.0 on seeds 0 and 4)"
+  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seed 10; also 1.0 on seeds 0 and 4)",
+  "media": "M-RXMWM4"
 }
