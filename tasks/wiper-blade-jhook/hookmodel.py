@@ -94,7 +94,7 @@ class LatchParams:
     click_n: float = 7.0  # N: push needed over the last CLICK_M with the tab up
     click_k: float = 2000.0  # N/m: the ramp's stiffness (its force is capped at click_n)
     slide_damping: float = 15.0  # N s/m: adapter sliding in the hook
-    break_n: float = 200.0  # N: a latched blade forced off (hook bends / adapter breaks)
+    break_n: float = 0.0  # N; 0: the weld never breaks (PhysX joint-force spikes broke it during normal tab presses)
 
 
 class HookMonitor:
@@ -148,7 +148,8 @@ class HookMonitor:
 
 @dataclass(frozen=True)
 class ArmRules:
-    slam_mps: float = 1.2  # hook speed toward the glass at landing: a fall of about 3 cm on the spring alone
+    slam_mps: float = 0.75  # hook speed toward the glass at landing: a fall of about 3 cm on the spring alone (released
+    #                         from 14 degrees, 8.7 cm, the hook lands at 1.32 m/s in the simulation; v ~ sqrt(height))
     near_deg: float = 2.0  # landing zone: within this of the glass (blade on) / the stop (bare)
     bare_deg: float = LOW_DEG + 0.5  # bare arm this low: the hook is on the glass
 

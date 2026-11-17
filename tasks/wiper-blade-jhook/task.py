@@ -41,7 +41,8 @@ LAYOUT = Layout(G_ORIGIN, PIVOT)
 
 ARM_BOXES = (  # arm frame: origin on the hinge axis, y along the arm
     ((0.0, 0.003, 0.0), (0.026, 0.05, 0.034), BLACK),  # pivot head
-    ((0.0, 0.165, 0.0), (0.012, 0.28, 0.010), BLACK),  # shaft (U-channel), 44-54 mm above the glass
+    ((0.0, 0.155, 0.0), (0.012, 0.26, 0.010), BLACK),  # shaft (U-channel), 44-54 mm above the glass
+    ((0.0, 0.295, 0.0), (0.012, 0.02, 0.010), BLACK, False),  # its last 2 cm (drawn only)
     ((0.0, 0.318, -0.009), (0.010, 0.026, 0.008), BLACK, False),  # drop to the hook
     ((0.0, 0.343, -0.0135), (0.009, 0.032, 0.0025), STEEL, False),  # hook strip, on the adapter's top
     ((0.0, 0.36125, -0.0185), (0.009, 0.0025, 0.0125), STEEL, False),  # the bend, round the adapter's nose
@@ -238,7 +239,7 @@ def stage(objects) -> float:
 
 
 def score(objects) -> float:
-    """0 if at any time the arm landed on the glass faster than 1.2 m/s at the hook (about a 3 cm fall on its spring),
+    """0 if at any time the arm landed on the glass faster than 0.75 m/s at the hook (about a 3 cm fall on its spring),
     the bare hook touched the glass, a latched blade was forced off the hook, or a blade left the table. Otherwise:
     0.25 the old blade off the hook and lying on the table (not on the windshield), let go; 0.5 and the new blade
     latched on the hook; 0.75 and the arm resting on the glass on the new blade; 1.0 and both grippers 3 cm or more

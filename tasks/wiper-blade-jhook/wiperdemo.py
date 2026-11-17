@@ -26,8 +26,8 @@ OPENING = 2 * abs(FINGER_OPEN)
 DEBUG = bool(os.environ.get("WIPER_DEBUG"))
 TOP = 0.7475
 LIFT_DEG = 14.0
-HOLD_S = 0.26  # right hand on the shaft, from the pivot
-GRASP = np.array([0.07, 0.0, 0.018])  # left hand on the bridge, 7 cm past the adapter (its wrist camera then clears the arm)
+HOLD_S = 0.22  # right hand on the shaft, from the pivot (clear of the left hand at the hook)
+GRASP = np.array([0.09, 0.0, 0.018])  # left hand on the bridge, 9 cm past the adapter (its wrist camera then clears the arm)
 TAB_TOP = np.array([-0.010, 0.024, 0.033])  # release tab's top, blade frame
 DROP = np.array([0.30, 0.56, TOP + 0.03])  # old blade laid here (blade origin), running along -x
 R_DROP = np.diag([-1.0, -1.0, 1.0])
@@ -38,6 +38,25 @@ def rot(approach, close) -> np.ndarray:
     x = np.asarray(close, float) - z * np.dot(close, z)
     x /= np.linalg.norm(x)
     return np.stack([x, np.cross(z, x), z], axis=1)
+
+
+def rotvec(r) -> np.ndarray:
+    """Axis times angle of a rotation matrix."""
+    ang = math.acos(max(-1.0, min(1.0, (np.trace(r) - 1) / 2)))
+    if ang < 1e-9:
+        return np.zeros(3)
+    v = np.array([r[2, 1] - r[1, 2], r[0, 2] - r[2, 0], r[1, 0] - r[0, 1]])
+    return v / (2 * math.sin(ang)) * ang
+
+
+def expm(w) -> np.ndarray:
+    """Rotation matrix of the rotation vector ``w`` (Rodrigues)."""
+    ang = float(np.linalg.norm(w))
+    if ang < 1e-12:
+        return np.eye(3)
+    k = np.asarray(w) / ang
+    kx = np.array([[0, -k[2], k[1]], [k[2], 0, -k[0]], [-k[1], k[0], 0]])
+    return np.eye(3) + math.sin(ang) * kx + (1 - math.cos(ang)) * kx @ kx
 
 
 def g_of(opening: float) -> float:
@@ -199,22 +218,26 @@ class Controller:
         return o + r @ GRASP, r @ rot((0, 0, -1), (0, 1, 0))  # the roll the left arm reaches at every blade pose
 
     def servo_blade(self, n, o_goal, r_goal, duration, bias=None, gain=0.25):
-        """Move the held blade's origin to ``o_goal`` (world), correcting for slip and the arm's lag."""
+        """Move the held blade's origin to ``o_goal`` and its axes to ``r_goal`` (world), correcting the hand's
+        command for the grip offset, slip and the arm's sag (integrated position and rotation errors)."""
         a = self.left
         b = self.blade(n)
         o0 = b.pos.copy()
-        bias = np.zeros(3) if bias is None else bias
+        bias, rc = (np.zeros(3), np.eye(3)) if bias is None else bias
         steps = max(1, round(duration / self.dt))
         for k in range(1, steps + 1):
             s = ik.smoothstep(k / steps)
             o_now = o0 + s * (o_goal - o0)
             b = self.blade(n)
-            bias += gain * (o_now - b.pos)
-            bias = np.clip(bias, -0.03, 0.03)
+            bias = np.clip(bias + gain * (o_now - b.pos), -0.06, 0.06)
+            w = rotvec(r_goal @ b.rotation().T)
+            rc = expm(0.1 * w) @ rc
+            if np.linalg.norm(rotvec(rc)) > math.radians(20):
+                rc = expm(rotvec(rc) * math.radians(20) / np.linalg.norm(rotvec(rc)))
             p, r = self.blade_grip(o_now, r_goal)
-            a.pos, a.rot = p + bias, r
+            a.pos, a.rot = p + bias, rc @ r
             yield
-        return bias
+        return bias, rc
 
     def left_script(self):
         a = self.left
@@ -273,11 +296,18 @@ class Controller:
         th = self.theta()
         so, sr = self.L.seat(th)
         u = sr[:, 1] * -1.0  # up the glass (the blade's -y)
-        below = so + sr @ np.array([-0.012, 0.0, -0.02])
+        below = so + sr @ np.array([-0.012, 0.0, -0.013])
+        # carry it toward the arms first, then turn it in front of the windshield (not over it), lined up with the arm
+        p, r = self.blade_grip(np.array([0.17, 0.42, TOP + 0.15]), R_DROP)
+        yield from a.move(p, 2.0, rot=r)
+        w1 = below - 0.10 * u + np.array([0.0, 0.0, 0.05])
+        p, r = self.blade_grip(w1 + np.array([0.0, 0.28, 0.06]), sr)
+        yield from a.move(p, 4.0, rot=r)
+        p, r = self.blade_grip(w1, sr)
+        yield from a.move(p, 2.0)
         p, r = self.blade_grip(below - 0.10 * u, sr)
-        yield from a.move(p + np.array([0.0, 0.0, 0.05]), 4.5, rot=r)
         yield from a.move(p, 1.5)
-        bias = yield from self.servo_blade("new_blade", below, sr, 2.0)
+        bias = yield from self.servo_blade("new_blade", below, sr, 3.0)
         th = self.theta()
         so, sr = self.L.seat(th)
         bias = yield from self.servo_blade("new_blade", so + sr @ np.array([-0.012, 0.0, -0.001]), sr, 1.5, bias)

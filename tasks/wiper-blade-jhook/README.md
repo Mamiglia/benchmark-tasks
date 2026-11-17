@@ -83,16 +83,16 @@ In the Isaac Lab-Arena environment from the simulation walkthrough, from this fo
 inspect-robots run --embodiment yam_arena --policy dream \
   -E task=task.py -E object_jitter=0 -E control_hz=20 -E cam_width=320 -E cam_height=176 \
   --instruction "Replace the wiper blade with the new one and lay the arm back on the windshield." \
-  --scorer task_score --max-steps RUN_LIMIT_STEPS --seed 0 --store-frames --log-dir ~/yam-eval/wiper-dream
+  --scorer task_score --max-steps 3000 --seed 0 --store-frames --log-dir ~/yam-eval/wiper-dream
 ```
 
-Scripted demo: the same with `--policy yam_scripted` (seeds 0, 4 and 10 were run; the layout does not depend on the
-seed). `DEMO_CHEAT=drop` (let go of the lifted arm once the new blade is on) and `DEMO_CHEAT=yank` (pull the old
+Scripted demo: the same with `--policy yam_scripted` (seeds 0, 4 and 10 all score 1.0; the layout does not depend on
+the seed). `DEMO_CHEAT=drop` (let go of the lifted arm once the new blade is on) and `DEMO_CHEAT=yank` (pull the old
 blade off without pressing the tab) play the two loopholes. `WIPER_DEBUG=1` prints the arm angle and each blade's
 latch state, offset from the seat and tab travel every 0.1 s. Unit tests (no simulator): `pytest
 test_wiper_blade_jhook.py` with `yam_arena` importable.
 
-Runtime per trial: RUNTIME_PLACEHOLDER.
+Runtime per trial: the scripted demo succeeds at about 62 s of simulated time (about 1,240 control steps), about 4 minutes of wall time on one Quadro-class GPU; a full 3,000-step model run takes about 10-15 minutes.
 
 ## Scoring
 
@@ -101,9 +101,9 @@ The latch and arm rules run at 60 Hz; the score every control step. The score at
 
 | Condition | Score | Real-trial check |
 |---|---|---|
-| At any time: the arm reached the glass with the hook moving faster than 1.2 m/s (the speed of a fall of about 3 cm on the spring alone) | 0 for the rest of the trial | Video: the arm was let go with the hook 3 cm or more above where it came to rest, or snapped down |
+| At any time: the arm reached the glass with the hook moving faster than 0.75 m/s (the speed of a fall of about 3 cm on the spring alone) | 0 for the rest of the trial | Video: the arm was let go with the hook 3 cm or more above where it came to rest, or snapped down |
 | At any time: the arm, with no blade on its hook, came down onto the glass (bare hook on the glass) | 0 | Video: the bare hook touched the glass |
-| At any time: a latched blade was forced off the hook (in simulation the weld broke, above 200 N) | 0 | Photo: hook bent or adapter broken, or the blade came off without the tab pressed (video) |
+| At any time: a latched blade was forced off the hook without its tab (real trial only: in simulation the weld does not break, so forcing gets nothing) | 0 | Photo: hook bent or adapter broken, or the blade came off without the tab pressed (video) |
 | At any time: a blade fell off the table | 0 | Video |
 | Old blade off the hook and lying on the table (lowest point within 1.5 cm of the table, not on the windshield or its stand), not held | 0.25 | Photo |
 | And the new blade latched on the hook | 0.5 | After the trial, a 2 kg pull along the arm on the blade does not move it (luggage scale); the adapter is in the bend |
@@ -112,8 +112,9 @@ The latch and arm rules run at 60 Hz; the score every control step. The score at
 
 Doing nothing scores 0. Re-latching the old blade, or leaving it on the windshield, scores 0.
 
-**Unintended strategies.** The old blade cannot be pulled off without the tab: the weld only breaks at a force
-that also bends a real hook, and that is a failure. The new blade cannot be latched from the tip side or turned
+**Unintended strategies.** The old blade cannot be pulled off without the tab: in simulation the weld holds
+whatever the pull (a breakable weld also broke under normal tab presses, from PhysX joint-force spikes), and in a
+real trial forcing it bends the hook, which scores 0. The new blade cannot be latched from the tip side or turned
 across the arm: the latch engages only from behind the bend, lined up within 3 mm and 6 degrees. Letting go of the
 arm in the air fails on the landing speed, and putting it down without a blade fails on the bare hook.
 
@@ -146,7 +147,7 @@ arm in the air fails on the landing speed, and putting it down without a blade f
 
 Total about $75-85. Set the stand so the sheet slopes at 27 degrees. Check the arm's force with a luggage scale at
 the blade's centre (lift until the blade leaves the glass): 0.75-0.95 kg; adjust the spring tension (or choose an
-arm) to match. A real blade weighs about 110 g; the arm's spring force at the hand (about 11 N at 26 cm from the
+arm) to match. A real blade weighs about 110 g; the arm's spring force at the hand (about 13 N at 22 cm from the
 pivot) is within the YAM's payload, and pressing the tab (about 5 N) and clicking the latch (about 7 N) are well
 within its grip.
 
