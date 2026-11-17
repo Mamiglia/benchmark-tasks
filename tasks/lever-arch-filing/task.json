@@ -1,0 +1,22 @@
+{
+  "title": "File punched sheets in a lever arch file: throw its lever, put both holes over both posts at once, snap the rings shut",
+  "category": "Societal relatability",
+  "keywords": [
+    "lever arch file",
+    "ring binder",
+    "office filing",
+    "two-point alignment",
+    "flexible stack",
+    "bimanual carry",
+    "over-centre lever",
+    "constrained order"
+  ],
+  "instruction": "File the punched sheets in the lever arch file and lock its rings shut.",
+  "context": "Filing punched papers in a lever arch file is one of the most familiar office and school jobs; anyone watching knows at once what is being done. It is hard for a robot for physical reasons. The 2 mm stack of 20 sheets bends and can only be pinched at its overhanging ends, so both hands must carry it as one piece. Its two 6 mm holes, 80 mm apart, must go over both 4.6 mm posts together, with 0.7 mm clearance and the holes hidden under the sheets. The rings open only through an over-centre lever that resists up to 10 N and must be thrown past its centre, then driven back past it with the sheets in place. The order is fixed: open, thread, close.",
+  "setup": "Positions in cm from the midpoint between the arm bases on the table top (x forward, y left). (1) Lever arch file: Leitz 180 polypropylene, A4, 80 mm spine, blue (10101035; 318 x 285 mm boards, 0.49 kg), open flat: back board x 20.5-49, y -15.9 to 15.9 (near corners taped); spine x 49-57; front cover flat at x 57-85.5. Its two-ring mechanism is on the back board next to the spine: fixed posts (4.6 mm wire, 65 mm tall) at x 44, y +4 and -4; rings shut; the lever at the file's left end (y +16), folded flat. (2) Two wrapped 500-sheet reams of A4 80 g/m2 copier paper, stacked crosswise and taped: x -10.7 to 19, y -10.5 to 10.5, 10 cm tall. (3) On the reams, a squared stack of 20 A4 80 g/m2 sheets (2 mm, 100 g), two-hole punched to ISO 838 (6 mm holes, 80 mm apart, 12 mm from the edge): holed long edge at x 15 facing the file, centred on y 0, so each short end overhangs the reams by 4.4 cm. Arms start in the ready pose.",
+  "scoring": "Tools: photo after the trial and the trial video. 0 for the whole trial if at any time a sheet is creased or folded (bent over 120 degrees), the sheets fall off the table, a sheet tears at a hole, or a gripper pushes or pulls a ring's moving half open instead of working the lever (sim: halves 6 degrees more open than the lever allows with a gripper within 4 cm of a ring). Otherwise, read at the end: 1.0 if all 20 sheets are on both rings (each post through its hole: hole centre within 3 mm of the post axis and 5 mm or more below its tip), the lever is folded flat (within 5 degrees) with both rings shut, and both grippers are 3 cm or more from the sheets' holed strip and the lever, held 1 s; 0.5 if the sheets are on both posts but the rings are not shut or a gripper is still on them; 0.2 if on one post only (or some sheets are off a ring); 0.1 if the lever was thrown past its centre (40 degrees) at some point; else 0.",
+  "run_limit": "2,400 steps (120 s at 20 Hz)",
+  "reset_notes": "Lift the sheets off the rings (open the lever, take them off, close it), square the stack and lay it back on the reams with the holed edge at its tape marks. Lever folded flat, rings shut. Replace any sheet that is creased or torn at a hole with a freshly punched one (ISO 838 two-hole punch).",
+  "fidelity": "Approximate. The 20-sheet stack is three rigid 2 mm slabs (holed strip 40 mm wide, then 85 + 85 mm) hinged parallel to the holed edge with bending springs, so it droops when held by the strip; sheets cannot slide on each other or tear. Holes are 6 mm square, posts 4.6 mm round. The lever's over-centre spring and its cam to the rings are joint torques set each physics step (up to 10 N at the plate, centre 40 deg). Boards are rigid.",
+  "scores": "Dream-1 run (1,200 steps): 0.0; scripted demo: 1.0 (seed 0; also 1.0 on seeds 4 and 10)"
+}
