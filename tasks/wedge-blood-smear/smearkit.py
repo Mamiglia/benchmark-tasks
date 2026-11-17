@@ -56,9 +56,9 @@ class SmearRig(Box):
     paper_xy: tuple[float, float] = (0.30, -0.12)
     grip_zone: float = 0.020  # the top of the spreader the fingers hold ...
     grip_collider: float = float(os.environ.get("SMEAR_GRIPC", "0.003"))  # ... collided this thick (see _spawn)
-    mu_glass: float = 0.35  # wet glass on glass (both slides' material; PhysX averages)
+    mu_glass: float = 0.15  # glass on glass lubricated by the film (both slides' material; PhysX averages)
     mu_paper: float = 0.8
-    mu_grip: float = 1.2
+    mu_grip: float = 1.5
     law: Law = Law()
     touch_n: float = 0.02  # contact force from which the edge counts as on the slide
     drop_from_near: float = 0.024  # drop centre from the base slide's near (frosted) end
@@ -147,6 +147,8 @@ def _spawn(prim_path: str, cfg, translation=None, orientation=None, **kwargs):
             mats[mu] = f"{prim_path}/Looks/m{len(mats)}"
             mat = sim_utils.RigidBodyMaterialCfg(static_friction=mu, dynamic_friction=mu)
             mat.func(mats[mu], mat)
+            if mu == s.mu_grip:  # rubber pads on glass: the pad's grip, not the average with the robot's material
+                PhysxSchema.PhysxMaterialAPI.Apply(stage.GetPrimAtPath(mats[mu])).CreateFrictionCombineModeAttr("max")
         return mats[mu]
 
     def look(color, rough=0.5, opacity=1.0) -> str:
@@ -328,6 +330,7 @@ class _Runtime:
         self.smear = Smear(law=s.law, slide_l=s.slide[0], slide_w=s.slide[1], drop_x=s.drop_from_near,
                            spreader_w=s.slide[1])
         self.base0 = None
+        self.last_touch = -100
         self.moved = 0.0
         self.force = 0.0
         self.edge = (0.0, 0.0, 0.0, 0.0)
@@ -352,7 +355,10 @@ class _Runtime:
         self.force = float(np.linalg.norm(f.sum(axis=0)))
         x, y, ang = edge_on_slide(sp, sR[:, 2], bp, bR, s.slide[0] / 2)
         self.edge = (x, y, ang, self.force)
-        msg = self.smear.step(self.dt, x, y, self.force >= s.touch_n, ang)
+        # PhysX reports the force of a light sliding contact on most substeps but not all: the edge counts as on the
+        # glass if it pushed 0.02 N or more within the last 6 substeps (25 ms)
+        self.last_touch = self.n if self.force >= s.touch_n else self.last_touch
+        msg = self.smear.step(self.dt, x, y, self.n - self.last_touch < 6, ang)
         if msg:
             self.say(f"{msg} (edge {x * 1000:.1f} mm, angle {ang:.1f} deg, force {self.force:.2f} N, speed "
                      f"{self.smear.v * 1000:.0f} mm/s)")

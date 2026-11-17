@@ -8,13 +8,14 @@ The right arm does the smear; the left arm turns out of the top camera's view.
 1. Grip the spreader across its thickness, 8 mm below its top end, from straight above, and lift it out of the stand.
 2. Pitch it so that it leans back over the drop at ``ANGLE`` (35 degrees) to the base slide, its lower edge across the
    slide 6 mm in front of the drop, 4 mm above the glass.
-3. Feel the glass: the edge goes down slowly; once the measured tool point stops following the command (the arm's
-   joints are springs, so the extra lag is the edge pressing on the glass with a fraction of a newton), it holds that
-   command depth plus ``PRESS_M``.
-4. Back the edge into the drop at 5 mm/s, to 1 mm in front of its centre, and hold ``WICK_S`` (1.5 s) while the drop
+3. Measure the arm's sag and lag there (forward kinematics of the measured joints against the command), aim off by
+   it, and lower the edge over 1 s to ``PRESS_M`` (1.0 mm) below the glass: the arm's joints are springs, so the
+   edge rests on the glass with a fraction of a newton.
+4. Back the edge into the drop at 5 mm/s, to 1.5 mm past its centre, take out the arm's x lag there, and hold ``WICK_S`` (1.5 s) while the drop
    runs out along the edge.
-5. One stroke: the edge goes forward along the slide at ``SPEED`` (45 mm/s, constant, with 0.1 s ramps), at the same
-   height and angle, for 44 mm, past the point where the blood runs out (about 38 mm); then it lifts clear.
+5. One stroke: the edge goes forward along the slide at ``SPEED`` (50 mm/s, constant, with 0.25 s ramps), at the same
+   height and angle, for 48 mm, past the point where the blood runs out (about 40 mm); then it lifts clear and turns
+   out of the top camera's view.
 """
 
 from __future__ import annotations
@@ -53,7 +54,7 @@ class Move:
 
     SEEDS = (READY, [0.0, 1.5, 1.2, -0.6, 0.0, 0.0], [-0.3, 1.0, 0.8, -0.3, 0.0, 1.5])
 
-    def __init__(self, base, q_start, finger_start, legs, ramp=0.1):
+    def __init__(self, base, q_start, finger_start, legs, ramp=0.25):
         self.base, self.q = np.asarray(base, float), np.asarray(q_start, float).copy()
         p0, R0 = ik.tcp_pose(self.q, self.base)
         self.legs, self.ramp = [], ramp
@@ -112,12 +113,11 @@ PARK_Q = {"left": np.array([1.2, *READY[1:]]), "right": np.array([-1.2, *READY[1
 
 class Controller:
     ANGLE = _env("DEMO_ANGLE", 35.0)  # spreader to slide, deg
-    SPEED = _env("DEMO_SPEED", 0.045)  # m/s
+    SPEED = _env("DEMO_SPEED", 0.050)  # m/s
     WICK_S = _env("DEMO_WICK_S", 1.5)
-    PRESS_M = _env("DEMO_PRESS", 0.0008)  # command this far below where the glass was felt
+    PRESS_M = _env("DEMO_PRESS", 0.0010)  # command the edge this far below the glass (a light press)
     GRIP_BELOW_TOP = 0.008
-    FEEL_M = 0.0004
-    STROKE_M = 0.044
+    STROKE_M = 0.048
 
     def __init__(self, bases, dt, rig):
         self.rig, self.dt = rig, dt
@@ -228,29 +228,24 @@ class Controller:
         want = self.tcp_for_edge(above, R)
         off = want - got
         self.say(f"hover: TCP off {np.round(-off * 1000, 2)} mm; aiming off by that")
-        aim = np.array([off[0], off[1], 0.0])
-        lag0 = off[2]
-        z = zt + 0.004
-        felt = False
-        for _ in range(80):  # feel the glass: 0.25 mm per 0.05 s
-            z -= 0.00025
-            yield from self.step(0.05, np.array([dx + ahead, dy, z]) + aim, R)
-            lag = (self.tcp_for_edge((0, 0, z), R)[2] + aim[2]) - self.samples[-1][2] - lag0
-            if lag >= self.FEEL_M:
-                felt = True
-                break
-        self.say(f"glass {'felt' if felt else 'NOT felt'} at edge command {(z - zt) * 1000:+.2f} mm")
-        z -= self.PRESS_M
-        yield from self.step(0.3, np.array([dx + ahead, dy, z]) + aim, R)
+        aim = off  # the arm sags and lags by about a millimetre: aim off by what was measured
+        z = zt - self.PRESS_M
+        yield from self.step(1.0, np.array([dx + ahead, dy, z]) + aim, R)
         if self.cheat == "plough":  # push straight through the drop from behind
             x_from = dx + ahead
         else:
-            x_from = dx + 0.001
-            yield from self.step(abs(ahead - 0.001) / 0.005, np.array([x_from, dy, z]) + aim, R, collect=False)
+            x_from = dx - 0.0015  # into the drop, past its centre
+            yield from self.step(abs(ahead + 0.0015) / 0.005, np.array([x_from, dy, z]) + aim, R, collect=False)
+            # in the drop: check the tool point against the command and take out any x lag (the glass drags the edge)
+            yield from self.step(0.3, np.array([x_from, dy, z]) + aim, R)
+            err = self.tcp_for_edge(np.array([x_from, dy, z]) + aim, R) - np.median(self.samples, axis=0)
+            self.say(f"in the drop: TCP lags the command by {np.round(err * 1000, 2)} mm")
+            aim = aim + np.array([err[0], 0.0, 0.0])
+            yield from self.step(0.3, np.array([x_from, dy, z]) + aim, R, collect=False)
             if self.cheat != "nowait":
                 yield from self.step(self.WICK_S, np.array([x_from, dy, z]) + aim, R, collect=False)
         x_to = x_from + self.STROKE_M
-        dur = self.STROKE_M / self.SPEED + 0.1
+        dur = self.STROKE_M / self.SPEED + 0.25
         if self.cheat == "lift":
             mid = x_from + 0.012
             yield from self.step((mid - x_from) / self.SPEED, np.array([mid, dy, z]) + aim, R, collect=False,
@@ -258,7 +253,8 @@ class Controller:
             yield from self.step(0.3, np.array([mid + 0.004, dy, z + 0.004]) + aim, R, collect=False)
             yield from self.step(0.3, np.array([mid + 0.008, dy, z]) + aim, R, collect=False)
             x_from = mid + 0.008
-            dur = (x_to - x_from) / self.SPEED + 0.1
+            dur = (x_to - x_from) / self.SPEED + 0.25
         yield from self.step(dur, np.array([x_to, dy, z]) + aim, R, collect=False, prof="line")
         yield from self.step(0.8, np.array([x_to + 0.01, dy, z + 0.03]) + aim, R, collect=False)
-        yield ({}, 1.5, None)
+        yield ({"right": 2.0}, 0.0, None)  # out of the top camera's view of the slide, spreader still held
+        yield ({}, 1.0, None)

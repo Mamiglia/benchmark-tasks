@@ -139,11 +139,13 @@ inspect-robots run --embodiment yam_arena --policy yam_scripted \
 
 `smeardemo.py` sees only the measured joint positions (forward kinematics gives the tool point) and the fixed layout
 above; it does not read the simulator. The right arm grips the spreader across its thickness 8 mm below its top end,
-lifts it out of the stand, pitches it to lean back over the drop at 35 degrees, holds its edge 6 mm in front of the
-drop and 4 mm above the glass, measures its own lag, and lowers the edge slowly until the measured tool point stops
-following the command (the glass is felt), then presses 0.8 mm further. It backs the edge into the drop at 5 mm/s,
-waits 1.5 s while the drop runs along the edge, and pushes forward 44 mm at a constant 45 mm/s (0.1 s ramps), then
-lifts clear.
+lifts it out of the stand, pitches it to lean back over the drop at 35 degrees, and holds its edge 6 mm in front of
+the drop and 4 mm above the glass. There it measures its own sag and lag (forward kinematics of the measured joints
+against the command) and aims off by them, then lowers the edge over 1 s to 1 mm below the glass: the arm's joints are
+springs, so the edge rests on the glass with about 0.2-0.4 N. It backs the edge into the drop at 5 mm/s to 1.5 mm past
+its centre (it stops about 1 mm short of that: the glass drags the edge), takes out the arm's x lag there, waits 1.5 s while the drop runs along the edge, and pushes forward 48 mm
+at a constant 50 mm/s (0.25 s ramps); the blood runs out after about 40 mm. Then it lifts clear and turns away from
+the top camera's view of the slide, still holding the spreader.
 
 DEMO_RESULTS
 
