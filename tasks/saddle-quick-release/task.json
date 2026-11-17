@@ -1,0 +1,22 @@
+{
+  "title": "Raise a child's bike saddle: open the quick-release, lift and straighten the loose post, shut the lever past dead centre",
+  "category": "Societal relatability",
+  "keywords": [
+    "bimanual",
+    "quick-release",
+    "over-centre lever",
+    "seat post",
+    "bicycle",
+    "hold and act",
+    "position control",
+    "balance bike"
+  ],
+  "instruction": "Raise the saddle until the bottom of the blue tape on the seat post is 4 cm above the seat clamp, with the saddle straight, and close the quick-release lever.",
+  "context": "Parents raise a child's bike saddle every few months as the child grows, and anyone who has done it knows the trick: as soon as the quick-release lever is open the post is loose, it slides back down and turns freely in the frame, so one hand has to hold the saddle at the right height and in line with the bike while the other hand shuts the lever, pushing it through its stiff point until it snaps flat. A lever left short of that point springs back open and the saddle drops under the child.",
+  "setup": "Centimetres from the midpoint between the arm bases, x forward, y left, heights above the table. A Strider 12 Sport balance bike (red, 3.0 kg, 12 in wheels 30 cm across, about 54 cm wheelbase, seat tube leaning back 15 degrees) stands along x, front wheel away from the arms (front hub x 56, rear hub x 0, both 15 up), its front wheel in a slot-type floor bike stand (30 x 16 cm base, slot walls 11 cm tall). Its left side faces +y. Stock aluminium quick-release seat collar: top centre at x 25, y 0, 24 up; red lever on the bike's left (+y) side, pivot 2 cm behind the tube, 4.8 cm to the paddle (2.0 x 1.6 cm), folded down along the seat tube when closed (start). Stock 22.2 mm seat post with its moulded saddle (0.30 kg; saddle 20 cm long, 12.5 cm wide at the rear, 5 cm at the nose, 3 cm thick); saddle top 31.8 cm up; saddle turned 12 degrees nose-left of the frame's line. Blue painter's tape (12 mm band) round the post, lower edge level with the collar's top. Arms start in the ready pose.",
+  "scoring": "Read at the end with a ruler, a photo from above and by hand. 0 if at any time the post was pulled up past its MIN INSERT line (7.5 cm), or unless: the lever is folded within 12 degrees of the frame (past its dead point), both grippers are 3 cm or more from the post, saddle and lever, and the tape's lower edge is 10 mm or more above the collar. Then 0.3; +0.5 if the tape's lower edge is 40 +- 5 mm above the collar (ruler); +0.2 if the saddle's centre line is within 5 degrees of the frame's main tube (photo from above, protractor). 1.0 is success, held 1 s. Real trial, after the run: push down on the saddle with 20 N (a kitchen scale under the hand reading 2 kg); if the tape moves 2 mm or more, score 0 (lever not clamping). Score 0 too if the bike moved more than 2 cm off its taped footprint.",
+  "run_limit": "2,400 steps (120 s at 20 Hz)",
+  "reset_notes": "Open the lever, set the post back with the tape's lower edge at the collar and the saddle turned 12 degrees nose-left (pencil marks on the collar and the post), close the lever. Check the cam nut setting each session (README): about 30 N at the paddle to close, and the post slides down by itself with the lever open.",
+  "fidelity": "Approximate. The bike is a fixed body; post and lever are joints of it. No cam contact: each physics step applies a stroke profile (the paddle pushed open up to 30 N at 22 degrees, pulled shut past 12 degrees), 1.5 N sliding friction on the loose post (it sinks under its 2.9 N weight) and 0.03 N m turning friction; below 30 degrees the collar holds the post with a 15 kN/m, 60 N m/rad spring. Details in README.",
+  "scores": "Dream-1 run: TBD; demo: 1.0"
+}
