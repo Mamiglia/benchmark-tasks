@@ -115,7 +115,9 @@ inspect-robots run --embodiment yam_arena --policy yam_scripted \
 `yam_scripted` runs `jenga_demo.Controller` closed loop (`jengakit` hooks it in when the task module defines
 `demo_controller`). It reads only the joint positions and its own commands; it knows the nominal layout, never which
 blocks are loose. See the docstring of `jenga_demo.py` for the steps. `DEMO_MODE=noprobe`, `brace` and `parallel`
-play the loopholes listed under "Checked in simulation".
+play the loopholes listed under "Checked in simulation". On seeds 0, 4 and 10 the first block the demo tries (the middle
+block of level 10) was loose, so the recorded demos never back off from a pinched block; see "Checked in simulation"
+for what happened when the demo started at a pinched one.
 
 ## Files
 
@@ -144,11 +146,29 @@ python -m pytest -q      # in the yam_arena environment; no GPU needed
 
 ## Checked in simulation
 
-RESULTS
+Isaac Lab-Arena (Isaac Lab 3.0, Isaac Sim 6.1) on shared RTX workstations, with the commands above (`JENGA_DEBUG=1`,
+`--max-steps 3000`). Frames of every run listed were checked (not blank).
+
+| Run | `task_score` | What the log shows |
+|---|---|---|
+| No robot motion, 60 s (tower standing test) | 0 (nothing taken) | Largest block movement 0.88 mm (a top-level block), largest tilt 1.4 deg; no latch |
+| Scripted demo, seed 0 | **1.0** | Tower top touched at 273.3 mm (true 273.0). Level 10 middle block loose: pushed 15.3 mm at about 1.3 N, drawn out by the right hand, stacked crosswise; other blocks under 0.8 mm; success at about 49 s (about 1,000 steps) |
+| Scripted demo, seed 4 | **1.0** | Top at 273.7 mm. Level 10 middle pushed 15.1 mm at about 0.9 N; stacked; other blocks under 0.6 mm |
+| Scripted demo, seed 10 | **1.0** | Top at 273.2 mm. Level 10 middle pushed 15.1 mm at about 0.4 N; stacked; other blocks under 0.9 mm |
+| Demo probing level 6 first, seed 0 (that middle block is the thickest of its level: pinched) | **0** | The probe did not stop: the 12 levels above slid with the block, and the tower fell (fell latch). Kept as evidence that pushing a pinched block topples the tower in the simulation; it also shows the demo's probe threshold is coarse (see Simplifications) |
+| `DEMO_MODE=noprobe`, seed 0 (naive: push the middle block of level 6, a pinched one, 15 mm with no force limit, then carry on) | **0** | The levels above slid with the block and the tower fell (fell latch at 19 s); the rest of the turn earns nothing |
+| `DEMO_MODE=brace`, seed 10 (loophole: the right hand steadies the tower's far face at level 13 while the left pushes) | **0** | Both hands on tower blocks at once (two-hands latch at 19 s), although the block was then drawn out and stacked |
+| Dream-1 (`dreamlabs/dream-1-beta`), seed 0 | **0** | 3,000 steps. Both arms moved about near their bases and the table; neither gripper came near the tower; no block moved |
+
+Scorer rules not reached by these runs (both hands on the tower, a block put back after moving 1 cm, a top-level block
+taken, a block laid along the top level, held, off centre or still moving) are covered by the unit tests.
 
 ## Runtime and seeds
 
-RUNTIME
+A scripted trial is about 1,000 control steps (50 s simulated: touch-off 11 s, probe and push 9 s, draw out and
+stack 25 s, then the 5 s hold); wall time 6 to 30 minutes on a shared RTX workstation, mostly Isaac Sim start-up
+and GPU sharing. A 3,000-step policy run takes longer, depending on the policy's latency. Seeds (`JENGA_SEED`): 0, 4
+and 10 checked; the default is 0. The layout is fixed with `-E object_jitter=0`.
 
 ## Real-world trial
 
@@ -180,4 +200,9 @@ Keep the area around the table clear of anything a block could knock off.
 
 - Wood is a rigid box: no surface roughness, compliance or edge chamfers. The thickness spread (+-0.3 mm) stands in
   for the real variation in a set; it makes loose and pinched blocks, which is what the task needs.
-- The simulation shows a slow creep of the standing tower (under 1 mm in 60 s with no robot), within the 5 mm limit.
+- PhysX settings for a standing 54-box tower: TGS, 32 position and 4 velocity iterations per block, 2 mm contact offset,
+  0 rest offset, depenetration speed capped at 0.05 m/s (at 0.5 or 1 m/s the loaded tower crept several mm a minute).
+  With no robot the tower moves under 1 mm in 60 s (checked: top block 0.88 mm, no block tilting more than 1.4 deg),
+  within the 5 mm limit.
+- The robot's hand force is read from joint lag, as on the real arm; the demo's probe threshold (command 5 mm ahead
+  of the fingertip) is coarse. See "Checked in simulation" for a pinched block it did not catch.

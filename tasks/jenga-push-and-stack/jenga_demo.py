@@ -23,7 +23,7 @@ One turn, one hand at a time:
    the lower jaw clears the tower's face; lets go and backs away.
 
 ``DEMO_MODE`` (environment variable) plays a loophole instead, to check that the scorer gives it nothing:
-``noprobe`` (push level 10's middle block 15 mm with no force limit, then carry on as usual), ``brace`` (the right
+``noprobe`` (push level 6's middle block 15 mm with no force limit, then carry on as usual), ``brace`` (the right
 hand steadies the tower while the left one pushes). ``parallel`` lays the block along the top level instead of across
 it (partial credit).
 """
@@ -282,7 +282,7 @@ class Controller:
                 yield
         yield from left.touch_top(self.tower_xy, self.nominal_top)
         if self.mode == "noprobe":
-            only = [(self.tower_xy[0], self.level_z(10), 10, 1)]
+            only = [(self.tower_xy[0], self.level_z(6), 6, 1)]
             yield from left.find_and_push(self, limit=False, only=only)
             if self.found is None:  # pushed anyway: say it went in
                 self.found = (*only[0], 0.015)
