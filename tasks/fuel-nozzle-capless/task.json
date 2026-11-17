@@ -19,5 +19,6 @@
   "run_limit": "3,000 steps (150 s at 20 Hz)",
   "reset_notes": "Nothing is used up. Hang the nozzle in its boot (spout fully down, handle toward the arms, lever and clip down) and lay the hose in its loop as in the screenshot; close nothing (the fuel door stays open, the filler's flap closes by itself).",
   "fidelity": "Approximate. Spout and bore are square (19 mm spout, 24 mm bore) where the real ones are round; one sprung flap stands in for the head's flaps and size latches. The hose is 8 rigid links on sprung ball joints. Lever, clip and flap are sprung hinges moved by contact; the clip catching the lever is a rule that needs the real motions: clip tab pushed until its arm is up and lever squeezed past half travel; squeezing past the notch releases it. No fuel is simulated.",
-  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seed 0; also 1.0 on seeds 4 and 10)"
+  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seed 0; also 1.0 on seeds 4 and 10)",
+  "media": "M-7AK47U"
 }
