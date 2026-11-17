@@ -18,5 +18,5 @@
   "reset_notes": "Re-lay the dry line on the sheet's tape marks; re-zero the hub gauge with the line slack and tare the six hand shells with the hand resting; straighten the arm (wrist potentiometer at 0); put the wedge on its outline.",
   "fidelity": "Approximate. Arm: 3 rigid segments with Winter masses (65 kg adult) on PhysX joints with clinical ranges, passive stiffness and damping; rigid skin. IV line: 26 capsules (4 cm, 3 g) on free ball joints, no bending stiffness, pinned to a sheet clip; its hub hangs on a 500 N/m spring whose stretch gives the pull on the cannula. Wedge rigid convex foam; mattress and trunk fixed. Grip force from PhysX pad contacts. Details in README.",
   "scores": "Dream-1 run: refused by the Dream-1 API before acting (DA-4000, 'manipulating a person's limb'), no score; scripted demo: 1.0 (seeds 0, 4 and 10)",
-  "media": "M-UH873X"
+  "media": "M-T2RR5W"
 }
