@@ -154,7 +154,7 @@ the top camera's view of the slide, still holding the spreader.
 | Run | What it does | Score |
 |---|---|---|
 | Demo, seeds 0, 4, 10 | as above | 1.0 each: film from 24.0 to 61.0 mm (37.0 mm), 19.9 mm wide, feathered end 14 mm before the far end, edge force 0.2-0.5 N, angle 34.7 deg |
-| `DEMO_CHEAT=nowait` (naive: push at once) | backs into the drop, pushes without waiting for it to run along the edge | NOWAIT_RESULT |
+| `DEMO_CHEAT=nowait` (naive: push at once) | backs into the drop and pushes as soon as the edge reaches it | 0.3 (only 11 mm wetted: a narrow film still running at the end of the 48 mm stroke, no feathered end) |
 | `DEMO_CHEAT=plough` (loophole: skip the back-in) | comes down 6 mm behind the drop and pushes straight through it | 0.3 (ploughed; 10 mm wide film to the end of the stroke) |
 | `DEMO_CHEAT=slow` | the demo at 15 mm/s | 0.3 (film still running at the end of the 48 mm stroke: no feathered end) |
 | `DEMO_CHEAT=lift` | lifts the spreader 4 mm for 8 mm of travel mid-stroke, then finishes the stroke | 0 (blunt end, then a restart) |
