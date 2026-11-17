@@ -129,6 +129,19 @@ riser (any gap visible), tipped or slid more than 5 cm (tape marks on the riser 
 The demo is closed loop: nothing in it is timed to the layout except the approach to the knobs. It never touches
 the ball or the board.
 
+### Checked in simulation
+
+| Run | Policy | Result | Score |
+|---|---|---|---|
+| Demo, seeds 0, 4, 10 | `yam_scripted` | Grips both knobs at 5.2 s, steers the ball past all 20 holes, at FINISH at 22.9 s (about 460 steps) | 1.0, 1.0, 1.0 |
+| Contrast `DEMO_CHEAT=none` | grips the knobs, never turns them | The ball drifts slowly into the corner behind START (the board is never perfectly level) | 0.0 |
+| Contrast `DEMO_CHEAT=press` | right hand on its knob, left fingers press the board's corner down inside the box | Foul "left hand in the box" latched; the ball then drops into hole 1 | 0.0 |
+| Dream-1, seed 0 | `dream`, 2,400 steps | Raises both arms toward the box but never reaches or grips a knob; the board stays level and the ball drifts into the corner behind START | 0.0 |
+
+The demo video shows the top camera (rendered at 1280 x 704) with, on the right, a 2x crop of the same frame
+around the labyrinth, so the 12.7 mm ball can be seen. Seeds only matter through object jitter, which is 0 for this task (one fixed layout), so the three demo seeds run
+the same scene.
+
 ## Simulation fidelity
 
 - **Mechanism.** The box, gimbal frame, board and both knobs are one PhysX articulation standing loose on the riser.
@@ -147,10 +160,10 @@ the ball or the board.
 
 ## Runtime
 
-On the shared RTX workstation used, a scripted demo trial (Isaac Sim start, reset, about 470 control steps)
-takes about 3 minutes of wall time. A 2,400-step policy run takes longer, depending on the policy's latency.
-The demo reaches FINISH on the 20-hole board in about 18 s after gripping (about 470 steps in all); on the real
-60-hole board a run at that pace needs about 1,400 steps, inside the 2,400-step limit.
+On the shared RTX workstation used, a scripted demo trial (Isaac Sim start, reset, about 500 control steps)
+takes about 4 minutes of wall time; a 2,400-step Dream-1 run took about an hour. The demo reaches FINISH on the
+20-hole board 17.7 s after gripping (about 460 steps in all). On the real 60-hole board, about three times as long,
+a run at that pace needs about 1,200 steps, inside the 2,400-step limit.
 
 ## Tests
 

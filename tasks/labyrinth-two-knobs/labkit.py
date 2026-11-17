@@ -280,7 +280,7 @@ def _spawn_ball(prim_path: str, cfg, translation=None, orientation=None, **kwarg
     collide(sph.GetPrim(), steel, offset=0.001)
     from isaaclab.sim.utils import bind_visual_material
 
-    bind_visual_material(str(sph.GetPath()), look((0.86, 0.88, 0.92), 0.25, 0.7), stage=stage)
+    bind_visual_material(str(sph.GetPath()), look((0.36, 0.38, 0.42), 0.3, 0.5), stage=stage)
     return root.GetPrim()
 
 

@@ -17,6 +17,6 @@
   "scoring": "Foul, latched for the whole trial: 0 if a gripper reaches inside the box (within its walls, below rim + 1 cm) or comes within 1 cm of the ball, or the box is lifted 1 cm, tipped 5 deg or slid 5 cm on the riser. Otherwise: highest-numbered hole the ball has rolled past / number of holes (real board 60, simulation 20); 1.0 at FINISH. Passed = the ball's centre has crossed the line across the path through that hole; latched, so rolling back loses nothing. A ball that drops into a hole ends the trial and keeps the holes passed before it. Real trial: read from the top-camera video against the numbers printed beside the holes; fouls from the video, the slide against tape marks at the box's corners on the riser. Simulation: the ball's furthest point along the path's centre line; it drops when its centre is within a hole's 9 mm radius.",
   "run_limit": "2,400 steps (2 minutes at 20 Hz)",
   "reset_notes": "Take the ball from the box's ball return and put it on START. Turn the knobs until the board is level (phone inclinometer on the board, 0.0 +- 0.2 deg in both directions). Check the box's corners are on their tape marks on the riser.",
-  "fidelity": "TBD",
-  "scores": "TBD"
+  "fidelity": "Approximate. Box, gimbal, board and knobs are one PhysX articulation; each knob's angle sets its tilt joint's target (1 deg per 25 deg, +-4 deg). The string-and-spring linkage's slip and backlash are not modelled. Holes are a rule: ball centre within 9 mm of a hole's centre = dropped (ball moved under the board). Path shortened to 20 holes (real: 60), same board, holes, walls and ball. Knob friction and rolling resistance are chosen, not measured.",
+  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seeds 0, 4 and 10)"
 }
