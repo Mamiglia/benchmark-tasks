@@ -35,7 +35,9 @@ CONTACT_OFFSET = 0.002  # m
 REST_OFFSET = 0.0
 POS_ITERS = 32
 VEL_ITERS = 4
-MAX_DEPEN_V = 0.5  # m/s: PhysX depenetration speed cap per block
+MAX_DEPEN_V = 0.05  # m/s: slow depenetration (faster caps let the loaded tower creep several mm a minute)
+SLEEP_THRESHOLD = 0.002  # mass-normalised kinetic energy below which a block sleeps: stops the standing tower's creep
+STABILIZATION = 0.001
 
 
 @dataclass(frozen=True)
@@ -120,6 +122,8 @@ def _spawn(prim_path: str, cfg, translation=None, orientation=None, **kwargs):
     rb.CreateMaxDepenetrationVelocityAttr(MAX_DEPEN_V)
     rb.CreateSolverPositionIterationCountAttr(POS_ITERS)
     rb.CreateSolverVelocityIterationCountAttr(VEL_ITERS)
+    rb.CreateSleepThresholdAttr(SLEEP_THRESHOLD)
+    rb.CreateStabilizationThresholdAttr(STABILIZATION)
     PhysxSchema.PhysxContactReportAPI.Apply(prim).CreateThresholdAttr(0.0)
     _PATHS.setdefault(spec.name, prim_path)
     material = f"{prim_path}/Looks/physics"

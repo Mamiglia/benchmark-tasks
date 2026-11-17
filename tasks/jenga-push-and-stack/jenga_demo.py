@@ -52,8 +52,12 @@ def frame(approach, closing) -> np.ndarray:
 
 DOWN = frame((0, 0, -1), (0, 1, 0))
 PUSH = frame((0, -1, 0), (0, 0, 1))  # left hand: pointing along -y, jaws closing vertically
-PULL = frame((0, 1, 0), (0, 0, 1))  # right hand: pointing along +y
-PLACE = frame((1, 0, 0), (0, 0, 1))  # right hand: pointing along +x
+if os.environ.get("GRIP_AXIS") == "x":  # jaws on the block's side faces
+    PULL = frame((0, 1, 0), (1, 0, 0))
+    PLACE = frame((1, 0, 0), (0, -1, 0))
+else:  # jaws on its top and bottom faces
+    PULL = frame((0, 1, 0), (0, 0, 1))  # right hand: pointing along +y
+    PLACE = frame((1, 0, 0), (0, 0, 1))  # right hand: pointing along +x
 PLACE_PAR = frame((0, 1, 0), (0, 0, 1))
 
 PROBE_SPEED = 0.006  # m/s of command
@@ -217,7 +221,7 @@ class Arm:
         yield from self.servo(grip, 0.6)
         self.note(f"at grip: tool point {np.round(self.meas(), 4)} target {np.round(grip, 4)} "
                   f"opening {self.ctl.joints[self.side][6]:.3f}")
-        yield from self.move(self.pos, 0.8, g=g_of(0.013))  # close: pads on the block's top and bottom faces, about 10 N
+        yield from self.move(self.pos, 0.8, g=g_of(0.011))  # close: pads on the top and bottom faces, about 20 N
         yield from self.wait(0.4)
         self.note(f"gripped, opening {self.ctl.joints[self.side][6]:.3f}")
         yield from self.move(self.pos + (0.0, -PULL_OUT, 0.0), 4.0)
