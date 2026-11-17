@@ -85,7 +85,7 @@ In the Isaac Lab-Arena environment from the simulation walkthrough, from this fo
 inspect-robots run --embodiment yam_arena --policy dream \
   -E task=task.py -E object_jitter=0 -E control_hz=20 -E cam_width=320 -E cam_height=176 \
   --instruction "Turn the labyrinth's two knobs to roll the steel ball from START along the numbered path, past every hole to FINISH, without letting it drop into a hole." \
-  --scorer task_score --max-steps RUNLIMIT --seed 0 --store-frames --log-dir ~/yam-eval/labyrinth-dream
+  --scorer task_score --max-steps 2400 --seed 0 --store-frames --log-dir ~/yam-eval/labyrinth-dream
 ```
 
 `--policy yam_scripted` plays the scripted demo. `LAB_DEBUG=1` prints the ball's position, both knob angles and
@@ -113,15 +113,44 @@ riser (any gap visible), tipped or slid more than 5 cm (tape marks on the riser 
 
 `labdemo.py`, played by `yam_scripted`:
 
-DEMOTEXT
+1. **Grip the knobs.** Each arm brings its gripper level and pointing along its knob's shaft, 7 cm out, moves in
+   along the shaft and closes on the knob's rim (about 15 N). The right arm holds the end knob, the left arm the
+   side knob. From then on only each wrist's roll joint moves: rolling the wrist turns the knob.
+2. **Steer.** Every control step (20 Hz) it reads the ball's position and velocity on the board and both knob
+   angles (simulator state; a scripted demo may read it, a person reads the same by eye) and computes the ball
+   acceleration that pulls it toward a point 25 mm ahead on its planned line at 4 cm/s:
+   `a = 3 (target - p) + 2.5 (v_line - v)`, at most 0.25 m/s^2. The planned line follows the drawn path and swings
+   8 mm away from each hole as the ball passes it. Each tilt is the one that gives that acceleration
+   (`a = 5/7 g sin(tilt)` for a rolling ball), each knob angle is 25 times its tilt, and each wrist roll is set to
+   turn its knob there, plus an integral term that removes the knob's lag behind the wrist. Both hands correct at
+   the same time throughout; in each turn of the path both knobs move.
+3. After FINISH it levels the board and opens both hands.
+
+The demo is closed loop: nothing in it is timed to the layout except the approach to the knobs. It never touches
+the ball or the board.
 
 ## Simulation fidelity
 
-FIDELITY
+- **Mechanism.** The box, gimbal frame, board and both knobs are one PhysX articulation standing loose on the riser.
+  Every physics step (240 Hz) each knob's measured angle sets its tilt joint's position target (1 degree per 25
+  degrees, +-4 degrees); the tilt joints are stiff position drives (400 N m/rad). The real string-and-spring
+  linkage also has some slip, delay and backlash (Gaber et al., arXiv:2406.08650); these are not modelled, which
+  makes the simulated game somewhat easier than the real one.
+- **Knobs.** Each knob turns on its shaft against a stick-slip friction of 0.04 N m (chosen, not measured: a
+  fingertip turn). The gripper turns it by friction on its 35 mm rim.
+- **Ball.** A 12.7 mm, 8.4 g steel sphere with friction 0.3 on wood, light rolling resistance (angular damping
+  0.15, chosen). It rolls at 5/7 g sin(tilt), as a real ball does.
+- **Holes.** The board is a solid collider; holes are a rule. When the ball's centre comes within a hole's 9 mm
+  radius it has dropped: it is moved to the box floor under that hole and progress stops.
+- **Path.** Shortened: 20 holes on four lanes (the real board has 60 on a longer path). Same board size, hole size,
+  wall height and ball. The hole numbers are not drawn; holes count in path order.
 
 ## Runtime
 
-RUNTIME
+On the shared RTX workstation used, a scripted demo trial (Isaac Sim start, reset, about 470 control steps)
+takes about 3 minutes of wall time. A 2,400-step policy run takes longer, depending on the policy's latency.
+The demo reaches FINISH on the 20-hole board in about 18 s after gripping (about 470 steps in all); on the real
+60-hole board a run at that pace needs about 1,400 steps, inside the 2,400-step limit.
 
 ## Tests
 
@@ -131,7 +160,26 @@ pytest test_labyrinth_two_knobs.py      # in the yam_arena environment; no GPU n
 
 ## Real-world build and safety
 
-HARDWARE
+| Item | Part | Approx. price |
+|---|---|---|
+| Labyrinth | BRIO Labyrinth, article 34000 (35 x 30.5 x 9.4 cm, 1.25 kg, two steel balls included) | $55 |
+| Riser | 18 mm plywood: a top 37 x 32 cm and two side walls 37 x 7.7 cm under its long edges, glued and screwed (95 mm high in all); or any rigid flat box of the same height | $15 |
+| Tape, phone | Masking tape for corner marks; any phone inclinometer app | - |
+
+Total about $70.
+
+**Before the first trial** measure on the delivered game: the knob-axis height above the box's underside (make the
+riser 15 cm minus it); the gearing (put the phone on the board, turn one knob 90 degrees from level, read the tilt:
+ratio = 90 / tilt); the board's travel each way. Enter the ratio as `RATIO` in `labmodel.py` if it differs from 25.
+
+**Forces.** Turning a labyrinth knob takes a light fingertip torque. Measure it with a string wound twice round
+the knob and a luggage scale: we expect under 0.1 N m (under 6 N on the 17.5 mm rim). The YAM's wrist roll gives
+7 N m, and a 15 N squeeze with rubber pads holds the knob's rim with a large margin. The game weighs 1.25 kg and is
+never lifted.
+
+**Safety.** Nothing is sharp, hot, liquid or heavy. The ball stays inside the box (a dropped ball comes out at the
+ball return). People stay outside the arms' reach during the trial, as in any YAM trial; the game is reset by hand
+between trials with the arms stopped.
 
 ## Assets and licences
 

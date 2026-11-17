@@ -1,0 +1,22 @@
+{
+  "title": "Steer the steel ball through a BRIO Labyrinth with its two knobs, one hand on each, past the holes to FINISH",
+  "category": "Societal relatability",
+  "keywords": [
+    "bimanual",
+    "closed-loop control",
+    "rolling ball",
+    "knob",
+    "tilt maze",
+    "labyrinth",
+    "dynamic object",
+    "game"
+  ],
+  "instruction": "Turn the labyrinth's two knobs to roll the steel ball from START along the numbered path, past every hole to FINISH, without letting it drop into a hole.",
+  "context": "The wooden tilting labyrinth (BRIO, since 1946, over 3 million sold) is one of the best-known table games: most people have played it and know at a glance why it is hard. Each knob tilts the board about one axis; about 1 degree of tilt sets the 12.7 mm steel ball rolling. The robot must steer a moving, underactuated object by closed-loop control through two coupled axes, one knob per hand, correcting both together while the ball moves past holes on either side of the path. Nothing is held still and nothing is turned to a set position. The board is the real game at full size.",
+  "setup": "Positions in cm from the midpoint between the two arm bases, on the table top (x forward, y left, z up); the same layout in every trial. Riser: plywood box, 37 x 32 cm top, 9.5 cm high (README drawing; make it 15 cm minus the measured knob-axis height), taped to the table, centred at (42, 0) and turned 45 degrees. Labyrinth: BRIO Labyrinth (article 34000), wooden box 35 x 30.5 x 9.4 cm, 1.25 kg, standing loose on the riser with the same centre and turn: the knob centred on its long side faces the left arm, the knob centred on its short end faces the right arm (35 mm plastic knobs, axes 5.5 cm above the box's underside, so 15 cm above the table). Inside: a gimbal frame and the playing board (about 29 x 24.5 cm) with wooden path walls, 18 mm holes and the printed path; the board is levelled (phone inclinometer 0.0 +- 0.2 deg) before the trial. Ball: the game's steel ball, 12.7 mm, 8.4 g, at START. Simulation: the same box, gearing (1 deg of tilt per 25 deg of knob, +-4 deg) and ball on a shortened 20-hole path (README).",
+  "scoring": "Foul, latched for the whole trial: 0 if a gripper reaches inside the box (within its walls, below rim + 1 cm) or comes within 1 cm of the ball, or the box is lifted 1 cm, tipped 5 deg or slid 5 cm on the riser. Otherwise: highest-numbered hole the ball has rolled past / number of holes (real board 60, simulation 20); 1.0 at FINISH. Passed = the ball's centre has crossed the line across the path through that hole; latched, so rolling back loses nothing. A ball that drops into a hole ends the trial and keeps the holes passed before it. Real trial: read from the top-camera video against the numbers printed beside the holes; fouls from the video, the slide against tape marks at the box's corners on the riser. Simulation: the ball's furthest point along the path's centre line; it drops when its centre is within a hole's 9 mm radius.",
+  "run_limit": "2,400 steps (2 minutes at 20 Hz)",
+  "reset_notes": "Take the ball from the box's ball return and put it on START. Turn the knobs until the board is level (phone inclinometer on the board, 0.0 +- 0.2 deg in both directions). Check the box's corners are on their tape marks on the riser.",
+  "fidelity": "TBD",
+  "scores": "TBD"
+}
