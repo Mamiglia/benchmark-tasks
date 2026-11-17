@@ -35,10 +35,10 @@ single volume press changes the volume; a single side-button press locks the scr
 
 | Task | Its skill | Here |
 |---|---|---|
-| Two-hand control start of a machine (board) | Two big buttons on a 2.5 kg panel, pressed within 0.5 s and **held** 2 s | Opposed press on a 164 g phone that is free in its stand; the press must be **brief** (holding is the failure); 2.8 mm buttons with a wrong neighbour 2.7 mm away |
-| Swap a hand blender's attachment, both release buttons in (board) | Squeeze two release buttons on a held tool, then pull the part off | No part moves; the timing and duration of the press decide the outcome; the object is not held |
-| Pop a phone's SIM tray with the eject pin (board) | A pin into a 1 mm hole | Two opposite edge buttons at once, the phone's own response |
-| Mount a phone in a spring car holder (board) | Hold sprung arms open while inserting a phone | The phone is not moved at all |
+| TK-F4NTMM Set up a machine and start it with a two-hand control | Two big buttons on a 2.5 kg panel, pressed within 0.5 s and **held** 2 s | Opposed press on a 164 g phone that is free in its stand; the press must be **brief** (holding is the failure); 2.8 mm buttons with a wrong neighbour 2.7 mm away |
+| TK-ENDKGS Swap a hand blender's shaft for the whisk | Squeeze two release buttons on a held tool, then pull the part off | No part moves; the timing and duration of the press decide the outcome; the object is not held |
+| TK-MLJF7T Pop a phone's SIM tray out with the eject pin | A pin into a 1 mm hole | Two opposite edge buttons at once, the phone's own response |
+| TK-DJYB5S Mount a phone in a spring-clamp car holder | Hold sprung arms open while inserting a phone | The phone is not moved at all |
 | RoboCasa button tasks (e.g. press the microwave or coffee-machine start button) | One untimed press on a fixed appliance | Two presses at once, from opposite sides of a loose light object, inside a timing window |
 
 ## Scoring
@@ -113,7 +113,7 @@ Isaac Lab-Arena (Isaac Lab 3.0, Isaac Sim 6.1) on a shared RTX workstation, `--m
 | `DEMO_CHEAT=low` (pinch centred on volume down) | **0.3** | The left pad bears on volume up and volume down at once and the force splits, so neither goes past its 3 N preload; the side button alone goes down: lock |
 | `DEMO_CHEAT=lift` (pinch, then raise the hand 3 cm before letting go) | **0** | Screenshot taken, but the pinch carried the phone 24 mm up out of its seat (seat latch) |
 | `DEMO_CHEAT=poke` (closed fingertips push volume up from one side) | **0** | The phone slid 5 mm and tilted 3.7 degrees in the stand; the button never went down (the phone gives way before 3 N builds up); nothing happened |
-| Dream-1, seed 0 | **DREAM** | DREAMNOTE |
+| Dream-1, seed 0 | **0** | 600 steps. Both hands came forward on either side of the phone (around step 240) and stayed near it, but never touched it; no button pressed, the phone did not move |
 
 ## Runtime and seeds
 

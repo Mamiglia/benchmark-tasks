@@ -17,5 +17,5 @@
   "run_limit": "600 steps (30 s at 20 Hz)",
   "reset_notes": "Stop the screen recording, delete the trial's screenshot, cancel any slider, unlock to the home screen, set volume back to 50 %, start a new screen recording, stand the phone back between the seat's tape marks.",
   "fidelity": "Phone dimensions and button positions from Apple's iPhone 12 dimensional drawing. Phone is a rigid box; the three buttons are rigid caps on sprung slides (3.0 N to start, 3.5 N at the 0.35 mm stop; the click is not modelled), pressed by real finger contact. The phone's response is a rule at 240 Hz with estimated timings (pair within 0.2 s, release within 1 s, slider at 2 s); real trials use the real phone's output. Stand is loose boxes; friction 0.4 phone, 1.0 stand feet.",
-  "scores": "Dream-1 run: DREAM; scripted demo: 1.0 (seeds 0, 4 and 10)"
+  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seeds 0, 4 and 10)"
 }
