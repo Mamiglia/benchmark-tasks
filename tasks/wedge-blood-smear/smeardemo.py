@@ -11,8 +11,8 @@ The right arm does the smear; the left arm turns out of the top camera's view.
 3. Measure the arm's sag and lag there (forward kinematics of the measured joints against the command), aim off by
    it, and lower the edge over 1 s to ``PRESS_M`` (1.0 mm) below the glass: the arm's joints are springs, so the
    edge rests on the glass with a fraction of a newton.
-4. Back the edge into the drop at 5 mm/s, to 1.5 mm past its centre, take out the arm's x lag there, and hold ``WICK_S`` (1.5 s) while the drop
-   runs out along the edge.
+4. Back the edge into the drop at 5 mm/s, to 1.5 mm past its centre, take out the arm's x lag there, and hold
+   ``WICK_S`` (1.5 s) while the drop runs out along the edge.
 5. One stroke: the edge goes forward along the slide at ``SPEED`` (50 mm/s, constant, with 0.25 s ramps), at the same
    height and angle, for 48 mm, past the point where the blood runs out (about 40 mm); then it lifts clear and turns
    out of the top camera's view.
@@ -129,8 +129,8 @@ class Controller:
         self.finished_at = None
         self.obs = None
         self.collect, self.samples = None, []
-        # contrasts for the README: "nowait" (push at once, no wicking), "plough" (come down behind the drop and push
-        # through it), "steep" (55 degrees, 90 mm/s), "slow" (15 mm/s), "lift" (lift off half way and finish the stroke)
+        # contrasts for the README: "nowait" (push as soon as the edge reaches the drop), "plough" (come down behind
+        # the drop and push through it), "steep" (55 degrees, 90 mm/s), "slow" (15 mm/s), "lift" (lift off part way)
         self.cheat = os.environ.get("DEMO_CHEAT", "")
         if self.cheat == "steep":
             self.ANGLE, self.SPEED = 55.0, 0.090
@@ -237,11 +237,12 @@ class Controller:
             x_from = dx - 0.0015  # into the drop, past its centre
             yield from self.step(abs(ahead + 0.0015) / 0.005, np.array([x_from, dy, z]) + aim, R, collect=False)
             # in the drop: check the tool point against the command and take out any x lag (the glass drags the edge)
-            yield from self.step(0.3, np.array([x_from, dy, z]) + aim, R)
+            yield from self.step(0.05 if self.cheat == "nowait" else 0.3, np.array([x_from, dy, z]) + aim, R)
             err = self.tcp_for_edge(np.array([x_from, dy, z]) + aim, R) - np.median(self.samples, axis=0)
             self.say(f"in the drop: TCP lags the command by {np.round(err * 1000, 2)} mm")
             aim = aim + np.array([err[0], 0.0, 0.0])
-            yield from self.step(0.3, np.array([x_from, dy, z]) + aim, R, collect=False)
+            if self.cheat != "nowait":
+                yield from self.step(0.3, np.array([x_from, dy, z]) + aim, R, collect=False)
             if self.cheat != "nowait":
                 yield from self.step(self.WICK_S, np.array([x_from, dy, z]) + aim, R, collect=False)
         x_to = x_from + self.STROKE_M

@@ -98,11 +98,13 @@ inspect-robots run --embodiment yam_arena --policy dream \
   --max-steps 1200 --seed 0 --store-frames --log-dir ~/yam-eval/wedge-smear-dream
 ```
 
-Run limit: 1,200 steps (60 s at 20 Hz). The scripted demo needs about RUNTIME_DEMO s.
+Run limit: 1,200 steps (60 s at 20 Hz). The scripted demo finishes in 364 steps (18.2 s).
 
 ## Scoring
 
-Latched over the whole trial; the trial's score is the score at the end (success: 1.0 held 1 s).
+Latched over the whole trial; the trial's score is the score at the end. Success (which ends the episode early) is
+1.0 with the spreader taken away (its edge 3 cm or more above the table and 10 cm or more from the base slide's
+centre), held 1 s.
 
 | Score | When |
 |---|---|
@@ -143,18 +145,31 @@ lifts it out of the stand, pitches it to lean back over the drop at 35 degrees, 
 the drop and 4 mm above the glass. There it measures its own sag and lag (forward kinematics of the measured joints
 against the command) and aims off by them, then lowers the edge over 1 s to 1 mm below the glass: the arm's joints are
 springs, so the edge rests on the glass with about 0.2-0.4 N. It backs the edge into the drop at 5 mm/s to 1.5 mm past
-its centre (it stops about 1 mm short of that: the glass drags the edge), takes out the arm's x lag there, waits 1.5 s while the drop runs along the edge, and pushes forward 48 mm
-at a constant 50 mm/s (0.25 s ramps); the blood runs out after about 40 mm. Then it lifts clear and turns away from
+its centre (it stops about 1 mm short of that: the glass drags the edge), takes out the arm's x lag there, waits
+1.5 s while the drop runs along the edge, and pushes forward 48 mm at a constant 50 mm/s (0.25 s ramps); the blood runs out after about 40 mm. Then it lifts clear and turns away from
 the top camera's view of the slide, still holding the spreader.
 
-DEMO_RESULTS
+### Checked in simulation
+
+| Run | What it does | Score |
+|---|---|---|
+| Demo, seeds 0, 4, 10 | as above | 1.0 each: film from 24.0 to 61.0 mm (37.0 mm), 19.9 mm wide, feathered end 14 mm before the far end, edge force 0.2-0.5 N, angle 34.7 deg |
+| `DEMO_CHEAT=nowait` (naive: push at once) | backs into the drop, pushes without waiting for it to run along the edge | NOWAIT_RESULT |
+| `DEMO_CHEAT=plough` (loophole: skip the back-in) | comes down 6 mm behind the drop and pushes straight through it | 0.3 (ploughed; 10 mm wide film to the end of the stroke) |
+| `DEMO_CHEAT=slow` | the demo at 15 mm/s | 0.3 (film still running at the end of the 48 mm stroke: no feathered end) |
+| `DEMO_CHEAT=lift` | lifts the spreader 4 mm for 8 mm of travel mid-stroke, then finishes the stroke | 0 (blunt end, then a restart) |
+| Dream-1 (`--policy dream`, seed 0, 1,200 steps) | | 0.0: the spreader never touched the drop (no film) |
+
+The demo's runs are identical across seeds (`object_jitter=0`, nothing random in the task). Contrast runs are
+started with `DEMO_CHEAT=<name>` in the environment of the scripted run.
 
 ## Smear rule and simulation fidelity
 
 The simulator cannot wet glass or lay down a liquid film, so a rule (`smearmodel.py`) stands in for the liquid. It
 runs at 240 Hz from what PhysX gives: the spreader's pose relative to the base slide and the contact force between
 the two slides. The robot must still do the real physical work: grip and pitch the spreader, put its edge on the
-glass (contact force 0.02 N or more, about half the spreader's weight), and move it.
+glass (contact force 0.02 N or more, about half the spreader's weight; PhysX reports a light sliding contact on most
+240 Hz substeps but not all, so a push within the last 25 ms counts), and move it.
 
 - **Wick.** While the edge touches the slide on the drop (within 1.8 mm of its centre), having come onto it from the
   front or been set straight down on it, the wetted width along the edge grows as 20 mm x (1 - exp(-t / 0.5 s)).
@@ -174,14 +189,15 @@ glass (contact force 0.02 N or more, about half the spreader's weight), and move
   slide) and three speeds (timed from 60 fps phone video against a ruler), measure each film's length and width on
   graph paper, and fit `h_ref` and the angle and speed exponents; time the wicking (drop touch to full width) from
   the same videos for `tau_wick` and `w_max`.
-- **Bodies.** Both slides are PhysX rigid boxes (75 x 25 x 1 mm, 4.7 g); the spreader's top 22 mm collides as
-  5 mm thick, because the simulated finger pads stop about 3 mm apart when closed (real rubber pads close on the
-  1 mm glass); the look is 1 mm. Glass on glass friction 0.35 (wet), paper 0.8. The film is drawn as 1.5 mm
+- **Bodies.** Both slides are PhysX rigid boxes (75 x 25 x 1 mm, 4.7 g); the spreader's top 20 mm collides as
+  3 mm thick, because the simulated finger pads stop about 3 mm apart when closed (real rubber pads close on the
+  1 mm glass); the look is 1 mm. Friction: glass on glass 0.15 (lubricated by the liquid), glass on paper about
+  0.5, finger pads on the spreader 1.5 (the pad's rubber, not averaged with the glass). The film is drawn as 1.5 mm
   segments in three shades of red by thickness; its colour is not used for scoring.
 
 ## Runtime
 
-About RUNTIME_WALL min of wall time per trial on one GPU (Isaac Sim start included); 60 s of simulated time at the
+About 5-6 min of wall time per trial on one GPU (Isaac Sim start included); 60 s of simulated time at the
 run limit.
 
 ## Tests

@@ -10,6 +10,8 @@ from __future__ import annotations
 import pathlib
 import sys
 
+import numpy as np
+
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 from smearkit import SmearRig  # noqa: E402
@@ -39,7 +41,11 @@ def score(objects) -> float:
 
 
 def success(objects) -> bool:
-    return score(objects) >= 1.0
+    """Full score, and the spreader taken away: its edge 3 cm or more above the table and 10 cm or more from the base
+    slide's centre (the smear is finished and in view)."""
+    r = objects["smear_rig"]
+    away = float(np.linalg.norm((r.spreader_pos - r.pos)[:2])) >= 0.10
+    return score(objects) >= 1.0 and r.spreader_pos[2] >= TOP + 0.03 and away
 
 
 def controller(bases, dt):

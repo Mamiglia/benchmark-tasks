@@ -138,7 +138,7 @@ class Smear:
                 msg = "the drop touches the edge and starts to run along it"
         if self.state == "wicking":
             if contact and x > self.x_max + law.start_m:
-                msg = self._start(x, y)
+                msg = "; ".join(m for m in (msg, self._start(x, y)) if m)
             elif contact and self._on_drop(x):
                 self.t_wick += dt
                 self.width = law.w_max * (1.0 - math.exp(-self.t_wick / law.tau_wick))
@@ -149,7 +149,7 @@ class Smear:
         elif self.state == "carrying":
             if contact and dx > 0:
                 self.x_max = x
-                msg = self._start(x, y)
+                msg = "; ".join(m for m in (msg, self._start(x, y)) if m)
         elif self.state == "spreading":
             self.angles.append(angle)
             if contact:
