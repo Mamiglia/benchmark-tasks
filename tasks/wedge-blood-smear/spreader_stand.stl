@@ -1,0 +1,254 @@
+solid spreader_stand
+ facet normal -1 0 0
+  outer loop
+   vertex -12.000 -20.000 0.000
+   vertex -12.000 -20.000 15.000
+   vertex -12.000 20.000 15.000
+  endloop
+ endfacet
+ facet normal -1 0 0
+  outer loop
+   vertex -12.000 -20.000 0.000
+   vertex -12.000 20.000 15.000
+   vertex -12.000 20.000 0.000
+  endloop
+ endfacet
+ facet normal 1 0 0
+  outer loop
+   vertex -0.800 -20.000 0.000
+   vertex -0.800 20.000 0.000
+   vertex -0.800 20.000 15.000
+  endloop
+ endfacet
+ facet normal 1 0 0
+  outer loop
+   vertex -0.800 -20.000 0.000
+   vertex -0.800 20.000 15.000
+   vertex -0.800 -20.000 15.000
+  endloop
+ endfacet
+ facet normal 0 -1 0
+  outer loop
+   vertex -12.000 -20.000 0.000
+   vertex -0.800 -20.000 0.000
+   vertex -0.800 -20.000 15.000
+  endloop
+ endfacet
+ facet normal 0 -1 0
+  outer loop
+   vertex -12.000 -20.000 0.000
+   vertex -0.800 -20.000 15.000
+   vertex -12.000 -20.000 15.000
+  endloop
+ endfacet
+ facet normal 0 1 0
+  outer loop
+   vertex -12.000 20.000 0.000
+   vertex -12.000 20.000 15.000
+   vertex -0.800 20.000 15.000
+  endloop
+ endfacet
+ facet normal 0 1 0
+  outer loop
+   vertex -12.000 20.000 0.000
+   vertex -0.800 20.000 15.000
+   vertex -0.800 20.000 0.000
+  endloop
+ endfacet
+ facet normal 0 0 -1
+  outer loop
+   vertex -12.000 -20.000 0.000
+   vertex -12.000 20.000 0.000
+   vertex -0.800 20.000 0.000
+  endloop
+ endfacet
+ facet normal 0 0 -1
+  outer loop
+   vertex -12.000 -20.000 0.000
+   vertex -0.800 20.000 0.000
+   vertex -0.800 -20.000 0.000
+  endloop
+ endfacet
+ facet normal 0 0 1
+  outer loop
+   vertex -12.000 -20.000 15.000
+   vertex -0.800 -20.000 15.000
+   vertex -0.800 20.000 15.000
+  endloop
+ endfacet
+ facet normal 0 0 1
+  outer loop
+   vertex -12.000 -20.000 15.000
+   vertex -0.800 20.000 15.000
+   vertex -12.000 20.000 15.000
+  endloop
+ endfacet
+ facet normal -1 0 0
+  outer loop
+   vertex 0.800 -20.000 0.000
+   vertex 0.800 -20.000 15.000
+   vertex 0.800 20.000 15.000
+  endloop
+ endfacet
+ facet normal -1 0 0
+  outer loop
+   vertex 0.800 -20.000 0.000
+   vertex 0.800 20.000 15.000
+   vertex 0.800 20.000 0.000
+  endloop
+ endfacet
+ facet normal 1 0 0
+  outer loop
+   vertex 12.000 -20.000 0.000
+   vertex 12.000 20.000 0.000
+   vertex 12.000 20.000 15.000
+  endloop
+ endfacet
+ facet normal 1 0 0
+  outer loop
+   vertex 12.000 -20.000 0.000
+   vertex 12.000 20.000 15.000
+   vertex 12.000 -20.000 15.000
+  endloop
+ endfacet
+ facet normal 0 -1 0
+  outer loop
+   vertex 0.800 -20.000 0.000
+   vertex 12.000 -20.000 0.000
+   vertex 12.000 -20.000 15.000
+  endloop
+ endfacet
+ facet normal 0 -1 0
+  outer loop
+   vertex 0.800 -20.000 0.000
+   vertex 12.000 -20.000 15.000
+   vertex 0.800 -20.000 15.000
+  endloop
+ endfacet
+ facet normal 0 1 0
+  outer loop
+   vertex 0.800 20.000 0.000
+   vertex 0.800 20.000 15.000
+   vertex 12.000 20.000 15.000
+  endloop
+ endfacet
+ facet normal 0 1 0
+  outer loop
+   vertex 0.800 20.000 0.000
+   vertex 12.000 20.000 15.000
+   vertex 12.000 20.000 0.000
+  endloop
+ endfacet
+ facet normal 0 0 -1
+  outer loop
+   vertex 0.800 -20.000 0.000
+   vertex 0.800 20.000 0.000
+   vertex 12.000 20.000 0.000
+  endloop
+ endfacet
+ facet normal 0 0 -1
+  outer loop
+   vertex 0.800 -20.000 0.000
+   vertex 12.000 20.000 0.000
+   vertex 12.000 -20.000 0.000
+  endloop
+ endfacet
+ facet normal 0 0 1
+  outer loop
+   vertex 0.800 -20.000 15.000
+   vertex 12.000 -20.000 15.000
+   vertex 12.000 20.000 15.000
+  endloop
+ endfacet
+ facet normal 0 0 1
+  outer loop
+   vertex 0.800 -20.000 15.000
+   vertex 12.000 20.000 15.000
+   vertex 0.800 20.000 15.000
+  endloop
+ endfacet
+ facet normal -1 0 0
+  outer loop
+   vertex -0.800 -20.000 0.000
+   vertex -0.800 -20.000 3.000
+   vertex -0.800 20.000 3.000
+  endloop
+ endfacet
+ facet normal -1 0 0
+  outer loop
+   vertex -0.800 -20.000 0.000
+   vertex -0.800 20.000 3.000
+   vertex -0.800 20.000 0.000
+  endloop
+ endfacet
+ facet normal 1 0 0
+  outer loop
+   vertex 0.800 -20.000 0.000
+   vertex 0.800 20.000 0.000
+   vertex 0.800 20.000 3.000
+  endloop
+ endfacet
+ facet normal 1 0 0
+  outer loop
+   vertex 0.800 -20.000 0.000
+   vertex 0.800 20.000 3.000
+   vertex 0.800 -20.000 3.000
+  endloop
+ endfacet
+ facet normal 0 -1 0
+  outer loop
+   vertex -0.800 -20.000 0.000
+   vertex 0.800 -20.000 0.000
+   vertex 0.800 -20.000 3.000
+  endloop
+ endfacet
+ facet normal 0 -1 0
+  outer loop
+   vertex -0.800 -20.000 0.000
+   vertex 0.800 -20.000 3.000
+   vertex -0.800 -20.000 3.000
+  endloop
+ endfacet
+ facet normal 0 1 0
+  outer loop
+   vertex -0.800 20.000 0.000
+   vertex -0.800 20.000 3.000
+   vertex 0.800 20.000 3.000
+  endloop
+ endfacet
+ facet normal 0 1 0
+  outer loop
+   vertex -0.800 20.000 0.000
+   vertex 0.800 20.000 3.000
+   vertex 0.800 20.000 0.000
+  endloop
+ endfacet
+ facet normal 0 0 -1
+  outer loop
+   vertex -0.800 -20.000 0.000
+   vertex -0.800 20.000 0.000
+   vertex 0.800 20.000 0.000
+  endloop
+ endfacet
+ facet normal 0 0 -1
+  outer loop
+   vertex -0.800 -20.000 0.000
+   vertex 0.800 20.000 0.000
+   vertex 0.800 -20.000 0.000
+  endloop
+ endfacet
+ facet normal 0 0 1
+  outer loop
+   vertex -0.800 -20.000 3.000
+   vertex 0.800 -20.000 3.000
+   vertex 0.800 20.000 3.000
+  endloop
+ endfacet
+ facet normal 0 0 1
+  outer loop
+   vertex -0.800 -20.000 3.000
+   vertex 0.800 20.000 3.000
+   vertex -0.800 20.000 3.000
+  endloop
+ endfacet
+endsolid spreader_stand
