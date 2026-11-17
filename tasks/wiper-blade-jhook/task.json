@@ -18,5 +18,5 @@
   "run_limit": "3,000 steps (150 s at 20 Hz)",
   "reset_notes": "Lift the arm, hook the worn blade back on (adapter clicked) and lower the arm onto the glass; stand the new blade, adapter clicked in its J-hook position, back in the tray slot on its mark. Nothing is used up. If a hook was bent or an adapter broken (a scored failure), replace that part.",
   "fidelity": "Approximate. Rigid boxes; rigid blade on a flat panel. Arm: one hinge with an implicit spring (2.9 N m at rest). The hook is drawn without a collider: a state machine switches D6 joints between blade and arm (weld when latched; 16 mm slide along the arm when threaded). The tab is a real sprung part; the latch needs the tab pressed and a 13 mm push to release, and engages only from behind the bend, lined up within 3 mm and 6 deg, with up to 7 N to click.",
-  "scores": "SCORES_PLACEHOLDER"
+  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seed 0; also 1.0 on seeds 4 and 10)"
 }
