@@ -18,5 +18,6 @@
   "run_limit": "2,000 steps (100 s at 20 Hz)",
   "reset_notes": "Pull the dripper out; slide the tube along the stakes to an unpunched stretch (or fit a fresh 62 cm length), draw a new white ring, stand the punch and a new dripper in their block holes. A punched stretch and the dripper are used up (about 3 cm of tube and $0.40 per trial).",
   "fidelity": "Approximate. Rigid bodies; the staked line is fixed. A rule stands in for the wall: a hole appears at the punch's point once it has pushed on the tube with 25 N (+-10% per seed) for 0.1 s; torn if over 15 deg off the surface normal. The dripper seats once its barb tip is within 1.5 mm of a hole and it pushes 15 N for 0.1 s within 15 deg of square (then held seated); crooked, it tears the hole. Forces are estimates (README: how to measure them). Dripper 20 g in the solver.",
-  "scores": "Dream-1 run: 0.0 (seed 0, 2,000 steps, step limit; never grasped the punch); scripted demo: 1.0 (seeds 0, 4 and 10, 830-960 steps); contrasts: no punch 0.0, light push 0.0, second hole 0.2"
+  "scores": "Dream-1 run: 0.0 (seed 0, 2,000 steps, step limit; never grasped the punch); scripted demo: 1.0 (seeds 0, 4 and 10, 830-960 steps); contrasts: no punch 0.0, light push 0.0, second hole 0.2",
+  "media": "M-UQGY9J"
 }
