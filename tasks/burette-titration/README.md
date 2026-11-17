@@ -79,7 +79,8 @@ start in the ready pose. The layout is the same in every trial; only the acid al
 | Flask | 125 mL narrow-mouth borosilicate Erlenmeyer flask (Pyrex 4980-125: 67 mm base, 114 mm tall, neck about 29 mm outside and 21 mm bore; about $5), standing on the tile centred under the tip. The tip is 1 cm inside the neck |
 | In the flask | The trial's acid aliquot (8.00 to 12.00 mL of 0.05 M acetic acid, from the seed's table), water to about 30 mL, 3 drops of 1% phenolphthalein. Colourless |
 
-Nothing else is on the table.
+Nothing else is on the table. The screenshot's inset (top right) is a zoom of the boxed area: the white key
+handle, the burette tip and the flask on the tile.
 
 ### Reagents and their hazards
 
