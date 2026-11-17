@@ -211,7 +211,7 @@ def _spawn_lab(prim_path: str, cfg, translation=None, orientation=None, **kwargs
     knob_mat = material("knob", 1.0)
     knobs = {}
     for name, pos, axis in (("knob_x", (L / 2, 0.0, M.KNOB_Z), "X"), ("knob_y", (0.0, -W / 2, M.KNOB_Z), "Y")):
-        kb = body(name, pos, 0.02)
+        kb = body(f"{name}_body", pos, 0.02)
         out = 1.0 if axis == "X" else -1.0  # outward along the joint axis
         c = M.KNOB_GAP + M.KNOB_LEN / 2
         cen = (out * c, 0, 0) if axis == "X" else (0, out * c, 0)
@@ -280,7 +280,7 @@ def _spawn_ball(prim_path: str, cfg, translation=None, orientation=None, **kwarg
     collide(sph.GetPrim(), steel, offset=0.001)
     from isaaclab.sim.utils import bind_visual_material
 
-    bind_visual_material(str(sph.GetPath()), look(STEEL, 0.15, 1.0), stage=stage)
+    bind_visual_material(str(sph.GetPath()), look((0.86, 0.88, 0.92), 0.25, 0.7), stage=stage)
     return root.GetPrim()
 
 

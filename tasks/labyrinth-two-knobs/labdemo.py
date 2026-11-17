@@ -12,8 +12,9 @@
    wrist (grip slip, the arm's compliance).
 3. After FINISH it levels the board, opens the hands and backs off.
 
-``DEMO_CHEAT``: ``none`` grips the knobs and then holds them still; ``onearm`` steers with the end knob only (the
-other arm never grips).
+``DEMO_CHEAT`` (contrast runs): ``none`` grips the knobs and then holds them still; ``onearm`` steers with the end
+knob only (the other arm never grips); ``press`` (the right arm steers on its knob) reaches into the box with
+the left gripper and presses the board's corner down by hand to tilt it.
 """
 
 from __future__ import annotations
@@ -98,6 +99,22 @@ class Controller:
         self.say(f"{arm}: knob {KNOB_OF[arm]} grip at {np.round(p, 3)}, IK {pe * 1000:.1f} mm {math.degrees(re):.1f} deg")
         return qs
 
+    def _push(self, t):
+        """Contrast run: the left fingertips come down into the box onto the board's corner and press it down."""
+        if not hasattr(self, "_push_q"):
+            from yam_arena.demo import DOWN_GRIP
+
+            q, self._push_q = np.asarray(READY, float), []
+            for h in (0.06, 0.012, 0.004):
+                p = task.LAB.to_world((0.12, -0.10, M.BOARD_TOP + h))
+                q, pe, _ = ik.solve(p, DOWN_GRIP, q_init=q, base_pos=self.bases["left"], iters=300)
+                self._push_q.append(q)
+            self.say(f"press plan IK err {pe * 1000:.1f} mm")
+        qs, seg = [np.asarray(READY, float), *self._push_q], 2.0
+        i = min(int(t / seg), len(qs) - 2)
+        f = ik.smoothstep(min((t - i * seg) / seg, 1.0))
+        return qs[i] + f * (qs[i + 1] - qs[i])
+
     # -- the ball controller
     def _accel(self, snap):
         p, v = snap.ball_uv, snap.ball_vel_uv
@@ -132,8 +149,10 @@ class Controller:
                 q = qs[-1].copy()
                 grip = max(GRIP, 1.0 - (t - T_PRE - T_IN) / T_CLOSE * (1.0 - GRIP))
             out[arm] = (q, grip)
-        if self.cheat == "onearm":
+        if self.cheat in ("onearm", "press"):
             out["left"] = (np.asarray(READY, float), 1.0)
+        if self.cheat == "press" and t >= T_PRE:
+            out["left"] = (self._push(t - T_PRE), 0.0)
         if t >= T_PRE + T_IN + T_CLOSE + 0.3:
             if self.t_grip is None:
                 self.t_grip = t
@@ -144,7 +163,7 @@ class Controller:
             tilt = {"y": math.asin(float(np.clip(a[0] / G_ROLL, -1, 1))),
                     "x": -math.asin(float(np.clip(a[1] / G_ROLL, -1, 1)))}
             for arm in ARMS:
-                if self.cheat == "onearm" and arm == "left":
+                if self.cheat in ("onearm", "press") and arm == "left":
                     continue
                 k = KNOB_OF[arm]
                 want = M.RATIO * float(np.clip(tilt[k], -M.TILT_MAX, M.TILT_MAX))
