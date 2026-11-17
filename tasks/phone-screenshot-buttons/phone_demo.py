@@ -30,7 +30,8 @@ APPROACH_DEG = 70.0
 GRIP_R = axis_angle_matrix(np.array([0.0, 1.0, 0.0]), -np.radians(APPROACH_DEG)) @ grip_rotation(0.0)
 AXIS = GRIP_R[:, 2]  # approach direction (world)
 DEBUG = bool(os.environ.get("PHONE_DEBUG"))
-PAD_AT = float(os.environ.get("PHONE_PAD_AT", "0.0375"))  # m: the pads' centre this far above the phone's centre
+PAD_AT = float(os.environ.get("PHONE_PAD_AT", "0.0435"))  # m: the pads' centre this far above the phone's centre
+PAD_SPAN = 0.0257  # m: a finger pad's contact face across the approach axis (YAM tip_left collision mesh)
 SQUEEZE = 0.0025  # m: command the opening this much below the span with both buttons at their stops
 
 

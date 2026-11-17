@@ -1,0 +1,21 @@
+{
+  "title": "Take a screenshot on a phone in a desk stand: side button and volume up pressed together from both edges, then let go",
+  "category": "Societal relatability",
+  "keywords": [
+    "smartphone",
+    "simultaneous press",
+    "opposed forces",
+    "timing window",
+    "free-standing light object",
+    "small buttons",
+    "assistive"
+  ],
+  "instruction": "Take one screenshot on the phone: press its side button and volume-up button together and let go at once. Leave the phone in its stand.",
+  "context": "Taking a screenshot is one of the most familiar phone gestures: on an iPhone with Face ID, Apple's instruction is to press the side button and volume up at the same time and quickly release both; holding them brings up the power-off / SOS slider. The buttons are on opposite edges of a 164 g phone that only rests in its stand, each needs about 3 N, and a one-sided push slides or tips the phone. So the two forces must arrive together and balance (a pinch across the phone, or both arms at once), land on 2.8 mm buttons with volume down 2.7 mm away, and come off within a second.",
+  "setup": "Coordinates from the midpoint between the arm bases on the table top: x forward, y left. An aluminium desk phone stand (grey, 0.25 kg, loose on the table): base 90 x 80 mm centred at (30, 0) cm, seat 3 cm up with a 8 mm front lip, cradle leaning back 20 degrees, back rest 45 mm wide and 70 mm tall. In it, an iPhone 12 (146.7 x 71.5 x 7.4 mm, 164 g, aluminium frame, no case), portrait, screen towards the robot, bottom edge on the seat, back on the back rest; centre at (33.4, 0) cm, 10 cm up. Side button (17.8 mm long) on its right edge (-y), volume up and volume down (11.3 mm each, 2.7 mm apart) on its left edge (+y), 39 and 53 mm from the top; all 2.8 mm wide, about 0.6 mm proud. Phone unlocked, awake, Auto-Lock off, SOS button calls off, no SIM. Arms in the ready pose.",
+  "scoring": "0 if the phone ever leaves its seat (bottom lifted over 1 cm, slid over 1.5 cm past tape marks, tipped over 10 degrees or fell; video). Else 0.1 if the power-off/SOS slider appeared. Else 1.0 for exactly one new screenshot and nothing else (no volume change, screen not locked, no Siri) with the robot off the phone at the end; 0.5 for a screenshot plus any other effect, a second screenshot, or still touching; 0.3 for single-button effects only (volume, lock, Siri); 0 if nothing happened. Checked from Photos > Screenshots, an on-phone screen recording, and the trial video.",
+  "run_limit": "600 steps (30 s at 20 Hz)",
+  "reset_notes": "Stop the screen recording, delete the trial's screenshot, cancel any slider, unlock to the home screen, set volume back to 50 %, start a new screen recording, stand the phone back between the seat's tape marks.",
+  "fidelity": "Phone dimensions and button positions from Apple's iPhone 12 dimensional drawing. Phone is a rigid box; the three buttons are rigid caps on sprung slides (3.0 N to start, 3.5 N at the 0.35 mm stop; the click is not modelled), pressed by real finger contact. The phone's response is a rule at 240 Hz with estimated timings (pair within 0.2 s, release within 1 s, slider at 2 s); real trials use the real phone's output. Stand is loose boxes; friction 0.4 phone, 1.0 stand feet.",
+  "scores": "Dream-1 run: DREAM; scripted demo: 1.0 (seeds 0, 4 and 10)"
+}

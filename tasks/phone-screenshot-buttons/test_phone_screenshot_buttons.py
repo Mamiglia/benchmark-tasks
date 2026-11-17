@@ -112,9 +112,9 @@ def test_phone_rests_in_the_cradle():
 
 
 def test_pad_window_separates_volume_buttons():
-    """The pads' 14 mm span centred at PAD_AT covers volume up and the side button, and misses volume down."""
+    """The pads' 25.7 mm span centred at PAD_AT covers volume up and the side button, and misses volume down."""
     p, c = task.PARAMS, phone_demo.PAD_AT
-    lo, hi = c - 0.007, c + 0.007
+    lo, hi = c - phone_demo.PAD_SPAN / 2, c + phone_demo.PAD_SPAN / 2
     vu = (p.button_z(1) - p.lengths[1] / 2, p.button_z(1) + p.lengths[1] / 2)
     vd_top = p.button_z(2) + p.lengths[2] / 2
     sd = (p.button_z(0) - p.lengths[0] / 2, p.button_z(0) + p.lengths[0] / 2)
