@@ -1,0 +1,23 @@
+{
+  "title": "Refuel a car through its capless filler: nozzle in past the sprung flap, trigger clipped open, then back in the boot",
+  "category": "Societal relatability",
+  "keywords": [
+    "refuelling",
+    "fuel nozzle",
+    "capless filler",
+    "hold-open clip",
+    "bimanual",
+    "heavy tool",
+    "hose drag",
+    "blind insertion",
+    "sprung flap"
+  ],
+  "instruction": "Fill the car: put the nozzle in the filler, squeeze the trigger and set the hold-open clip, then release the trigger and hang the nozzle back up.",
+  "context": "Filling a car at the pump is one of the most familiar adult chores (US drivers do it about once a week), and anyone watching knows at once what the robot is doing. It is hard for a robot: the nozzle weighs 1.3 kg and its hose drags, so it is carried in two hands; the spout must go 8 cm down a tilted 24 mm bore, past a sprung flap the robot cannot see; the trigger is squeezed with one hand while the other flips the small hold-open clip under it; and the trigger must stay shut whenever the spout is out of the filler. No fuel is used.",
+  "setup": "Positions in cm from the midpoint between the arm bases, on the table top (x forward, y left). Car body: a painted panel (12 mm plywood or scrap steel quarter panel) 50 x 42 cm standing upright on the table, face at x 56, spanning y 2 to 52; its fuel door open on the left of a 10 x 10 cm pocket 3.5 cm deep; in the pocket a Ford Easy Fuel capless filler head (66 mm face, 40 mm opening tapering to the 23.6 mm restrictor, sprung flap inside), bore axis 30 degrees below horizontal into the car, lip centre at (59.5, 15), 17 cm above the table. Pump: an 8 x 12 cm post 52 cm tall at x 56.5-64.5, y -11 to 1; on its face a nozzle boot (36-50 mm bore, 17.5 cm deep) holding the nozzle spout-down at 55 degrees below horizontal, boot mouth at (43.7, -5), 16 cm up, handle toward the arms. Nozzle: dry Husky 1A automatic unleaded nozzle with three-notch hold-open clip, 1.3 kg, 21.3 mm spout 20 cm long, never used with fuel. Hose: 3/4 in dispenser hose, 1.04 m between fittings, from the nozzle's swivel to a 3/4 in NPT flange near the top of a 3 x 3 cm mast at (56, -40), 52 cm up, hanging in a loop as in the screenshot. Lever and clip down. Arms in the ready pose.",
+  "scoring": "0 if at any time the trigger lever was raised a third of its travel (about 1 cm at the finger) while the spout tip was less than 4 cm into the filler (tape mark 4 cm from the tip), or the nozzle fell or hit the table. Otherwise: 0.15 the spout went 8 cm into the filler (tape mark 8 cm from the tip inside the face); 0.5 and, with it that far in, the lever stayed held open by the hold-open clip for 3 s in a row with no gripper on the lever (video); 0.7 and after that the clip released and the lever returned to rest; 1.0 and at the end the nozzle hangs in its boot with the spout 13 cm in (tape mark), lever down, no gripper holding it. Stages count only in this order.",
+  "run_limit": "3,000 steps (150 s at 20 Hz)",
+  "reset_notes": "Nothing is used up. Hang the nozzle in its boot (spout fully down, handle toward the arms, lever and clip down) and lay the hose in its loop as in the screenshot; close nothing (the fuel door stays open, the filler's flap closes by itself).",
+  "fidelity": "Approximate. Spout and bore are square (19 mm spout, 24 mm bore) where the real ones are round; one sprung flap stands in for the head's flaps and size latches. The hose is 8 rigid links on sprung ball joints. Lever, clip and flap are sprung hinges moved by contact; the clip catching the lever is a rule that needs the real motions: clip tab pushed until its arm is up and lever squeezed past half travel; squeezing past the notch releases it. No fuel is simulated.",
+  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seed 0; also 1.0 on seeds 4 and 10)"
+}
