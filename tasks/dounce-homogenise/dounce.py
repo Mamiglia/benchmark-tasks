@@ -125,9 +125,9 @@ class Dounce:
 
 def score(d: Dounce) -> float:
     """0 if the mortar was ever lifted > 5 mm or tipped > 20 deg, or the head was pulled out of the bore.
-    Otherwise 0.08 per full stroke (up to 10), plus 0.2 if the foam is under 2 mm, minus 0.05 per upstroke that drew
-    air past the head; floored at 0."""
+    Otherwise 0.08 per full stroke (up to 10), plus 0.2 if all ten were done and the foam is under 2 mm, minus 0.05
+    per upstroke that drew air past the head; floored at 0."""
     if d.failed:
         return 0.0
-    s = 0.08 * min(d.strokes, STROKES) + (0.2 if d.foam_mm < FOAM_OK_MM else 0.0) - 0.05 * d.air
+    s = 0.08 * min(d.strokes, STROKES) + (0.2 if d.strokes >= STROKES and d.foam_mm < FOAM_OK_MM else 0.0) - 0.05 * d.air
     return round(max(0.0, min(1.0, s)), 4)

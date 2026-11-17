@@ -56,8 +56,8 @@ def score(objects) -> float:
     """Latched over the whole trial, any one gives 0: the mortar rose more than 5 mm off its seat, tipped past
     20 degrees, or the pestle's head was pulled up out of the grinding tube. Otherwise 0.08 per full stroke (the
     head within 3 mm of the floor, then at least 25 mm above it, then back to the floor), counted up to ten; plus
-    0.2 if the foam on the sample is under 2 mm at the end; minus 0.05 for every upstroke on which the head rose
-    above the liquid and drew air in; floored at 0."""
+    0.2 once all ten are done if the foam on the sample is under 2 mm at the end; minus 0.05 for every upstroke on
+    which the head rose above the liquid and drew air in; floored at 0."""
     return D.score(objects["dounce"].model)
 
 

@@ -99,10 +99,21 @@ fresh in seconds (1 mL of detergent in 1 L of water), costs nothing and is not p
   use 8 N at 50 mm/s (160 N s/m). The demo's strokes run at up to 25 mm/s (about 4 N). Measure it on the real set
   by standing the mortar on a kitchen scale (0.1 g) and pushing the pestle down at about one stroke per two seconds:
   the reading rises by 300 to 900 g. Both well inside the YAM's limits (about 40 N per finger, 1.5 kg per arm).
-- **Reach and view.** The knob is 17 to 21 cm above the table during the strokes. The right gripper points
-  straight down the bore's axis and grips the knob between its pads (14 mm across, 94 mm opening). The left
-  gripper reaches the reservoir horizontally from the left, 9 to 11 cm above the table, with its fingers closing
-  front to back. We checked both poses through the full stroke with the arm's inverse kinematics.
+- **Reach and view.** The knob is 17 to 21 cm above the table during the strokes. The right gripper comes down
+  over it leaning 25 degrees in from the right (straight down is outside the wrist's reach at this spot) and grips
+  the knob front and back between its pads (14 mm across, 94 mm opening); its tool point then moves only along the
+  bore's axis. The left gripper reaches the reservoir from the left, 30 degrees down, 9 to 11 cm above the table,
+  fingers closing front to back. We checked both poses through the full stroke with the arm's inverse kinematics
+  (under 0.1 mm and 0.1 degree of error).
+
+## Scripted demo
+
+`ddemo.py` knows the layout from the setup and nothing from the simulator (not the sample volume, not the joint).
+Both hands grip as above. Then, ten times, closed loop on the right arm's own joint positions: the hand draws the
+knob up at 20 mm/s until its tool point is 33 mm above where it gripped, pushes it back down at 30 mm/s to 2 mm past
+the floor, and waits there until the hand is back at the bottom. The left hand presses the mortar 4 mm down onto the
+rack's base throughout, against the suction. Then both hands let go and back away; the pestle stays in the mortar.
+33 mm keeps the head under the liquid for any volume in the range (air is drawn in above 38 mm at 3.0 mL).
 
 ## Run a trial
 
@@ -117,7 +128,11 @@ inspect-robots run --embodiment yam_arena --policy dream \
 
 `--policy yam_scripted` plays the scripted demo; `DEMO_CHEAT=nohold|high|short` plays the contrasting attempts.
 `DOUNCE_DEBUG=1` prints the model's state every half second (head height and speed, mortar lift and tilt, strokes,
-air, cavitation). The seed sets the sample volume: `volume_for(seed)` in `dounce.py`. RUNTIME_LINE
+air, cavitation). The seed sets the sample volume: `volume_for(seed)` in `dounce.py`. Runtime per trial on one shared RTX-class GPU:
+about 4 to 5 minutes for the scripted demo (it stops at success after about 53 s of simulated time), about
+12 minutes for a Dream-1 run of the full 2,400 steps. With `--seed` 0, 4 and 10 the sample is 3.25, 3.05 and
+3.05 mL (inspect-robots derives the episode seed from `--seed`; the log prints `[dkit] seed ...: sample ... mL`). In
+a real trial the technician pipettes the seed's volume.
 
 ## Scoring
 
@@ -130,17 +145,21 @@ The model is stepped after every control step (20 Hz). The score at the end of t
 | At any time the mortar tipped past 20 degrees | 0 (latched) | Video |
 | At any time the head was pulled up out of the grinding tube into the reservoir (z > 70 mm) | 0 (latched) | Video: the head is visible through the glass |
 | Each full stroke: the head within 3 mm of the floor, then at least 25 mm above it, then back to the floor | +0.08, up to 10 strokes (0.8) | Video: tape marks on the tube at 3 mm and 25 mm above the floor |
-| Foam on the sample at the end under 2 mm | +0.2 | Photo of the tube against a ruler after the trial |
+| All ten full strokes done and the foam on the sample at the end under 2 mm | +0.2 | Photo of the tube against a ruler after the trial |
 | Each upstroke on which the head rose above the liquid (all of the sample below the head) and drew air in | -0.05 each | Video: the head's bottom face above the meniscus |
 
-The total is floored at 0 and capped at 1. Success = 1.0. In the model, an upstroke that draws air leaves 2 mm of
-foam, and one faster than the cavitation speed (about 50 mm/s) leaves 0.5 mm; so any air, or four or more fast
-pulls, lose the foam bonus. Every outcome is covered: a trial that does nothing scores 0.2 (no strokes, no foam);
-the stroke count needs both the floor and the 25 mm rise; the latches cover lifting, tipping and pulling out.
+The total is floored at 0 and capped at 1. Success = 1.0. Head speeds are taken over each control step (50 ms),
+as a 20 fps video shows them. In the model, an upstroke that draws air leaves 2 mm of foam, and one faster than the cavitation speed (about 50 mm/s) leaves 0.5 mm; so any air, or four or more fast
+pulls, lose the foam bonus. Every outcome is covered: a trial that does nothing scores 0; the stroke count needs both
+the floor and the 25 mm rise; the latches cover lifting, tipping and pulling out.
 
 | Run | Score |
 |---|---|
-RESULTS_TABLE
+| Scripted demo, seeds 0, 4, 10 | 1.0, 1.0, 1.0 (ten strokes each, about 33 mm high at 20 mm/s up; no air, no cavitation; mortar lift under 0.5 mm) |
+| Contrast: the left hand never holds the mortar (`DEMO_CHEAT=nohold`) | 0 (the suction lifts the mortar 17 mm with the pestle on the first pull) |
+| Contrast: fast strokes to 60 mm (`DEMO_CHEAT=high`) | 0 (air drawn every upstroke, and the 100 mm/s pulls lift the held mortar more than 5 mm) |
+| Contrast: 15 mm strokes (`DEMO_CHEAT=short`) | 0 (no full stroke) |
+| Dream-1, seed 0, 2,400 steps | 0 (gripped the knob with one hand and pulled; the unheld mortar rose with the pestle, up to 23 mm, latched; one full stroke later) |
 
 ## Reset
 

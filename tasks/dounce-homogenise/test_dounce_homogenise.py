@@ -46,13 +46,14 @@ def test_careful_strokes_full_score():
 
 
 def test_partial_strokes():
-    assert D.score(run(0.034, n=5)) == pytest.approx(0.6)
+    assert D.score(run(0.034, n=5)) == pytest.approx(0.4)  # no foam bonus before ten strokes
     assert D.score(run(0.034, n=12)) == 1.0  # capped at ten
 
 
 def test_short_strokes_do_not_count():
     d = run(0.015)
-    assert d.strokes == 0 and D.score(d) == pytest.approx(0.2)
+    assert d.strokes == 0 and D.score(d) == 0.0
+    assert D.score(D.Dounce()) == 0.0  # doing nothing earns nothing
 
 
 def test_head_above_liquid():
