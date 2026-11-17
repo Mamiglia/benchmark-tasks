@@ -156,6 +156,9 @@ def score(objects) -> float:
     if another block was ever moved 1 cm or more, or is 5 mm or more from its start at the end."""
     u = _update(objects)
     if STATE["fell"] or STATE["two_hands"]:
+        if os.environ.get("JENGA_DEBUG") and not STATE.get("said"):
+            STATE["said"] = True
+            print(f"[jenga] step {STATE['steps']} score 0: fell={STATE['fell']} 2h={STATE['two_hands']}", flush=True)
         return 0.0
     t = objects[u["taken"]]
     if on_top(t, u["taken"]):
@@ -170,6 +173,12 @@ def score(objects) -> float:
         s = 0.0
     if STATE["disturbed"] or any(u["disp"][n] > END_OTHER_M for n in u["others"]):
         s = min(s, 0.1)
+    if os.environ.get("JENGA_DEBUG"):
+        touched = [n + ("L" if objects[n].left else "") + ("R" if objects[n].right else "") for n in NAMES
+                   if objects[n].left or objects[n].right]
+        if touched and touched != STATE.get("touched"):
+            print(f"[jenga] step {STATE['steps']} touched {touched}", flush=True)
+        STATE["touched"] = touched
     if os.environ.get("JENGA_DEBUG") and STATE["steps"] % 20 == 1:
         d = u["disp"]
         worst = max(u["others"], key=d.get)

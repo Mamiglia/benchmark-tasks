@@ -40,6 +40,7 @@ from yam_arena.constants import READY, SHOULDER, WRIST
 
 K_JOINT = np.array([SHOULDER["stiffness"]] * 3 + [WRIST["stiffness"]] * 3)  # N m/rad
 TIP = 0.013  # pad tips past the tool point
+FINGER_BELOW = 0.0033  # touch-off offset: measured tool point minus the touched surface (calibrated once on the fingers, not per tower)
 OPEN_G = 1.0
 DEBUG = bool(os.environ.get("JENGA_DEBUG"))
 
@@ -56,12 +57,13 @@ PLACE = frame((1, 0, 0), (0, 0, 1))  # right hand: pointing along +x
 PLACE_PAR = frame((0, 1, 0), (0, 0, 1))
 
 PROBE_SPEED = 0.006  # m/s of command
+TOUCH_LEAD = 0.002  # touching the top: the tip lags its command this much
 TIGHT_LEAD = 0.005  # command this far ahead of the fingertip ...
 TIGHT_DEPTH = 0.003  # ... before the tip is this deep: the block is pinched
 PUSH_DEPTH = 0.015
 STUCK_LEAD = 0.008  # past TIGHT_DEPTH: give up if the command leads by this much
 STANDOFF = 0.010
-GRIP_GAP = 0.0025  # right pad tips stop this far short of the tower's face
+GRIP_GAP = 0.0015  # right pad tips stop this far short of the tower's face
 OVERHANG = 0.018  # the placed block overhangs the tower's near face by this
 PULL_OUT = 0.095
 
@@ -130,23 +132,30 @@ class Arm:
 
     # -- 1. how tall is the tower --
     def touch_top(self, tower_xy, nominal_top):
+        """Lower the closed fingertips, held as for pushing, onto the top level's edge: the tower's real height."""
         x, y = tower_xy
-        p = np.array([x, y + 0.012, nominal_top + 0.05])  # over the top level's middle block
-        yield from self.move(p, 2.0, rot=DOWN, g=0.0)
-        yield from self.servo(p, 0.8)
-        yield from self.wait(0.3)
-        tare = self.force()[2]
-        while True:
-            self.pos = self.pos - (0.0, 0.0, 0.01 * self.ctl.dt)
+        face = y + self.ctl.length / 2
+        p = np.array([x, face - 0.008 + TIP, nominal_top + FINGER_BELOW + 0.015])  # tips 8 mm in, 15 mm up
+        yield from self.move(p + (0.0, 0.06, 0.04), 2.5, rot=PUSH, g=0.0)
+        # The compliant arm sags under gravity: settle the measured tool point clear of the tower first, then move
+        # relative to that command.
+        yield from self.servo(p + (0.0, 0.06, 0.04), 1.5)
+        yield from self.move(self.pos - (0.0, 0.06, 0.0), 1.5)
+        yield from self.servo(p + (0.0, 0.0, 0.04), 0.8)
+        yield from self.move(self.pos - (0.0, 0.0, 0.04), 1.5)
+        yield from self.wait(0.8)
+        cmd0, meas0, n = self.pos[2], self.meas()[2], 0
+        while self.pos[2] > nominal_top - 0.02:
+            self.pos = self.pos - (0.0, 0.0, 0.006 * self.ctl.dt)
             yield
-            if tare - self.force()[2] < -1.0 or self.force()[2] - tare > 1.0:
+            lead = (cmd0 - self.pos[2]) - (meas0 - self.meas()[2])  # command below the measured tip
+            n = n + 1 if lead > TOUCH_LEAD else 0
+            if n >= 3:
                 break
-            if self.pos[2] < nominal_top - 0.02:
-                break
-        top = float(self.meas()[2] - TIP)
+        top = float(self.meas()[2] - FINGER_BELOW)
         self.note(f"top of the tower at {top - self.ctl.table_z:.4f} m above the table")
-        yield from self.move(self.pos + (0.0, 0.0, 0.05), 0.8)
-        yield from self.move(self.home, 2.0, rot=ik.tcp_pose(np.array(READY), self.base)[1])
+        yield from self.move(self.pos + (0.0, 0.0, 0.02), 0.6)
+        yield from self.move(self.pos + (0.0, 0.07, 0.0), 1.0)
         self.ctl.top = top
 
     # -- 2. find a loose block and push it through --
@@ -206,7 +215,9 @@ class Arm:
         yield from self.servo(grip + (0.0, -0.06, 0.0), 0.6)
         yield from self.move(self.pos + (0.0, 0.06, 0.0), 1.5)
         yield from self.servo(grip, 0.6)
-        yield from self.move(self.pos, 0.8, g=0.0)  # close: pads on the block's top and bottom faces
+        self.note(f"at grip: tool point {np.round(self.meas(), 4)} target {np.round(grip, 4)} "
+                  f"opening {self.ctl.joints[self.side][6]:.3f}")
+        yield from self.move(self.pos, 0.8, g=g_of(0.013))  # close: pads on the block's top and bottom faces, about 10 N
         yield from self.wait(0.4)
         self.note(f"gripped, opening {self.ctl.joints[self.side][6]:.3f}")
         yield from self.move(self.pos + (0.0, -PULL_OUT, 0.0), 4.0)

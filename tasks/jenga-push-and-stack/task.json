@@ -1,0 +1,20 @@
+{
+  "title": "Play one turn of Jenga: find a loose block, push it through, draw it out and stack it crosswise on top",
+  "category": "Societal relatability",
+  "keywords": [
+    "Jenga",
+    "force-limited probing",
+    "extraction under load",
+    "keep the rest undisturbed",
+    "one hand at a time",
+    "compliant pushing"
+  ],
+  "instruction": "Play one turn of Jenga: using one hand at a time, take a block out from below the top level and stack it on top, crosswise to the top level, without knocking the tower over.",
+  "context": "Jenga is one of the best-known tabletop games; most people have played a turn or watched one. The blocks differ slightly in thickness, so some are pinched by the weight of the levels above and others are loose, and nothing visible tells them apart. A player feels for a loose block with a light push, pushes it through from one side and draws it out from the other, straight along its length, then stacks it. Pushing a pinched block, or pushing off-axis, drags the levels above and the tower falls.",
+  "setup": "Positions in cm from the midpoint between the arm bases, x forward, y left. Hasbro Jenga Classic (A2120): 54 hardwood blocks, 7.5 x 2.5 x 1.5 cm, about 15 g each, stacked with the box's loading sleeve (then removed) into 18 levels of 3 on the bare table, centred at (30, 0), about 27 cm tall. Level 1 (on the table) runs along x, so the even levels, including the top level 18, run along y. Blocks are stacked in random order, as in a game. Nothing else on the table. Arms start in the ready pose.",
+  "scoring": "From the trial video, a ruler and before/after photos. 0 if the tower falls (any block other than the one being taken falls, moves 2.5 cm or more, or tilts over 15 deg) or both grippers touch the tower at the same moment (the taken block counts as tower until no part of it is inside the tower's footprint). Else, for the taken block (the block from levels 1-17 that moved most): 1.0 if it lies flat on the top level (within 10 deg), its length within 20 deg of crosswise, its centre within 3 cm of the tower's axis both ways, let go, and everything still 5 s later; 0.6 if it is out of the tower but not so; 0.3 if it slid half its length (3.75 cm) or more; 0.1 if it slid 5 mm or more; else 0. Capped at 0.1 if any other block ever moved 1 cm or more, or sticks out or sits 5 mm or more from where it started at the end.",
+  "run_limit": "3,000 steps (150 s at 20 Hz)",
+  "reset_notes": "Knock the tower down, shuffle the 54 blocks and rebuild it with the loading sleeve, level 1 along x, then slide the sleeve off. Which blocks are loose changes with every rebuild, as in a real game; that is intended (the simulation draws them per seed).",
+  "fidelity": "Each block is a rigid box with real size; its thickness is 15 mm plus a seeded uniform +-0.3 mm, so in every level some blocks carry the load and others are loose. Wood-on-wood friction 0.40 static, 0.30 dynamic; blocks 15 g; 0.3 mm play between neighbours. PhysX TGS, 32 position iterations per block, 2 mm contact offset; with no robot the tower creeps under 1 mm in 60 s. Wood compliance and surface roughness are not modelled.",
+  "scores": "Dream-1 run: TBD; scripted demo: TBD"
+}

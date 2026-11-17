@@ -35,7 +35,7 @@ CONTACT_OFFSET = 0.002  # m
 REST_OFFSET = 0.0
 POS_ITERS = 32
 VEL_ITERS = 4
-MAX_DEPEN_V = 0.05  # m/s: slow depenetration, so tiny overlaps never kick a block
+MAX_DEPEN_V = 0.5  # m/s: PhysX depenetration speed cap per block
 
 
 @dataclass(frozen=True)
