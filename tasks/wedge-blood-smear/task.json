@@ -19,5 +19,6 @@
   "run_limit": "1,200 steps (60 s at 20 Hz)",
   "reset_notes": "New base slide and spreader each trial (about 1 min): base slide on its pencil marks, spreader in the stand, a fresh 5 uL drop pipetted 24 mm from the frosted end. The stand-in is food-grade; wipe any drop off the paper with a damp towel. Collect any broken glass with tweezers into glass waste.",
   "fidelity": "Approximate. Slides are PhysX rigid boxes; no liquid simulation. A rule at 240 Hz reads the spreader's pose and its PhysX contact force on the base slide: in contact on the drop, the drop wicks along the edge (20 mm x (1 - e^(-t/0.5 s))); moving forward in contact lays film h ~ v^(2/3) tan(angle) sqrt(volume left); lift, back-up, stop and run-off are latched. Constants are estimates, not measured (README gives the calibration method).",
-  "scores": "Dream-1 run: 0.0; demo: 1.0 (scripted, seeds 0, 4 and 10)"
+  "scores": "Dream-1 run: 0.0; demo: 1.0 (scripted, seeds 0, 4 and 10)",
+  "media": "M-GJ5LPL"
 }
