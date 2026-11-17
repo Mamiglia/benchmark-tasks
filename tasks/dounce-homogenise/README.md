@@ -32,7 +32,7 @@ bottom and back up, keeping the pestle's head under the liquid, and hold the mor
 
 ### Distinct from
 
-- **Our burette titration task (wet lab, Other, already submitted).** That task meters a liquid through a valve: a
+- **Burette titration task TK-688YJC (wet lab, Other, pending).** That task meters a liquid through a valve: a
   wrist roll that holds a stopcock angle inside a 10-degree window while the other hand swirls a flask, stopped
   at a colour end point. Nothing is pushed or pulled there. Here the skill is stroke force and travel: driving a
   tight-fit pestle up and down along its axis against drag and suction, ten times, with a per-stroke travel
