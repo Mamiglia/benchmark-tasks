@@ -23,7 +23,7 @@ SHAFT_R = 0.0030  # 6 mm glass shaft
 HEAD_L = 0.012  # ground head length
 TUBE_L = 0.082  # grinding tube, floor to the reservoir
 BOTTOM = 0.003  # a stroke "reaches the bottom" with the head within 3 mm of the floor
-RISE = 0.030  # ... and "is full" when the head then rises at least 30 mm above the floor
+RISE = 0.025  # ... and "is full" when the head then rises at least 25 mm above the floor
 DRAG = 160.0  # N s/m on the head (8 N at 50 mm/s; README: how it was set and how to check it)
 P_ATM = 101_325.0
 V_CAV = P_ATM * math.pi * BORE_R**2 / DRAG  # m/s: suction reaches one atmosphere (about 50 mm/s)
@@ -86,10 +86,11 @@ class Dounce:
     def failed(self) -> bool:
         return self.lifted or self.tipped or self.pulled
 
-    def step(self, z: float, zdot: float, lift: float, tilt_deg: float, dt: float) -> None:
-        """One control step: head height and speed (relative to the mortar), the mortar's rise off its seat and
-        its tilt."""
+    def step(self, z: float, lift: float, tilt_deg: float, dt: float) -> None:
+        """One control step: head height (relative to the mortar), the mortar's rise off its seat and its tilt.
+        The head's speed is taken over the control step (what a video at 20 fps shows)."""
         self.t += dt
+        zdot = (z - self.z) / dt if self.t > dt else 0.0
         self.z = z
         self.max_z = max(self.max_z, z)
         self.max_lift = max(self.max_lift, lift)

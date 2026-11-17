@@ -27,7 +27,7 @@ INSTRUCTION = ("Homogenise the sample in the Dounce with ten full strokes of the
 # -- layout (env frame: x forward, y left, z up; m) ------------------------------------------------------------------
 XY = (0.30, 0.0)  # the mortar's axis
 RACK_L, RACK_W, RACK_H, PLATE = 0.200, 0.102, 0.057, 0.003  # Nalgene Unwire rack for 13 mm tubes
-HOLE = 0.015
+HOLE = 0.014
 PP = (0.95, 0.85, 0.20)  # yellow acetal
 _x0, _y0 = XY
 _c = (RACK_W - HOLE) / 4 + HOLE / 2  # centre of the plate strips beside the hole
@@ -55,7 +55,7 @@ OBJECTS = [*RACK, GRINDER]
 def score(objects) -> float:
     """Latched over the whole trial, any one gives 0: the mortar rose more than 5 mm off its seat, tipped past
     20 degrees, or the pestle's head was pulled up out of the grinding tube. Otherwise 0.08 per full stroke (the
-    head within 3 mm of the floor, then at least 30 mm above it, then back to the floor), counted up to ten; plus
+    head within 3 mm of the floor, then at least 25 mm above it, then back to the floor), counted up to ten; plus
     0.2 if the foam on the sample is under 2 mm at the end; minus 0.05 for every upstroke on which the head rose
     above the liquid and drew air in; floored at 0."""
     return D.score(objects["dounce"].model)

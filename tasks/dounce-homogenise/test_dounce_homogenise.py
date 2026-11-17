@@ -26,7 +26,7 @@ def run(rise, n=10, t_up=2.0, t_down=1.5, v_ml=3.2, lift=0.0, tilt=0.0):
                 s = i / k
                 s = s * s * (3 - 2 * s)
                 zn = z0 + (z1 - z0) * s
-                d.step(zn, (zn - z) / DT, lift, tilt, DT)
+                d.step(zn, lift, tilt, DT)
                 z = zn
     return d
 
@@ -78,5 +78,5 @@ def test_strokes_need_the_bottom():
     d.reset(3.2)
     for k in range(200):  # oscillate between 5 and 35 mm: never reaches the floor again
         z = 0.020 + 0.015 * math.sin(k * 0.3)
-        d.step(z, 0.0, 0.0, 0.0, DT)
+        d.step(z, 0.0, 0.0, DT)
     assert d.strokes == 0

@@ -45,6 +45,7 @@ MORTAR_H = FLOOR + D.TUBE_L + RES_H
 KNOB_R, KNOB_Z0, KNOB_Z1 = 0.0070, 0.160, 0.175
 GRIP_Z = (KNOB_Z0 + KNOB_Z1) / 2  # the demo grips the knob
 
+PATCH_R = 0.004  # m: contact patch of a finger pad (with a nitrile cot) on the glass
 GLASS = (0.80, 0.86, 0.90)
 SAMPLE = (0.93, 0.80, 0.55)  # pale buff cell suspension
 FOAM = (0.99, 0.99, 0.99)
@@ -130,6 +131,8 @@ def _spawn(prim_path: str, cfg, translation=None, orientation=None, **kwargs):
             cp = PhysxSchema.PhysxCollisionAPI.Apply(prim)
             cp.CreateContactOffsetAttr(0.002)
             cp.CreateRestOffsetAttr(0.0)
+            cp.CreateTorsionalPatchRadiusAttr(PATCH_R)  # padded fingers on glass also resist twisting
+            cp.CreateMinTorsionalPatchRadiusAttr(PATCH_R)
             bind_physics_material(str(prim.GetPath()), mat, stage=stage)
         bind_visual_material(str(prim.GetPath()), look(rgb, opacity), stage=stage)
         return c
@@ -280,11 +283,12 @@ class _Runtime:
         tilt = math.degrees(math.acos(float(np.clip(axis[2], -1, 1))))
         lift = float(pos[2] - self.seat_z)
         m = _MODEL
-        m.step(q, qd, lift, tilt, float(self.base.step_dt))
+        m.step(q, lift, tilt, float(self.base.step_dt))
         self.show(m, q)
         if _DEBUG and round(m.t / float(self.base.step_dt)) % 10 == 0:
             print(f"[dkit] t {m.t:5.1f} z {q * 1000:5.1f} mm v {qd * 1000:6.1f} mm/s lift {lift * 1000:4.1f} "
-                  f"tilt {tilt:4.1f} strokes {m.strokes} air {m.air} cav {m.cav}", flush=True)
+                  f"tilt {tilt:4.1f} strokes {m.strokes} air {m.air} cav {m.cav} pos {np.round(pos * 1000, 1)} "
+                  f"axis {np.round(axis, 3)} tcpR {np.round(self.tcps()['right_robot'] * 1000, 1)}", flush=True)
         top = pos + axis * (FLOOR + q + KNOB_Z1)
         return DounceState(pos=pos, quat_xyzw=pose[3:7], lin_vel=vel[:3], ang_vel=vel[3:6],
                            low=pos - (RES_R, RES_R, 0.0), high=np.maximum(pos + axis * MORTAR_H, top) + RES_R,
