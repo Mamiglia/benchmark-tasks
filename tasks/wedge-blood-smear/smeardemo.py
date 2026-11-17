@@ -125,7 +125,7 @@ class Controller:
         self.q = {a: np.array(READY, float) for a in ARMS}
         self.finger = dict.fromkeys(ARMS, FINGER_OPEN)
         self.plans: dict = {}
-        self.t0 = self.dur = 0.0
+        self.t0, self.dur = -1.0, 0.0
         self.finished_at = None
         self.obs = None
         self.collect, self.samples = None, []
@@ -162,14 +162,17 @@ class Controller:
         self.obs = obs
         if self.collect is not None:
             self.samples.append(self.collect(obs))
-        while self.finished_at is None and t + self.dt >= self.t0 + self.dur:
-            self.t0 += self.dur
+        # a segment ends once its last action is out; the next starts now (the observation clock is not on a grid
+        # with the segments' durations)
+        while self.finished_at is None and t >= self.t0 + self.dur - 1e-6:
             try:
-                self._start(next(self.script_it))
+                seg = next(self.script_it)
             except StopIteration:
-                self.t0 -= self.dur
                 self.finished_at = t
                 self.collect = None
+                break
+            self.t0 = t
+            self._start(seg)
         out = []
         for arm in ARMS:
             if arm in self.plans:

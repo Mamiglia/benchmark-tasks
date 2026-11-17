@@ -222,7 +222,7 @@ def _spawn(prim_path: str, cfg, translation=None, orientation=None, **kwargs):
     cube(bench, "stand_floor", (sx, sy, (dz - depth) / 2), (gap + 0.0002, dy, dz - depth), s.stand_color, mu=0.4)
 
     # base slide: origin at its centre (mid-thickness)
-    base, bprim = body("base", (s.pos[0], s.pos[1], s.paper_top + T / 2))
+    base, bprim = body("base", (s.pos[0], s.pos[1], s.paper_top + T / 2), report=True)
     cube(base, "glass", (0, 0, 0), (L, W, T), s.glass_color, mu=s.mu_glass, rough=0.1, opacity=0.6)
     cube(base, "frost", (-L / 2 + s.frost / 2, 0, T / 2 + 0.00002), (s.frost, W, 0.00004), s.frost_color, rough=0.9)
     mass(bprim, s.glass_mass, (L, W, T))
@@ -306,6 +306,9 @@ class _Runtime:
         self.contact = view.create_rigid_contact_view([f"{self.root}/spreader"],
                                                       filter_patterns=[[f"{self.root}/base"]],
                                                       max_contact_data_count=64)
+        self.c_bench = view.create_rigid_contact_view([f"{self.root}/spreader"],
+                                                      filter_patterns=[[f"{self.root}/bench"]],
+                                                      max_contact_data_count=64)
         self.dt = float(base.physics_dt)
         self.origin = _arr(base.scene.env_origins)[0]
         self.debug = bool(os.environ.get("SMEAR_DEBUG"))
@@ -354,6 +357,10 @@ class _Runtime:
             self.say(f"{msg} (edge {x * 1000:.1f} mm, angle {ang:.1f} deg, force {self.force:.2f} N, speed "
                      f"{self.smear.v * 1000:.0f} mm/s)")
         if self.debug and self.n % 24 == 0:
+            fb = float(np.linalg.norm(_arr(self.c_bench.get_contact_force_matrix(dt=self.dt)).reshape(-1, 3).sum(0)))
+            ez = (sp[2] - bp[2] - s.slide[2] / 2) * 1000
+            self.say(f"edge z {ez:5.2f} mm roll {math.degrees(math.asin(float(np.clip(sR[2, 1], -1, 1)))):5.1f} "
+                     f"bench force {fb:.3f} N spreader {np.round(sp * 1000, 1)}")
             self.say(f"edge x {x * 1000:6.1f} y {y * 1000:5.1f} mm angle {ang:5.1f} force {self.force:.3f} N "
                      f"state {self.smear.state} width {self.smear.width * 1000:.1f} moved {self.moved * 1000:.2f} mm")
 
