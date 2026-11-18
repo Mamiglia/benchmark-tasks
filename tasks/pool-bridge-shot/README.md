@@ -1,9 +1,10 @@
 # Pot the object ball in the taped corner pocket: one hand is the bridge, the other strokes the cue
 
-A tabletop pool table stands in front of the robot. On the cloth are the white cue ball and a yellow object ball. The
-near-left corner pocket has white tape on its rails, and a 36 in cue lies on the near rail. The robot must pot the
-yellow ball in the taped pocket with one strike of the cue on the white ball, as a pool player does: one hand makes the
-bridge the cue slides through, and the other strokes it.
+The robot stands at the near-left corner of a 7 ft bar pool table, at full size: regulation 2 1/4 in balls, real
+cushions and rails, and a 48 in "shorty" cue of the kind bars keep for shots near a wall. On the cloth are the white
+cue ball and a yellow object ball. The near-left corner pocket has white tape on its rails, and the cue lies on the
+near rail. The robot must pot the yellow ball in the taped pocket with one strike of the cue on the white ball, as a
+player does: one hand makes the bridge the cue slides through, and the other strokes it.
 
 **Instruction:** `Pot the yellow ball in the corner pocket marked with white tape, striking only the white ball, once, with the cue.`
 
@@ -12,20 +13,18 @@ one in a bar, a games room or a student union, and know how hard it is to pot a 
 
 ## Why this task
 
-- **The skill is a guided, bimanual tool strike.** The cue is long and is held at its balance point. The bridge hand
-  must hold the shaft on the aim line while it slides. The stroking hand must drive the cue straight through the
-  bridge at a set speed and hit the cue ball within a few millimetres of its centre, once. In the simulation, a tip
-  4 mm off centre sends the cue ball 4 to 6 degrees off line, and the object ball then misses the pocket.
+- **The skill is a guided, bimanual tool strike.** The cue is 1.2 m long and weighs 510 g. It is held at its balance
+  point, and the bridge hand must hold the shaft on the aim line while it slides. The stroking hand must drive it
+  straight through the bridge at a set speed and hit the cue ball near its centre, once.
 - **Aim is physical, not a reading.** For the object ball to go into the pocket, the cue ball must reach the
-  ghost-ball point: one ball diameter behind the object ball, on the line from the pocket. Here that means a 32 degree
-  cut. The cue must be laid on the line from the cue ball's centre through that point.
+  ghost-ball point: one ball diameter behind the object ball, on the line from the pocket. Here that is a 35 degree
+  cut, and the cue must be laid on the line from the cue ball's centre through that point.
 - **Pace is part of the task.** Strike too softly and the object ball stops short. Strike too hard and the cue ball
-  follows into a pocket (a scratch). Following through too far brings the tip back onto the cue ball (a double hit).
-  In the simulation, the demo pots the ball with cue speeds of 0.32 and 0.41 m/s at contact; at 0.65 m/s the
-  cue ball follows into the far-left pocket. With an earlier, slower-tracking stroke, a 5 cm follow-through caught the
-  cue ball again (two strikes, score 0).
-- **It is not a push.** Pushing the cue ball with the tip in contact (a push shot) is a foul in pool and scores 0
-  here. So does moving a ball by hand or touching the object ball with the cue.
+  can run on into a pocket (a scratch). A cue kept on the ball while it rolls is a push.
+- **Fouls are fouls.** Pushing the ball with the cue, touching a ball with a gripper or arm, or hitting the yellow
+  ball with the cue scores 0.
+- **Full size.** The table, balls and cue are the real ones, so the ball mass (170 g), the cushion and rail heights,
+  the pocket size and the cue's length and weight are those a player meets.
 
 ### Distinct from
 
@@ -40,18 +39,17 @@ Robot billiards exists only as research systems with a dedicated cue actuator, n
 
 ## Scene
 
-Positions in cm from the midpoint between the two arm bases, on the table top (x forward, y left).
+Positions in cm from the midpoint between the two arm bases, at the arm bases' mounting height (x forward, y left).
 
 | Object | Size | Mass | Notes |
 |---|---|---|---|
-| Pool table, Hathaway Breakout 40 in (BG5026) | 102 x 55 cm outside, cloth 13 cm above the table top; playing field 91.6 x 44.6 cm | fixed (clamped) | Long side along y, centred at y = 0; playing field from x = 14.0 to 58.6. Blue cloth, 2.5 cm cushions, 3.5 cm black rails. Six pockets: 6 x 6 cm corner holes, 7 cm side holes |
-| Cue ball | 38 mm (1.5 in) | 50 g | White, on a spot sticker at (25.0, 15.0) |
-| Object ball | 38 mm | 50 g | Yellow (the 1 ball), on a spot sticker at (23.0, 32.5) |
-| Cue | 36 in (914 mm): 11 mm tip, 13 mm shaft, 25 mm butt | 250 g | Lies on the near rail (rail centre x = 10.75), tip toward +y, its balance point (59.5 cm from the tip) at y = -25 |
-| White tape | 19 mm tape, 4 cm on each rail | - | Either side of the near-left corner pocket (the target) |
+| Pool table, 7 ft bar table (39 x 78 in playing field) | Cloth 7 cm above the arm bases' mounting plane; 2 in rubber cushions, nose 36 mm above the cloth; 4 in wooden rails, 44 mm above the cloth; corner pocket opening 85 mm square at each field corner (a 4 3/4 in mouth across the jaws) | fixed | Long side along y. Near cushion nose at x = 29, left cushion nose at y = 65 (the near-left corner is the target pocket); the field runs to x = 128 and y = -133, beyond the cameras. Green cloth, brown rails |
+| Cue ball | 57.15 mm (2 1/4 in) | 170 g | White, on a spot at (42.3, 35.9) |
+| Object ball | 57.15 mm | 170 g | Yellow (the 1 ball), on a spot at (39.0, 52.6) |
+| Cue, Action ACTO48 one-piece shorty | 48 in (1,219 mm), 12 mm tip, 13.6 mm shaft, 29 mm butt | 510 g (18 oz) | Lies on the near rail (rail centre x = 19), tip toward +y, its balance point (80 cm from the tip) at y = -55 |
+| White tape | 6 cm on each rail | - | Either side of the near-left corner pocket (the target) |
 
-The object ball is 18 cm from the cue ball, and the pocket is 12 cm beyond it. The cut is 32 degrees, so the cue ball
-leaves straight along +y and meets the object ball off centre.
+The cue ball travels 12 cm to the ghost-ball point; the object ball is 10 cm from the middle of the pocket opening. The cut is 35 degrees.
 
 ## Scoring
 
@@ -67,7 +65,8 @@ Latched over the whole trial, from the trial video:
 
 `task_score` gives the score at the end of the episode; a 1.0 shot that holds 1 s with the cue ball at rest ends it
 early. The simulation reads contacts at 240 Hz (PhysX contact reports between each ball and the cue, the other ball,
-and every link of both arms), and a ball counts as potted once its centre is below the cloth inside a pocket hole.
+and every link of both arms). A ball counts as potted once its centre has sunk a quarter of its radius below the
+cloth level inside a pocket opening (it may come to rest on another ball in the pocket).
 
 ## Run a trial
 
@@ -81,66 +80,86 @@ inspect-robots run --embodiment yam_arena --policy dream \
   --scorer task_score --max-steps 1500 --store-frames --log-dir ~/yam-eval/pool-bridge-shot-dream
 ```
 
-The scripted demo: `--policy yam_scripted` (same command), about 430 control steps. `POOL_DEBUG=1` prints the demo's
-state every 0.1 s; `POOL_LOG=file.npy` saves a 240 Hz log (balls, cue, contact forces, gripper tool points).
-`DEMO_MODE=push|hand` plays the loophole checks below; `POOL_V`/`POOL_FOLLOW` the pace checks. `POOL_V` sets the demo's stroke speed (m/s, default 0.38).
+The scripted demo: `--policy yam_scripted` (same command). `POOL_DEBUG=1` prints the demo's state every 0.1 s;
+`POOL_LOG=file.npy` saves a 240 Hz log (balls, cue, contact forces, gripper tool points). `DEMO_MODE=push|hand`
+plays the loophole checks below; `POOL_V` sets the demo's stroke speed command (m/s, default 0.38).
 
 **Run limit:** 1,500 steps (75 s at 20 Hz), about three times the scripted demo.
 
 **Runtime:** about 3 minutes of wall time for a scripted trial on a shared RTX workstation (Isaac Sim start, reset,
-520 steps); a 1,500-step policy run takes longer, depending on the policy's latency. Seeds do not change the layout
-(it is fixed); seeds 0, 4 and 10 give the same demo result.
+about 540 control steps); a 1,500-step policy run takes longer, depending on the policy's latency. Seeds do not change the
+layout (it is fixed); seeds 0, 4 and 10 give the same demo result.
 
 ## Results
 
 | Run | Score |
 |---|---|
-| Scripted demo, seeds 0, 4, 10 (427 steps; cue 0.41 m/s at contact) | 1.0, 1.0, 1.0 |
-| Check `DEMO_MODE=push`: tip placed on the cue ball and rolled forward at 0.15 m/s | 0 (the cue went on to touch the yellow ball: foul; the 70 ms push rule itself is checked in the unit tests) |
+| Scripted demo, seeds 0, 4, 10 (541 steps; stroke command 0.38 m/s, 0.48 m/s at contact) | 1.0, 1.0, 1.0 |
+| Demo stroke commands 0.32 and 0.45 m/s | 1.0, 1.0 |
+| Check `DEMO_MODE=push`: tip placed on the cue ball and rolled forward at 0.15 m/s | 0 (three cue contacts, and the cue reached the yellow ball: foul) |
 | Check `DEMO_MODE=hand`: the left gripper sweeps the yellow ball into the taped pocket | 0 (yellow potted, but a robot touched it) |
-| Check `POOL_V=0.6`: a hard stroke | 0.25 (yellow potted, the white ball scratched in the far-left pocket) |
-| Check `POOL_V=0.5 POOL_FOLLOW=0.06`: a long, fast follow-through | 0.25 (yellow potted, white ball scratched) |
-| Dream-1, seed 0, 1,500 steps | 0.0 (it moved both grippers over the table and toward the balls but never picked up the cue; the cue was knocked off the rail; no strike) |
+| Hard stroke, `POOL_V=0.7` | 1.0 (at this short range a firm stroke still pots and the 35 degree cut keeps the white ball out of the pocket) |
+| Dream-1, seed 0, 1,500 steps | 0.0 (the right gripper went to the cue on the rail and hovered over it, but never lifted it; no strike) |
+
+`setup.png` is the top camera with the left arm lifted out of its view of the taped pocket (`DEMO_MODE=show`); trials
+start with both arms in the ready pose.
 
 ## Simulation and fidelity
 
-- **Table** (`poolkit.TableGeom`): one fixed body of box colliders. The slate leaves six pocket holes 6 cm deep; the
-  cushions are boxes with restitution 0.75 and a 2.5 cm nose height; the rails are wood. Real cushions have an angled
-  nose and pocket jaws; here they are square.
-- **Balls**: solid spheres (inertia 2/5 m r^2), restitution 0.93 ball on ball, cloth friction 0.2 (ball on ball 0.04,
-  by PhysX "multiply" combining). Cloth rolling resistance is modelled as body damping (0.45 1/s, linear and angular):
-  a ball rolled at 0.5 m/s stops after about 1 m (v / 0.45). Measure your table (roll a ball off a 5 cm ramp, measure how far it
-  goes) and adjust `BallParams` if it differs much.
-- **Cue**: one rigid body: a 5.5 mm sphere tip (friction 3.0 x 0.2 = 0.6 on the ball, restitution 0.75), a 13 mm
-  shaft (friction 0.35, so it slides through a bridge) and a 25 mm butt (friction 1.0, for the grip). The real cue
-  tapers smoothly; here it is two steps. The grip uses an 8 mm torsional patch radius: a rubber pad on a round cue
-  grips over a patch, not at a point.
-- **Arms**: the YAM's own PD gains (i2rt), as yam_arena sets them. The achieved cue speed at contact in the demo is
-  0.41 m/s.
-- **What is not simulated**: the cloth's nap, ball spin effects beyond rolling friction (no swerve), chalk wear.
+- **Table** (`poolkit.TableGeom`): one fixed body of box colliders for the corner region in reach and the rest of
+  the 39 x 78 in field. The bed (slate and cloth) is a 7 cm slab on the station table with six square pocket
+  openings that go down to the table top; the cushions are boxes with restitution 0.75 and a 36 mm nose; the rails are
+  wood. Real cushions have an angled nose and pocket jaws, and real pockets have a liner and a ball return; here they
+  are square openings.
+- **Balls**: solid spheres (inertia 2/5 m r^2), 170 g, restitution 0.93 ball on ball, cloth friction 0.2 (ball on
+  ball 0.04, by PhysX "multiply" combining). Cloth rolling resistance is modelled as body damping (0.45 1/s, linear
+  and angular): a ball rolled at 0.5 m/s stops after about 1 m (v / 0.45).
+- **Cue**: one rigid body, centre of mass at its balance point: a 6 mm sphere tip (friction 3.0 x 0.2 = 0.6 on the
+  ball, restitution 0.75), a 13.6 mm shaft (friction 0.35, so it slides through a bridge) and a 29 mm butt (friction
+  1.0, for the grip). The real cue tapers smoothly; here it is two steps. The grip uses a 10 mm torsional patch
+  radius: a rubber pad on a round cue grips over a patch, not at a point.
+- **Arms**: the YAM's own PD gains (i2rt), as yam_arena sets them.
+- **Impact speeds**: at these slow speeds PhysX makes the tip impact nearly inelastic: the cue ball leaves at 0.6 to
+  0.8 times the cue's speed, where a real centre hit gives about 1.3 times. So the simulated stroke is faster than a
+  real one (demo commands 0.32 to 0.45 m/s, 0.40 to 0.57 m/s at contact, all pot the ball), and it stops 1 cm past
+  the contact point so the cue does not stay on the slower ball (which the scorer would call a push). Pace on the
+  real table differs and is part of what the real trial tests.
+- **What is not simulated**: the cloth's nap, swerve, chalk wear.
 
-## Real-world build and trial
+## Feasibility: stroke speed and forces
+
+The shot is short (12 cm to the ghost-ball point, 10 cm on to the pocket), so it needs a cue ball speed of only
+about 0.25 to 0.4 m/s. A real cue ball leaves a centre hit at about 1.3 times the cue's speed, so a real cue needs
+about 0.2 to 0.3 m/s at contact. The simulation needs more (0.40 to 0.57 m/s, see below), and the simulated arm,
+with the YAM's own PD gains and the 510 g cue, reached it; the real arm's shoulder motors (DM4340, about 5.5 rad/s)
+allow well over 1 m/s at the hand. Stroke speed is not the limit; control of it is. The grip on the
+29 mm butt is about 37 N per finger, under the YAM's roughly 40 N; the cue weighs 510 g, under the 1.5 kg payload,
+and is held at its balance point. The bridge is a light pinch of about 3 N per finger.
+
+## Real-world trial
 
 | Item | Product | Price |
 |---|---|---|
-| Table | Hathaway Breakout 40 in tabletop pool table, model BG5026, 40 x 21.5 in, 17 lb, MDF with cloth; comes with 16 balls, two 36 in cues, chalk, triangle | about $100 (Walmart) |
-| Balls (if the table's set is not 1.5 in) | RACK Essential 1.5 in billiard ball set | about $18 |
-| Spot stickers, white masking tape, 2 C-clamps | any | about $10 |
+| Table | A 7 ft bar or home pool table with a 39 x 78 in field. On site: a coin-op bar table (for example Valley Panther ZD-11, quote only). Cheapest new full-size option we found: Hathaway Maverick 7 ft (comes with 2 1/4 in balls) | about $750 (Hathaway Maverick); a bar's table costs nothing to use |
+| Balls | The table's 2 1/4 in set, or Aramith Blue Dot cue ball plus any 1 ball | about $13 each |
+| Cue | Action ACTO48 one-piece 48 in shorty cue, 18 oz, 12 mm tip | about $30 |
+| Tape, spot stickers | any | about $5 |
 
-Total about $130. Clamp the table's legs to the robot table so it cannot slide. Measure the playing field and the
-cloth height and set them in `TableGeom` if they differ from the values above; put the spot stickers at the positions
-in the Scene table (measured from the midpoint between the two arm bases). Weigh one ball and set `BallParams.mass`.
+This is the one part of the task over the usual ~$200: a full-size table. The honest options are to run the trial at
+a bar or club table, or to buy a home 7 ft table. A tabletop toy table would make it a miniature.
 
-**Forces.** The grip on the 25 mm butt is about 35 N per finger (the demo's command), under the YAM's roughly 40 N.
-The bridge is a light pinch of about 3 N per finger. The stroke needs a cue speed of about 0.3 to 0.45 m/s at contact; the
-YAM's shoulder joints (DM4340, about 5.5 rad/s) can move the hand well over 1 m/s.
+**Placing the robot.** The arms must stand at the table's near rail as a player does: arm bases 7 cm below the
+cloth, 32 cm back from the near cushion's nose, with the near-left corner pocket in front of the left arm (positions
+above). A bar table's cloth is 29 to 31 in high, so the two arms go on a stand of that height minus 7 cm at the rail,
+not on the usual rig table (which cannot go under the table). Measure the cloth height and pocket opening of the table
+used and set `TableGeom` if they differ.
 
-**Safety.** The balls weigh 50 g and leave the cue at under 0.5 m/s; the cue tip is a rounded leather tip. Nothing is
-sharp, wet or messy. Chalk the tip before the session, not during a trial, so no chalk dust reaches the grippers.
-Keep people out of the cue's swing (the butt reaches about 30 cm behind the right hand).
+**Safety.** The balls leave the cue at under 0.5 m/s; the cue tip is a rounded leather tip. Nothing is sharp, wet or
+messy. Chalk the tip before the session, not during a trial, so no chalk dust reaches the grippers. Keep people out of
+the cue's butt (it reaches about 40 cm behind the right hand).
 
-**Reset.** Put both balls back on their spot stickers and the cue on the near rail, tip to the left, its balance point
-(mark it with a pen) 25 cm right of the table's centre line.
+**Reset.** Take both balls out of the pocket or off the cloth, put them back on their spot stickers, and lay the cue on
+the near rail, tip to the left, its balance point (mark it with a pen) at the marked place.
 
 ## Third-party assets and licences
 

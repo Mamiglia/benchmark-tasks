@@ -1,11 +1,11 @@
-"""poolkit: a 40 in tabletop pool table, two 38 mm balls and a 36 in cue for a yam_arena task file, and a 240 Hz
-shot monitor.
+"""poolkit: the near corner of a 7 ft bar pool table, two regulation 57 mm balls and a 48 in shorty cue for a yam_arena
+task file, and a 240 Hz shot monitor.
 
 yam_arena task files only take single rigid primitives with one grippy, non-bouncy material. This module adds:
 
-- :class:`Table`: one fixed (kinematic) body with many box colliders: the cabinet, the slate with six pocket holes,
+- :class:`Table`: one fixed (kinematic) body with many box colliders: the bed (slate and cloth) with six pocket holes,
   rubber cushions (bouncy) and wooden rails, each with its own material.
-- :class:`Ball`: a 38 mm, 50 g solid ball with the ball's restitution, cloth friction and a rolling-resistance damping.
+- :class:`Ball`: a 57 mm, 170 g solid ball with the ball's restitution, cloth friction and a rolling-resistance damping.
 - :class:`Cue`: one free body, a tapered cue as three colliders (leather tip, shaft, butt).
 
 and hooks yam_arena (without modifying it):
@@ -40,29 +40,30 @@ from yam_arena.task_file import Box, ObjectState, Sphere
 
 @dataclass(frozen=True)
 class BallParams:
-    radius: float = 0.019  # 1.5 in mini balls (38 mm)
-    mass: float = 0.050  # resin ball of that size (weigh yours: README)
-    restitution: float = 0.93  # ball on ball (phenolic/resin); ball on cushion uses the cushion's value (min combine)
+    radius: float = 0.028575  # regulation 2 1/4 in (57.15 mm)
+    mass: float = 0.170  # 6 oz (Aramith regulation weight)
+    restitution: float = 0.93  # ball on ball (phenolic); ball on cushion uses the cushion's value (min combine)
     friction: float = 0.2  # ball on cloth, sliding (multiply combine: x the cloth's 1.0); ball on ball 0.04
-    # Rolling resistance of the cloth as body damping (1/s), tuned in the sim roll test (README): a ball rolled at
-    # 0.5 m/s stops after about 0.9 m, as on the real table.
+    # Rolling resistance of the cloth as body damping (1/s): a ball rolled at 0.5 m/s stops after about 1 m (v / 0.45).
     linear_damping: float = 0.45
     angular_damping: float = 0.45
 
 
 @dataclass(frozen=True)
 class CueParams:
-    length: float = 0.914  # 36 in
-    tip_r: float = 0.0055  # 11 mm leather tip, domed
-    shaft_r: float = 0.0065  # 13 mm shaft (the taper is modelled as two steps)
-    shaft_len: float = 0.50
-    butt_r: float = 0.0125  # 25 mm butt
-    mass: float = 0.25
+    """Action ACTO48, a one-piece 48 in shorty cue sold for tight bar spaces: 18 oz, 12 mm tip."""
+
+    length: float = 1.219  # 48 in
+    tip_r: float = 0.006  # 12 mm leather tip, domed
+    shaft_r: float = 0.0068  # 13.6 mm shaft (the taper is modelled as two steps)
+    shaft_len: float = 0.60
+    butt_r: float = 0.0145  # 29 mm butt
+    mass: float = 0.510  # 18 oz
     tip_friction: float = 3.0  # chalked leather: x ball 0.2 = 0.6
     tip_restitution: float = 0.75
     wood_friction: float = 1.0  # the butt's wrap, where the hand grips
     shaft_friction: float = 0.35  # smooth lacquered shaft (min combine): it slides through a bridge
-    grip_patch: float = 0.008  # m: torsional patch radius under a gripper pad (a 16 mm wide pad contact)
+    grip_patch: float = 0.010  # m: torsional patch radius under a gripper pad (a 20 mm wide pad contact)
 
     @property
     def com_from_tip(self) -> float:
@@ -75,33 +76,39 @@ class CueParams:
 
 @dataclass(frozen=True)
 class TableGeom:
-    """The Hathaway Breakout 40 in table (BG5026), world frame (m). Long side along y, centred on y = 0."""
+    """The near-left corner region of a 7 ft bar table (39 x 78 in playing field), world frame (m). The long side runs
+    along y, from the target corner at y = ``y_left`` toward -y; the field's far side and right end lie beyond the
+    workspace and the cameras. The bed (slate and cloth) stands ``felt_h`` above the station table top."""
 
     top: float  # the station table top it stands on
-    x0: float = 0.140  # playing field near edge (cushion nose)
-    depth: float = 0.446  # playing field, x
-    length: float = 0.916  # playing field, y
-    felt_h: float = 0.130  # cloth above the station table
-    slate_t: float = 0.060  # the pocket holes are this deep
-    cushion_w: float = 0.015
-    cushion_h: float = 0.025  # nose height above the cloth (about 0.65 ball diameter)
-    rail_w: float = 0.035
-    rail_h: float = 0.035  # wooden rail top above the cloth
-    corner: float = 0.060  # corner pocket hole: this square in each corner of the field
-    side_w: float = 0.070  # side pocket hole: this wide (y) ...
-    side_d: float = 0.030  # ... and this deep into the field (x)
+    x0: float = 0.200  # playing field near edge (cushion nose)
+    depth: float = 0.991  # playing field, x (39 in)
+    length: float = 1.981  # playing field, y (78 in)
+    y_left: float = 0.550  # the field's left edge (cushion nose)
+    felt_h: float = 0.070  # cloth above the station table: the pocket holes are this deep
+    cushion_w: float = 0.050  # cushion nose to rail (2 in)
+    cushion_h: float = 0.036  # nose height above the cloth (1 7/16 in, 63.5 % of a 2 1/4 in ball)
+    rail_w: float = 0.100  # wooden rail top (4 in)
+    rail_h: float = 0.044  # rail top above the cloth
+    corner: float = 0.085  # corner pocket hole: this square in each field corner (a 4 3/4 in mouth across the jaws)
+    side_w: float = 0.130  # side pocket hole: this wide (y, 5 1/8 in mouth) ...
+    side_d: float = 0.040  # ... and this deep into the field (x)
 
     @property
     def x1(self) -> float:
         return self.x0 + self.depth
 
     @property
-    def y0(self) -> float:
-        return -self.length / 2
+    def y1(self) -> float:
+        return self.y_left
 
     @property
-    def y1(self) -> float:
-        return self.length / 2
+    def y0(self) -> float:
+        return self.y_left - self.length
+
+    @property
+    def ym(self) -> float:
+        return self.y_left - self.length / 2
 
     @property
     def felt(self) -> float:
@@ -109,25 +116,25 @@ class TableGeom:
 
     def pockets(self) -> dict[str, tuple[float, float, float, float]]:
         """Each pocket's hole in the slate as (x0, x1, y0, y1)."""
-        c, sw, sd = self.corner, self.side_w, self.side_d
+        c, sw, sd, ym = self.corner, self.side_w, self.side_d, self.ym
         x0, x1, y0, y1 = self.x0, self.x1, self.y0, self.y1
         return {
             "near_left": (x0, x0 + c, y1 - c, y1), "far_left": (x1 - c, x1, y1 - c, y1),
             "near_right": (x0, x0 + c, y0, y0 + c), "far_right": (x1 - c, x1, y0, y0 + c),
-            "near_side": (x0, x0 + sd, -sw / 2, sw / 2), "far_side": (x1 - sd, x1, -sw / 2, sw / 2),
+            "near_side": (x0, x0 + sd, ym - sw / 2, ym + sw / 2), "far_side": (x1 - sd, x1, ym - sw / 2, ym + sw / 2),
         }
 
     def pocket_mouth(self, name: str) -> np.ndarray:
         """The field corner (or rail midpoint) a pocket sits on: the point the 10 cm partial credit is measured from."""
         xs = {"near": self.x0, "far": self.x1}[name.split("_")[0]]
-        ys = {"left": self.y1, "right": self.y0, "side": 0.0}[name.split("_")[1]]
+        ys = {"left": self.y1, "right": self.y0, "side": self.ym}[name.split("_")[1]]
         return np.array([xs, ys])
 
     def boxes(self) -> list[tuple[str, tuple, tuple]]:
         """(material, centre, size) of every collider, world frame."""
         out = []
         f, top = self.felt, self.top
-        c, sw, sd = self.corner, self.side_w, self.side_d
+        c, sw, sd, ym = self.corner, self.side_w, self.side_d, self.ym
         x0, x1, y0, y1 = self.x0, self.x1, self.y0, self.y1
         cw, rw = self.cushion_w, self.rail_w
 
@@ -135,18 +142,17 @@ class TableGeom:
             out.append((mat, ((xa + xb) / 2, (ya + yb) / 2, (za + zb) / 2), (xb - xa, yb - ya, zb - za)))
 
         ox0, ox1, oy0, oy1 = x0 - cw - rw, x1 + cw + rw, y0 - cw - rw, y1 + cw + rw
-        zs = f - self.slate_t
-        box("wood", ox0, ox1, oy0, oy1, top, zs)  # cabinet (the pocket floors)
+        zs = top + 0.002  # the slate's underside; pocket floors are the station table
         # slate, leaving the six holes
         box("felt", x0 + c, x1 - c, y0, y1, zs, f)
         for xa, xb, xs in ((x0, x0 + c, x0), (x1 - c, x1, x1)):
-            box("felt", xa, xb, y0 + c, -sw / 2, zs, f)
-            box("felt", xa, xb, sw / 2, y1 - c, zs, f)
+            box("felt", xa, xb, y0 + c, ym - sw / 2, zs, f)
+            box("felt", xa, xb, ym + sw / 2, y1 - c, zs, f)
             inner = (x0 + sd, x0 + c) if xs == x0 else (x1 - c, x1 - sd)
-            box("felt", inner[0], inner[1], -sw / 2, sw / 2, zs, f)
+            box("felt", inner[0], inner[1], ym - sw / 2, ym + sw / 2, zs, f)
         # cushions (gaps at the pockets) and rails
         ch, rh = f + self.cushion_h, f + self.rail_h
-        for ya, yb in ((y0 + c, -sw / 2), (sw / 2, y1 - c)):
+        for ya, yb in ((y0 + c, ym - sw / 2), (ym + sw / 2, y1 - c)):
             box("cushion", x0 - cw, x0, ya, yb, zs, ch)
             box("cushion", x1, x1 + cw, ya, yb, zs, ch)
         box("cushion", x0 + c, x1 - c, y0 - cw, y0, zs, ch)
@@ -155,11 +161,11 @@ class TableGeom:
         box("wood", x1 + cw, ox1, oy0, oy1, zs, rh)
         box("wood", x0 - cw, x1 + cw, oy0, y0 - cw, zs, rh)
         box("wood", x0 - cw, x1 + cw, y1 + cw, oy1, zs, rh)
-        # pocket corners behind the cushion gaps: the rails' inner faces
+        # the pocket's back walls behind the cushion gaps (inside faces of the rails), down to the pocket floor
         for xa, xb in ((x0 - cw, x0), (x1, x1 + cw)):
             for ya, yb in ((y0 - cw, y0 + c), (y1 - c, y1 + cw)):
                 box("wood", xa, xb, ya, yb, zs, rh)
-            box("wood", xa, xb, -sw / 2, sw / 2, zs, rh)  # side pocket backs
+            box("wood", xa, xb, ym - sw / 2, ym + sw / 2, zs, rh)
         for ya, yb in ((y0 - cw, y0), (y1, y1 + cw)):
             for xa, xb in ((x0, x0 + c), (x1 - c, x1)):
                 box("wood", xa, xb, ya, yb, zs, rh)
@@ -210,10 +216,11 @@ class ShotMonitor:
     def where(self, pos) -> str:
         """'' on the table, a pocket name, or 'off' (fell off the table)."""
         x, y, z = pos
-        if z > self.t.felt + self.radius - 0.008:
+        if z > self.t.felt + 0.75 * self.radius:
             return ""
         for name, (xa, xb, ya, yb) in self.holes.items():
-            if xa - 0.01 <= x <= xb + 0.01 and ya - 0.01 <= y <= yb + 0.01 and z < self.t.felt - self.radius:
+            # sunk more than a quarter of its radius below the cloth level inside a hole (it may rest on another ball)
+            if xa - 0.01 <= x <= xb + 0.01 and ya - 0.01 <= y <= yb + 0.01 and z < self.t.felt + 0.75 * self.radius:
                 return name
         return "off" if z < self.t.felt - 0.03 else ""
 
@@ -278,9 +285,9 @@ def shot_score(m: ShotMonitor, ob_pos, ob_resting: bool) -> float:
 @dataclass(frozen=True)
 class Table(Box):
     geom: TableGeom = None  # type: ignore[assignment]
-    felt_color: tuple = (0.05, 0.25, 0.60)
-    cushion_color: tuple = (0.04, 0.20, 0.50)
-    wood_color: tuple = (0.12, 0.12, 0.14)
+    felt_color: tuple = (0.10, 0.40, 0.20)
+    cushion_color: tuple = (0.08, 0.33, 0.16)
+    wood_color: tuple = (0.30, 0.17, 0.08)
 
 
 @dataclass(frozen=True)
@@ -398,6 +405,7 @@ def _spawn(prim_path: str, cfg, translation=None, orientation=None, **kwargs):
 
     if isinstance(spec, Table):
         UsdPhysics.RigidBodyAPI(prim).CreateKinematicEnabledAttr(True)
+
         mats = {
             "felt": _material(f"{prim_path}/Looks/felt", 1.0, 0.0),
             "cushion": _material(f"{prim_path}/Looks/cushion", 1.0, 0.75),
@@ -430,6 +438,7 @@ def _spawn(prim_path: str, cfg, translation=None, orientation=None, **kwargs):
 
     p = spec.params  # the cue
     UsdPhysics.MassAPI.Apply(prim).CreateMassAttr(p.mass)
+    UsdPhysics.MassAPI(prim).CreateCenterOfMassAttr(Gf.Vec3f(0.0, 0.0, 0.0))  # the body origin is the balance point
     rb.CreateEnableCCDAttr(True)
     PhysxSchema.PhysxContactReportAPI.Apply(prim).CreateThresholdAttr(0.0)
     tipm = _material(f"{prim_path}/Looks/tip", p.tip_friction, p.tip_restitution, "multiply", "min")

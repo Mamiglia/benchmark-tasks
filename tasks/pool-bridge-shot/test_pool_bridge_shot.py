@@ -10,11 +10,11 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from poolkit import CueParams, Rules, ShotMonitor, TableGeom, shot_score  # noqa: E402
 
 G = TableGeom(top=0.7475)
-R = 0.019
+R = 0.028575
 ON = G.felt + R
-CB0, OB0 = np.array([0.25, 0.15, ON]), np.array([0.23, 0.325, ON])
-IN_TARGET = np.array([G.x0 + 0.03, G.y1 - 0.03, G.felt - 0.04])
-IN_OTHER = np.array([G.x1 - 0.03, G.y1 - 0.03, G.felt - 0.04])
+CB0, OB0 = np.array([0.309, 0.275, ON]), np.array([0.285, 0.447, ON])
+IN_TARGET = np.array([G.x0 + 0.04, G.y1 - 0.04, G.top + R])
+IN_OTHER = np.array([G.x1 - 0.04, G.y1 - 0.04, G.top + R])
 
 
 def run(events, rules=Rules()):
@@ -45,7 +45,7 @@ def test_clean_pot_scores_one():
 def test_other_pocket_and_near_miss_score_half():
     m = run([STRIKE, QUIET, HIT, (1, dict(ob=IN_OTHER))])
     assert shot_score(m, IN_OTHER, True) == 0.5
-    near = np.r_[G.pocket_mouth("near_left") + np.array([0.06, -0.06]), ON]  # 8.5 cm from the corner
+    near = np.r_[G.pocket_mouth("near_left") + np.array([0.065, -0.065]), ON]  # 9.2 cm from the corner
     m = run([STRIKE, QUIET, HIT, (5, dict(ob=near))])
     assert shot_score(m, near, True) == 0.5
     assert shot_score(m, near, False) == 0.25  # still rolling: not counted yet
@@ -83,7 +83,7 @@ def test_off_table_object_ball_and_pocket_holes():
     holes = G.pockets()
     assert len(holes) == 6 and all(x0 < x1 and y0 < y1 for x0, x1, y0, y1 in holes.values())
     assert holes["near_left"][3] == G.y1 and holes["near_left"][0] == G.x0
-    assert m.where(np.array([0.3, 0.0, ON])) == ""  # on the cloth
+    assert m.where(np.array([0.3, 0.2, ON])) == ""  # on the cloth
 
 
 def test_geometry_and_cue():
@@ -92,7 +92,7 @@ def test_geometry_and_cue():
     assert np.allclose(felt_top, G.felt)
     assert all(s[i] > 0 for _, _, s in boxes for i in range(3))
     c = CueParams()
-    assert 0.55 < c.com_from_tip < 0.65 and 2 * c.butt_r < 0.094  # the butt fits the 94 mm gripper
+    assert 0.75 < c.com_from_tip < 0.85 and 2 * c.butt_r < 0.094  # the butt fits the 94 mm gripper
 
 
 if __name__ == "__main__":
