@@ -148,7 +148,7 @@ macro shot is enough.
   been off the paper for 0.1 s. Laid tape is drawn as white strips.
 - These thresholds are estimates. To check them on the real product, lay strokes on a sheet resting on a kitchen
   scale (0.8 N reads as 80 g), and at set angles against a protractor, and see where the film stops transferring.
-  The BIC instructions say to press down firmly. Our estimate is 1-3 N, far below the arm's limits.
+  The BIC instructions say to press down firmly. The estimate is 1-3 N, far below the arm's limits.
 
 ## Scripted demo
 
