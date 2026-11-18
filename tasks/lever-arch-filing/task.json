@@ -18,5 +18,6 @@
   "run_limit": "2,400 steps (120 s at 20 Hz)",
   "reset_notes": "Lift the sheets off the rings (open the lever, take them off, close it), square the stack and lay it back on the reams with the holed edge at its tape marks. Lever folded flat, rings shut. Replace any sheet that is creased or torn at a hole with a freshly punched one (ISO 838 two-hole punch).",
   "fidelity": "Approximate. The 20-sheet stack is three rigid 2 mm slabs (holed strip 40 mm wide, then 85 + 85 mm) hinged parallel to the holed edge with bending springs, so it droops when held by the strip; sheets cannot slide on each other or tear. Holes are 6 mm square, posts 4.6 mm round. The lever's over-centre spring and its cam to the rings are joint torques set each physics step (up to 10 N at the plate, centre 40 deg). Boards are rigid.",
-  "scores": "Dream-1 run (1,200 steps): 0.0; scripted demo: 1.0 (seed 0; also 1.0 on seeds 4 and 10)"
+  "scores": "Dream-1 run (1,200 steps): 0.0; scripted demo: 1.0 (seed 0; also 1.0 on seeds 4 and 10)",
+  "media": "M-879Y7U"
 }
