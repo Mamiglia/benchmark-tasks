@@ -19,5 +19,6 @@
   "run_limit": "1,200 steps (60 s at 20 Hz)",
   "reset_notes": "A fresh printed sheet each trial (taped at the same corners; about 1 min). The dispenser is put back flat on its start spot, nose toward +x; replace it when the tape runs out (12 m is several hundred trials).",
   "fidelity": "Approximate. Sheet is a kinematic box with the printed letter as a texture; dispenser is one rigid body (case, nose, 45-degree lip pad). No tape film is simulated: a rule at 240 Hz reads the lip's pose and PhysX contact force and lays a 4.2 mm strip (0.1 mm grid) only at 0.8 N or more, lip within 15 degrees of flat and 8 degrees sideways, moving in the pull direction (the strip follows the lip); pushed the wrong way over 1 mm it bunches. Thresholds are estimates (README: how to measure).",
-  "scores": "Dream-1 run: 0.0; demo: 1.0 (scripted, seeds 0, 4 and 10)"
+  "scores": "Dream-1 run: 0.0; demo: 1.0 (scripted, seeds 0, 4 and 10)",
+  "media": "M-XUUKKD"
 }
