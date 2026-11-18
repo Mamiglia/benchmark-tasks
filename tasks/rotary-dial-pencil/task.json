@@ -18,5 +18,6 @@
   "run_limit": "1,200 steps (60 s at 20 Hz)",
   "reset_notes": "Nothing is used up. Let the wheel come to rest, put the pencil back on the notepad at its tape mark (eraser toward the arms), put the phone back on its tape marks and the handset beside it.",
   "fidelity": "Approximate. Phone body and finger wheel are one articulation (wheel on a revolute joint); the holes are collided as pockets between radial webs, drawn round. Return spring (0.025 N m + 0.008 N m/rad) and the run-back governor (300 deg/s) are applied as joint torque; values chosen, not measured. Pencil is a 7 mm box drawn hexagonal; pad friction 2.0 because the sim gripper squeezes a 7 mm part with 17.5 N, the real one about 40 N. Handset static, cord not simulated.",
-  "scores": "Dream-1 run: 0.0 (picked the pencil up and moved it toward the phone, no digit dialed); scripted demo: 1.0 (seeds 0, 4 and 10)"
+  "scores": "Dream-1 run: 0.0 (picked the pencil up and moved it toward the phone, no digit dialed); scripted demo: 1.0 (seeds 0, 4 and 10)",
+  "media": "M-LJFCRP"
 }
