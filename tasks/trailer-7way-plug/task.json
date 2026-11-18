@@ -1,0 +1,23 @@
+{
+  "title": "Couple a trailer's 7-way electrical plug: hold the sprung lid up, push the keyed plug home, let the lid catch it",
+  "category": "Impact on jobs",
+  "keywords": [
+    "bimanual",
+    "trucking",
+    "trailer coupling",
+    "SAE J560",
+    "keyed connector",
+    "sprung lid",
+    "blind alignment",
+    "insertion force",
+    "latch"
+  ],
+  "instruction": "Plug the trailer cable into the 7-way socket on the trailer front and leave it latched. Then take both grippers away.",
+  "context": "Heavy and tractor-trailer truck drivers (about 2.1 million in the US) couple trailers as routine work; O*NET 53-3032.00 lists connecting the trailer's air and electrical lines. The electrical line is the SAE J560 7-way cable, plugged by hand into the socket on the trailer front at every coupling. The sprung lid opens outward, so one hand holds it up while the other lines the plug's key up with the slot it cannot see, and pushes the plug 30 mm home against the split pins. Let down, the lid's catch drops behind the plug's ridge and locks it, but only if the plug is fully home.",
+  "setup": "Positions in m from the midpoint between the arm bases, on the table top (x forward, y left). Trailer front wall: upright grey 18 mm plywood plate 30 x 30 cm, face at x 0.536, centred on y 0.02, on a foot. On it a Phillips 15-720 7-way socket (zinc die-cast, SAE J560, split pins, sprung lid), axis horizontal toward the robot, 13 cm above the table, barrel mouth at x 0.50, y 0.02, key slot at 12 o'clock, lid shut (thumb tab at its lower edge). Plug: Phillips 15-710 zinc J560 plug, 54 mm across, 0.35 kg with cable, in a pine V-block (120 x 100 x 37 mm, 90-degree groove) at (0.30, -0.13), insert toward the wall, rolled so its key is 31 degrees left of 12 o'clock (seed 0). 1.2 m of 7-way cable from its rear to a cup hook 0.40 m up a post at (0.20, -0.45). Arms in the ready pose.",
+  "scoring": "0 if the plug fell back onto the table after it left the V-block. Otherwise the highest that applies: 1.0 at the end the plug is seated (paint mark on the body within 3 mm of the barrel rim), the lid is down with its catch in the notch behind the plug's ridge (side photo; a 20 N pull on the cable does not move the plug), and no gripper touches the plug or the lid (held 1 s); 0.6 seated and released but the lid not caught (held open or resting on the ridge); 0.3 at some point the insert went 15 mm into the barrel (tape mark inside the rim, video); 0.1 at some point the lid was held 100 degrees or more open while the plug's face was on the socket axis within 1 cm of the mouth; else 0.",
+  "run_limit": "1,800 steps (90 s at 20 Hz)",
+  "reset_notes": "Nothing is used up. Pull the plug out, let the lid shut, and lay the plug back in the V-block with its key rolled to the seed's angle (README: PLUG_SEED); hang the cable on its hook.",
+  "fidelity": "Approximate. Barrel and plug are 12-sided prisms (boxes), not round; key rib and slot give about 7 degrees of roll tolerance. The split pins are an axial Coulomb friction force rising from 0 to 20 N over the last 15 mm; the pin face is a solid stop. The lid, its catch, the plug's ridge and the notch are real colliders on a sprung hinge, so the lid locks the plug by contact. The cable is a constant 1.5 N pull toward its hook, not drawn.",
+  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seed 0; also 1.0 on seeds 4 and 10)"
+}
