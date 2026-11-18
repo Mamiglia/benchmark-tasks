@@ -1,0 +1,22 @@
+{
+  "title": "Dial 4-1-1 on a rotary phone with a pencil: each digit pulled round to the finger stop, then left to run back",
+  "category": "Societal relatability",
+  "keywords": [
+    "rotary dial",
+    "telephone",
+    "held tool",
+    "curved drag",
+    "spring return",
+    "release timing",
+    "force-guided path",
+    "everyday object"
+  ],
+  "instruction": "Dial 4, 1, 1 on the rotary phone with the pencil. For each digit, put the pencil's eraser end in the digit's hole, pull the dial round to the finger stop, then take the pencil out and let the dial run back on its own before the next digit.",
+  "context": "Dialing a rotary phone is one of the best-known everyday actions of the last century, and dialing with a pencil was a common office habit. The robot drags a held 7 mm pencil's end round a 37 mm-radius circle on a sloping dial face against the return spring (145 degrees for the 4, 55 for each 1), without the end leaving the 17 mm hole and without the pencil twisting in its grip, then lets go at the stop. Letting go short of the stop dials a lower digit; holding the wheel on its way back spoils the digit.",
+  "setup": "Positions in cm from the midpoint between the two arm bases, on the table top (x forward, y left, z up); one fixed layout. Telephone: GPO 746 Rotary Dial Telephone (ProTelX), ivory, about 21.5 x 16 x 14.5 cm, 1 kg, working spring-return finger wheel 9.6 cm across with ten 17 mm holes on a 37 mm radius (1 at about 2 o'clock to 0 at about 6.30), chrome finger stop at about 4.30, dial face sloping 35 deg toward the arms; body centred at (40, -3), front facing the arms, loose on the desk, front corners on tape marks; dial centre at about (36, -3), 6.8 cm up. Handset off the cradle, lying on the desk centred at (40, 17) along x. A6 notepad (10.5 x 14.8 cm, 8 mm) centred at (25, -24.5). Unsharpened HB pencil with eraser (190 mm, hexagonal 7 mm, 6 g) on the notepad at (25, -23.5), along x, eraser end toward the arms. Wheel at rest.",
+  "scoring": "0 if, at any time, the phone slid over 3 cm (tape marks), tipped over 10 deg or lifted 1 cm, or a gripper finger or the gripper touched the dial (simulation: within 15 mm of the face, inside 5.2 cm of its centre). Otherwise leading digits dialed correctly / 3 (1/3 for 4; 2/3 for 4, 1; 1.0 for 4, 1, 1). A pull dials one pulse per hole it brought within 15 deg (about 1 cm) of the finger stop: real trial, the pencil's end touched the stop or stopped within a 1 cm tape mark of it. A pull whose run-back was held (slower than 1.5 x the free run-back + 0.25 s, timed on the video against the operator's own pull of that digit) or pushed on again before rest dials a wrong digit; a pull sending no pulse dials nothing; a fourth digit caps the score at 2/3. Success: 1.0 with the wheel at rest for 1 s.",
+  "run_limit": "1,200 steps (60 s at 20 Hz)",
+  "reset_notes": "Nothing is used up. Let the wheel come to rest, put the pencil back on the notepad at its tape mark (eraser toward the arms), put the phone back on its tape marks and the handset beside it.",
+  "fidelity": "Approximate. Phone body and finger wheel are one articulation (wheel on a revolute joint); the holes are collided as pockets between radial webs, drawn round. Return spring (0.025 N m + 0.008 N m/rad) and the run-back governor (300 deg/s) are applied as joint torque; values chosen, not measured. Pencil is a 7 mm box drawn hexagonal; pad friction 2.0 because the sim gripper squeezes a 7 mm part with 17.5 N, the real one about 40 N. Handset static, cord not simulated.",
+  "scores": "Dream-1 run: 0.0 (picked the pencil up and moved it toward the phone, no digit dialed); scripted demo: 1.0 (seeds 0, 4 and 10)"
+}
