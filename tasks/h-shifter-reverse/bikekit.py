@@ -1,7 +1,7 @@
 """bikekit: multi-box rigid parts in any orientation, chained child joints, a fixed-base articulation, joint efforts
 set every physics step, and switchable D6 joints between parts, for a yam_arena task file.
 
-yam_arena task files only take single primitives. This module adds (adapted from the kit of our wiper-blade task):
+yam_arena task files only take single primitives. This module adds:
 
 - ``Part``: one rigid body made of several boxes, spawned at ``pos`` with orientation ``quat`` (XYZW). With
   ``slides`` it becomes an articulation: each ``Slide`` is a child body on a prismatic or revolute joint with a spring

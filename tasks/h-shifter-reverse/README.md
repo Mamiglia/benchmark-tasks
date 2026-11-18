@@ -41,7 +41,7 @@ for reverse, for example); the robot works the lever the way a driver does, by f
 |---|---|
 | `task.py` | The yam_arena task file: the shifter, the gate and springs at run time, `score()` / `success()`, `demo_controller()` |
 | `shiftmodel.py` | Pure Python: the gate geometry and limits, the springs, the gear readout (`Gearbox`) and the score (`Sequence`) |
-| `bikekit.py` | Multi-shape parts, a fixed-base articulation with chained joints, per-step joint efforts and the hooks into yam_arena (our kit from an earlier task, unchanged) |
+| `bikekit.py` | Multi-shape parts, a fixed-base articulation with chained joints, per-step joint efforts and the hooks into yam_arena |
 | `shiftdemo.py` | The closed-loop scripted demo that `yam_scripted` plays |
 | `test_h_shifter_reverse.py` | Unit tests of the gate, the readout and every scoring outcome (no Isaac Sim needed) |
 | `task.json` | Submission details |
