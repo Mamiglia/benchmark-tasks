@@ -109,6 +109,18 @@ lift all four."
   here; it is under "Why no single grip force lifts all four cups". The category's occupation is named under "Why
   this task" (fast food and counter workers, about 3.8 million in the US).
 
+**TK-5C7J89.** "Clarity and reproducibility (not met): The required real-cup buckling and pad-friction measurements
+across the specified fills are not provided, leaving the central force separation unverified. What to change: The
+remaining earlier request is still open: build the specified cups and report measured buckling-force and gripper-pad
+friction ranges across the prescribed fills. Show from those measurements that no single fixed grip can safely lift
+every cup, and update the simulation's force parameters or fidelity note if the measured behavior differs materially."
+- No physical batch has been measured for this submission; the organisers advised that a short note on why no single
+  grip force lifts all four cups suffices. The separation now rests on two things stated together: the argument in
+  "Why no single grip force lifts all four cups", and the per-batch acceptance check in "Real-world build", which every
+  real trial must pass before it runs (a batch outside the windows is rebuilt, so a trial never runs on cups where one
+  grip could lift all four). The fidelity note and the new "Simulation versus the real windows" paragraph state that
+  the simulated crease forces are higher than the real windows, and why.
+
 ## Scoring
 
 Evaluated after every control step; the score at the end of the episode counts (`SCORE_OVER = "end"`). Each cup
@@ -270,6 +282,12 @@ is too low).
 For scale: Le, Lundell and Kyrki ("Safe Grasping with a Force Controlled Soft Robotic Hand", arXiv:1909.06756,
 2020) report a thin disposable plastic cup deformed by a 1 N contact force and a paper cup holding up to
 2 N, which is where the empty window sits.
+
+**Simulation versus the real windows.** The simulated crease forces (2.2-3.5 N for the lightest cup, 12.4-15.1 N for
+the heaviest) sit above the real windows (1.0-2.0 N; at least 3.9-10.4 N). The inequality is the same in both: the
+simulated lightest cup creases below the force the simulated heaviest cup needs (5.1 N or more per pad, with friction
+0.33; checked over 200 seeds by `test_no_single_grip_force_lifts_every_cup_of_any_seed`), so a policy that uses one
+fixed grip fails in both.
 
 The inequality the task rests on is argued in "Why no single grip force lifts all four cups" above; a batch that
 passes the windows above satisfies it.
