@@ -1,0 +1,23 @@
+{
+  "title": "Cover a typo with correction tape: one sideways stroke, nose flat and pressed, starting and stopping in the gaps",
+  "category": "Societal relatability",
+  "keywords": [
+    "correction tape",
+    "office",
+    "school",
+    "tool angle",
+    "light contact force",
+    "precise start and stop",
+    "force control",
+    "position control",
+    "held tool"
+  ],
+  "instruction": "Cover the typo 'teh' in the letter with the correction tape, without covering the words next to it.",
+  "context": "Whiting out a typo with a correction-tape roller is an everyday desk task. The film comes off the nose only while the nose is pressed flat on the paper (about 45 degrees to the case) and pulled sideways the way it lays tape: too light leaves gaps, tilted lifts an edge, pushed the wrong way bunches the tape. The tape is 4.2 mm wide over a 3.1 mm tall word, and the gaps to the next words are 1.1-1.2 mm, so the robot must hold a light steady force at a fixed angle while running the nose along a line within about half a millimetre, and start and stop within a millimetre.",
+  "setup": "Positions in cm from the midpoint between the arm bases on the table top (x forward, y left); arms in the ready pose; same layout every trial. Letter: sheet.png (in the code) printed at 100% on A4 80 g/m2 white copy paper, portrait, text readable from the arms, top edge at x 46.4, left edge at y -3.1 (spans x 16.7-46.4, y -3.1 to -24.1), taped at its four corners with 19 mm clear office tape. Eight lines of Liberation Sans (Arial-metric) 12 pt; line 5: 'Please file teh report by Friday so the board can see it.' The ink box of 'teh' is 5.9 x 3.1 mm, centred at x 30.0, y -8.0; gaps to 'file' and 'report' 1.2 and 1.1 mm. Correction tape: BIC Wite-Out EZ Correct (WOTAPP11), 4.2 mm x 12 m, sideways-pull dispenser about 85 x 33 x 13 mm, 16 g, new; lying flat, logo up, long side along x, nose toward +x with its tip at x 30, y -27. Nothing else on the table.",
+  "scoring": "From the tape on the sheet at the end; stroke count and bunching latched over the trial. 0 if the tape hides more than 1.5 mm of any other word's length, or tape is laid off the letter. Otherwise 0.6 x min(1, C / 0.95), where C is the share of the ink box of 'teh' under tape; + 0.2 if C is 90% or more and no other word is touched (0.2 mm or less of its length under tape); + 0.2 if C is 90% or more and the tape went on in one stroke (put down once, lifted once) without bunching. Success: 1.0 with the dispenser lifted 3 cm or more off the paper, held 1 s. Real trial: photo from above with a steel rule (0.5 mm marks) along the line: strip start, end and edges against the word's box (C) and the neighbours (mm covered); stroke count and bunched tape from the video; tape on the table or past the sheet edge from the photo.",
+  "run_limit": "1,200 steps (60 s at 20 Hz)",
+  "reset_notes": "A fresh printed sheet each trial (taped at the same corners; about 1 min). The dispenser is put back flat on its start spot, nose toward +x; replace it when the tape runs out (12 m is several hundred trials).",
+  "fidelity": "Approximate. Sheet is a kinematic box with the printed letter as a texture; dispenser is one rigid body (case, nose, 45-degree lip pad). No tape film is simulated: a rule at 240 Hz reads the lip's pose and PhysX contact force and lays a 4.2 mm strip (0.1 mm grid) only at 0.8 N or more, lip within 15 degrees of flat and 8 degrees sideways, moving in the pull direction (the strip follows the lip); pushed the wrong way over 1 mm it bunches. Thresholds are estimates (README: how to measure).",
+  "scores": "Dream-1 run: 0.0; demo: 1.0 (scripted, seeds 0, 4 and 10)"
+}
