@@ -128,7 +128,7 @@ A trial takes about 3 minutes of wall time on one data-centre GPU. Seeds change 
 |---|---|
 | `task.py` | The yam_arena task file: layout, the per-physics-step pin and cable forces, `score()` / `success()`, `demo_controller` |
 | `plugmodel.py` | Geometry, the pin rule, the lid's catch angles and the score bookkeeping (NumPy only) |
-| `partkit.py` | Multi-box parts, sprung child joints, and the hooks into yam_arena (our kit from earlier tasks) |
+| `partkit.py` | Multi-box parts, sprung child joints, and the hooks into yam_arena |
 | `plugdemo.py` | The closed-loop scripted demo |
 | `test_trailer_7way_plug.py` | Tests: pin rule, lid catch geometry, every scoring rule on handcrafted trajectories |
 | `task.json` | Submission details |
