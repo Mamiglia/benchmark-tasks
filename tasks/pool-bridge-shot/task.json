@@ -18,5 +18,6 @@
   "run_limit": "1,500 steps (75 s at 20 Hz)",
   "reset_notes": "Run at a real 7 ft bar or home table (README); the arms stand at the near rail on a stand, bases 7 cm below the cloth. Balls back on their spot stickers; cue back on the near rail at its pen-marked balance point. Chalk the tip before the session, not between trials.",
   "fidelity": "Approximate. Table: fixed boxes, a 7 cm bed with six square pocket openings, square cushions (restitution 0.75), wood rails. Balls: solid spheres (ball-ball restitution 0.93, cloth friction 0.2), rolling resistance as damping. Cue: one rigid body, sphere tip (friction 0.6), smooth shaft that slides through the pinch bridge, butt for the grip; taper in two steps. Slow tip impacts are nearly inelastic in PhysX, so the simulated stroke is faster than a real one. No swerve or nap.",
-  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seeds 0, 4 and 10)"
+  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seeds 0, 4 and 10)",
+  "media": "M-FZZASV"
 }
