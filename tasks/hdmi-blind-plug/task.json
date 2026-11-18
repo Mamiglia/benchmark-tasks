@@ -1,0 +1,22 @@
+{
+  "title": "Plug an HDMI cable into a monitor's downward-facing rear port, by feel, from under the screen",
+  "category": "Societal relatability",
+  "keywords": [
+    "blind insertion",
+    "keyed connector",
+    "HDMI",
+    "monitor",
+    "hidden port",
+    "insertion force",
+    "constrained approach",
+    "desk setup"
+  ],
+  "instruction": "Plug the HDMI cable into the HDMI port on the back of the monitor.",
+  "context": "Setting up a desk monitor or a TV means plugging its cable into ports on its back that face straight down, out of sight. People do it by feel: reach under the screen, point the plug up, find the port with small moves, and push. Here the robot must pick the plug up off the desk, turn it to point up, bring it in under the panel's lower edge to a port 32 mm behind the screen's face that no camera sees, line up the keyed 14 x 4.5 mm shell within about half a millimetre, and push it straight up past the contact springs until it is fully home.",
+  "setup": "Positions in m from the midpoint between the arm bases, on the table top (x forward, y left). Dell P2422H 23.8 in monitor (black, 5.6 kg) on its stand, facing the robot, centred on y 0: screen face at x 0.40, panel 538 x 318.5 mm, 52 mm deep, its lower edge set 130 mm above the desk, no tilt or swivel; stand base (245 x 173 mm) clamped to the desk with two C-clamps. Under the back, a 6 mm deep connector bay with the ports facing down; HDMI port centre at (0.432, -0.027), mouth 136 mm above the desk, its trapezoid's wide side toward the screen. Amazon Basics 3 ft HDMI cable: plug (overmold 36 x 21 x 11 mm, steel shell 11.5 mm, 30 g) lying flat, shell wide side up, pointing at the monitor, near (0.30, -0.13) (seed 0: (0.305, -0.139), tip turned 18 degrees to the robot's right); its other end in a 9 x 6 x 2 cm HDMI test-pattern generator taped at (0.15, -0.50). Monitor on, showing no signal. Arms in the ready pose.",
+  "scoring": "1.0: at the end the plug is seated in the HDMI port (overmold within 1 mm of the port face: the monitor shows the generator's picture, and a phone photo from below shows no gap at the shell) and no gripper is within 7 cm of it, held 1 s. 0.5: at the end the shell is 3 mm or more into the HDMI port but not seated, or a gripper is still at it (photo from below, video). 0.25: at some point the shell went 3 mm or more into the HDMI port, but at the end it is out (video). Else 0. Only the HDMI port counts; the shell fits it only the right way round.",
+  "run_limit": "1,600 steps (80 s at 20 Hz)",
+  "reset_notes": "Nothing is used up. Pull the plug out of the port, check the monitor shows no signal, and lay the plug flat on its tape marks, shell wide side up (README lists the start pose per seed, PLUG_SEED).",
+  "fidelity": "Approximate. Plug shell and receptacle are boxes with the HDMI trapezoid key, 0.4 mm clearance per side (real: about 0.1 mm). The contact springs are a joint: once the shell is 4 mm in on the axis, it slides only along the port axis against a 15 N capped damping drive. The cable is drawn as a stub; lifted, it pulls the plug 0.5 N toward the generator. Monitor fixed (clamped in the real trial); other bay ports drawn, not open.",
+  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seed 0; also 1.0 on seeds 4 and 10)"
+}
