@@ -18,5 +18,6 @@
   "run_limit": "1,200 steps (60 s at 20 Hz)",
   "reset_notes": "Arms stopped: take the ball from the goal, put it on the painted spot. Centre the red 5-bar and 3-bar, figures straight down. Check the four blue spring clamps hold their rods centred and straight down, and the two C-clamps are tight.",
   "fidelity": "Approximate. Cabinet, goals and unused rods are one fixed body; the red 5-bar and 3-bar each have a slide joint (+-5 / +-6.5 cm bumpers) and a turn joint, with stick-slip bushing friction (1.5 N, 0.004 N m, chosen). Figures are boxes (head, body, 22 x 24 mm foot), soles 3 mm above the field; real figures are moulded with rounded toes. Ball 31 mm, 12 g, rolling damping chosen. Handle held by rubber friction; it slips slightly. Red goalie and 2-bar fixed (free in the real table).",
-  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seeds 0, 4 and 10)"
+  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seeds 0, 4 and 10)",
+  "media": "M-2G2SH6"
 }
