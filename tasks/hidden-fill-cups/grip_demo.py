@@ -30,7 +30,7 @@ Per cup, each arm:
 ``squeeze`` (grip every cup with the gripper fully closed, its 50 N), ``push`` (shove the cups onto the tray with
 closed fingers, never lifting them), ``seal`` (press closed fingertips down on each seal and drag the cup there).
 ``tap`` is not a loophole but an incidental contact: tap each seal with the closed fingertips, then take the cup as
-usual; it must still score.
+usual; it must still score. ``fixed`` grips every cup at one force, ``DEMO_GRIP`` N (default 2.0), with no lift tests.
 """
 
 from __future__ import annotations
@@ -173,7 +173,9 @@ class Arm:
         yield from self.close_until(F_START)
         self.hold_force = F_START
         prev = None  # (grip, load) of the previous test
-        for attempt in range(10):
+        if self.ctl.fixed_grip:  # DEMO_CHEAT=fixed: one grip force for every cup, no lift tests
+            self.hold_force = self.ctl.fixed_grip
+        for attempt in range(0 if self.ctl.fixed_grip else 10):
             yield from self.wait(0.5)
             grip = self.grip_force()
             yield from self.lift_load(z0)
@@ -267,6 +269,7 @@ class Controller:
         self.joints = {"left": np.r_[READY, 1.0], "right": np.r_[READY, 1.0]}
         self.arms = {s: Arm(s, bases[s], self) for s in ("left", "right")}
         self.hold_after = 1.5
+        self.fixed_grip = float(os.environ.get("DEMO_GRIP", 2.0)) if cheat == "fixed" else None
         self.end_t = None
         for side, delay in (("left", 0.0), ("right", 1.0)):
             names = sorted((n for n in cups if (cups[n][1] > 0) == (side == "left")), key=lambda n: -cups[n][0])

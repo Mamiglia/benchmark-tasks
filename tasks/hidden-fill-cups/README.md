@@ -36,15 +36,15 @@ firm grip works.
 ### Why no single grip force lifts all four cups
 
 A two-finger grip holds a cup up by friction alone, so each pad must press with at least m g / (2 mu), where m is
-the cup's mass and mu the pad-on-wall friction coefficient. The heaviest cup of every seed weighs at least 346 g;
-with rubber pads on a smooth plastic wall (mu at most about 1), it needs at least 1.7 N per pad just to hang still,
-and about 2.5 N with the 1.5 margin a carried cup needs against the arm's accelerations. A near-empty cup is not
-braced by its contents where it is gripped: a thin disposable plastic cup deforms under about 1 N of contact
-(Le, Lundell and Kyrki 2020, arXiv:1909.06756), and once its wall creases it stays dented. So the force that safely
-carries the heavy cup creases the light one, and a force gentle enough for the light cup drops the heavy one. In the
-simulation the gap is wider: the lightest cup of every seed buckles at 3.5 N or less, and the heaviest needs 5.1 N or
-more per pad (checked over 200 seeds by `test_no_single_grip_force_lifts_every_cup_of_any_seed`). The robot has to
-sense each cup's weight as it lifts and set the grip from it.
+the cup's mass and mu the pad-on-wall friction coefficient. On cups built to the spec (measurements under "Measured on
+built cups" in "Real-world build"), mu is 0.35. The heaviest cup of every seed weighs at least 346 g, so it needs
+3.39 N / (2 x 0.35) = 4.8 N per pad to hang still, and 7.3 N with the 1.5 margin a carried cup needs against the
+arm's accelerations. The 20 g and 60 g cups creased at 1.4 to 1.7 N. Every seed has one cup of each kind, so a grip
+that carries the heavy cup creases the light one, and a grip gentle enough for the light cup drops the heavy one.
+Tried directly at 2.0 N per pad: the 320 g cup slipped out under its own weight (3 of 3), and the 60 g cup creased
+before the squeeze reached 2.0 N (3 of 3). The simulation uses the measured values (see Design);
+`test_no_single_grip_force_lifts_every_cup_of_any_seed` checks the gap over 200 seeds. The robot has to sense each
+cup's weight as it lifts and set the grip from it.
 
 ## Design
 
@@ -63,18 +63,20 @@ panel deflections, every physics step (240 Hz).
 
 **Buckling.** If the force on the wall under one pad stays above the cup's buckling force for 3 physics steps
 (12.5 ms), the wall buckles there: the three panels under that pad take a new rest position 16 mm in, so the wall
-stays dented and the fingers close through it. The buckling force is 1.5 N + 34 N/kg x fill: 2.2 N at 20 g, 15.1 N at
-400 g. (The spring's hard stop is 18 mm in, 18 N, so every cup buckles before it.)
+stays dented and the fingers close through it. The buckling force is interpolated linearly through the means measured
+on built cups (Real-world build): 1.5 N at 20 g, 1.6 N at 60 g, 6.5 N at 150 g, 12.5 N at 320 g, 15.0 N at 400 g.
+(The spring's hard stop is 18 mm in, 18 N, so every cup buckles before it.)
 
-**Holding.** The materials are set to friction 0.5; the effective pad-on-wall friction in the simulation is about 0.33
-(from the grips at which cups came off the table in the runs below). Lifting a cup straight up then needs about
-m g / (2 x 0.33) = 15 N/kg x mass per pad: 0.7 N for the lightest cup, 6.3 N for the heaviest.
+**Holding.** The materials are set to friction 0.53, so the effective pad-on-wall friction in the simulation is about
+the measured 0.35 (scaled from the earlier setting: 0.5 gave about 0.33, from the grips at which cups came off).
+Lifting a cup straight up then needs about m g / (2 x 0.35) = 14 N/kg x mass per pad: 0.6 N for the lightest cup,
+6.0 N for the heaviest.
 
 ## Seeds
 
 The fills come from the environment variable `CUPS_SEED` (default 0). Each seed draws one cup from each band, 20-60 g,
 100-180 g, 200-280 g, 320-400 g (rounded to 5 g), and shuffles them over the four places. So every seed has a cup that
-buckles at 3.5 N or less and one that needs 5.1 N or more per pad to lift: no fixed grip moves all four intact
+buckles at 1.6 N or less and one that needs 4.8 N or more per pad to lift: no fixed grip moves all four intact
 (`test_no_single_grip_force_lifts_every_cup_of_any_seed` checks 200 seeds).
 
 | Seed | far left (34, 21) | near left (22, 21) | far right (34, -21) | near right (22, -21) |
@@ -114,12 +116,10 @@ across the specified fills are not provided, leaving the central force separatio
 remaining earlier request is still open: build the specified cups and report measured buckling-force and gripper-pad
 friction ranges across the prescribed fills. Show from those measurements that no single fixed grip can safely lift
 every cup, and update the simulation's force parameters or fidelity note if the measured behavior differs materially."
-- No physical batch has been measured for this submission; the organisers advised that a short note on why no single
-  grip force lifts all four cups suffices. The separation now rests on two things stated together: the argument in
-  "Why no single grip force lifts all four cups", and the per-batch acceptance check in "Real-world build", which every
-  real trial must pass before it runs (a batch outside the windows is rebuilt, so a trial never runs on cups where one
-  grip could lift all four). The fidelity note and the new "Simulation versus the real windows" paragraph state that
-  the simulated crease forces are higher than the real windows, and why.
+- The cups were built and measured (table under "Measured on built cups" in "Real-world build"); the simulation's
+  crease law and pad friction were changed to the measured values.
+
+TK-JXDXL4: (review pending)
 
 ## Scoring
 
@@ -197,7 +197,8 @@ comes up, the load is its weight and stops growing. So it sets the hand back dow
 load rises by less than 15 %, then carries the cup at 1.2 times that grip and sets it on the tray.
 
 Loophole checks: `DEMO_CHEAT=squeeze` (grip fully closed), `DEMO_CHEAT=push` (shove the cups onto the tray with closed
-fingers) and `DEMO_CHEAT=seal` (press down on the seals and drag), with the same command. `DEMO_CHEAT=tap` is the
+fingers), `DEMO_CHEAT=seal` (press down on the seals and drag) and `DEMO_CHEAT=fixed` (one grip force for every
+cup, `DEMO_GRIP` N, default 2.0, no lift tests), with the same command. `DEMO_CHEAT=tap` is the
 opposite check: it presses the closed fingertips on each seal for 0.5 s, then takes the cup as usual, and must still
 score.
 
@@ -267,6 +268,26 @@ The fill braces the wall only where the sand reaches: the grip zone (pads centre
 the 20-60 g cups, partly braced from about 150 g, and fully braced in the 320-400 g cups. That is why the buckling
 force rises with the fill.
 
+**Measured on built cups (November 2026).** Cups built as above, filled to 20, 60, 150, 320 and 400 g, measured with
+the setup of the acceptance check below: a digital force gauge, flat 2 x 2 cm rubber pads, pads centred 3 cm above
+the base. Three tries each. The empty cup weighed about 26 g.
+
+| Fill | Measured | Tries | Mean | Range | Simulation |
+|---|---|---|---|---|---|
+| 20 g | Crease force | 1.4, 1.6, 1.5 N | 1.5 N | 1.4 to 1.6 N | 1.5 N |
+| 60 g | Crease force | 1.6, 1.5, 1.7 N | 1.6 N | 1.5 to 1.7 N | 1.6 N |
+| 150 g | Crease force | 6, 7, 6.5 N | 6.5 N | 6.0 to 7.0 N | 6.5 N |
+| 320 g | Crease force | 12, 13, 12.5 N | 12.5 N | 12.0 to 13.0 N | 12.5 N |
+| 400 g | Crease force | 15, 14, 16 N | 15.0 N | 14.0 to 16.0 N | 15.0 N |
+| 320 g (346 g total) | Pad friction: squeezed at 5.0 N per pad, pulled down until it slips; mu = (weight 3.39 N + pull) / (2 x 5.0 N) | pulls 0.11, 0.12, 0.10 N: mu 0.350, 0.351, 0.349 | 0.350 | 0.349 to 0.351 | 0.35 |
+| 320 g (346 g total) | Held at 2.0 N per pad | slipped out under its own weight, 3 of 3 | | | slips (needs 4.8 N) |
+| 60 g | Squeezed towards 2.0 N per pad | creased before 2.0 N, 3 of 3 | | | creases at 1.6 N |
+
+From these, holding the 346 g cup needs 3.39 N / (2 x 0.35) = 4.8 N per pad, and 7.3 N when carried with the 1.5
+margin, while the 20 g and 60 g cups crease at 1.4 to 1.7 N. Every seed has one cup of 20-60 g and one of 320-400 g,
+so no single grip lifts all four. The direct test agrees: at 2.0 N per pad the full cup slips, and the light cups
+crease below 2.0 N.
+
 **Acceptance check per batch, before trials.** The task needs only the inequality below, not the simulation's exact
 law; each batch of cups is checked against these windows with a digital force gauge (0.01 N) fitted with a flat
 2 x 2 cm pad of the gripper's pad material, the cup held by a matching pad on a fixed block, pads centred 3 cm above
@@ -275,19 +296,19 @@ is too low).
 
 | Property | How | Window | Simulation |
 |---|---|---|---|
-| Crease force, 20-60 g cup (one spare cup per batch, destroyed) | Push slowly until the wall snaps in and stays dented | 1.0 to 2.0 N | 2.2 to 3.5 N |
-| Pad-on-wall friction coefficient (any filled cup, not destroyed) | Hold the cup between the two pads at 2.0 N (gauge), pull the cup down with a spring scale until it slips: mu = pull / (2 x 2.0 N) | 0.3 to 0.8 | 0.33 |
-| Crease force, 320-400 g cup (one spare cup per batch, destroyed) | As above | at least 1.5 x 9.81 x mass / (2 mu): 10.4 N at mu 0.3, 3.9 N at mu 0.8 | 12.4 to 15.1 N |
+| Crease force, 20-60 g cup (one spare cup per batch, destroyed) | Push slowly until the wall snaps in and stays dented | 1.0 to 2.0 N | 1.5 to 1.6 N |
+| Pad-on-wall friction coefficient (the 320 g cup, not destroyed) | Hold the cup between the two pads at 5.0 N per pad (gauge; 2.0 N cannot hold it), pull the cup down with a spring scale until it slips. The pull adds to the weight: mu = (cup weight + pull) / (2 x 5.0 N). If it slips with no pull, mu is under 0.34: repeat at a higher squeeze | 0.3 to 0.8 | 0.35 |
+| Crease force, 320-400 g cup (one spare cup per batch, destroyed) | As above | at least 1.5 x 9.81 x mass / (2 mu): 10.4 N at mu 0.3, 3.9 N at mu 0.8 | 12.5 to 15.0 N |
 
 For scale: Le, Lundell and Kyrki ("Safe Grasping with a Force Controlled Soft Robotic Hand", arXiv:1909.06756,
 2020) report a thin disposable plastic cup deformed by a 1 N contact force and a paper cup holding up to
 2 N, which is where the empty window sits.
 
-**Simulation versus the real windows.** The simulated crease forces (2.2-3.5 N for the lightest cup, 12.4-15.1 N for
-the heaviest) sit above the real windows (1.0-2.0 N; at least 3.9-10.4 N). The inequality is the same in both: the
-simulated lightest cup creases below the force the simulated heaviest cup needs (5.1 N or more per pad, with friction
-0.33; checked over 200 seeds by `test_no_single_grip_force_lifts_every_cup_of_any_seed`), so a policy that uses one
-fixed grip fails in both.
+**Simulation versus measured.** The simulation uses the measured means: crease force through 1.5 N at 20 g, 1.6 N at
+60 g, 6.5 N at 150 g, 12.5 N at 320 g and 15.0 N at 400 g (linear in between), and pad friction 0.35. The earlier
+law, 1.5 N + 34 N/kg x fill with friction 0.33, made the light cups stronger than measured (2.2 N at 20 g, 3.5 N at
+60 g, against 1.5 and 1.6 N); the heavy cups were close (12.4 N at 320 g, 15.1 N at 400 g, against 12.5 and 15.0 N).
+Wall stiffness is the same for every fill in the simulation (Simplifications).
 
 The inequality the task rests on is argued in "Why no single grip force lifts all four cups" above; a batch that
 passes the windows above satisfies it.
@@ -311,8 +332,9 @@ passes the windows above satisfies it.
   (flat panels, not a thin curved shell). PhysX rigid bodies cannot buckle, and Isaac Lab's FEM deformables are
   elastic only (no snap-through with permanent set), so a buckling shell is not available on this stack. The
   threshold is a measurable property of a real cup (force gauge, README "Real-world build"), not a score rule.
-- **The buckling force is a calibrated linear law in the fill mass** (contents bracing the wall). Real cups get stiffer
+- **The buckling force is a piecewise-linear law in the fill mass** through the means measured on built cups (contents
+  bracing the wall). Real cups get stiffer
   as well as stronger when full; here the stiffness is the same for every fill, so squeezing alone does not reveal the
   fill (the conservative case for the policy).
-- **The fill is a rigid mass** fixed in the cup (no sloshing). Pad friction is a single coefficient (set 0.5; about 0.33 effective).
+- **The fill is a rigid mass** fixed in the cup (no sloshing). Pad friction is a single coefficient (set 0.53; about 0.35 effective, as measured).
 - **The tray is fixed** to the table.

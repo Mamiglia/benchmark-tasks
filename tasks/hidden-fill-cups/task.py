@@ -28,8 +28,8 @@ INSTRUCTION = "Put all four cups on the tray upright."
 PARAMS = CupParams()
 
 # -- hidden fills ----------------------------------------------------------------------------------------------------
-# One cup from each band per seed, in a seeded order. Every seed has a cup of 60 g or less (buckles at 3.5 N or
-# less) and one of 320 g or more (needs about 5.1 N per finger to lift at the effective friction 0.33), so no single
+# One cup from each band per seed, in a seeded order. Every seed has a cup of 60 g or less (buckles at 1.6 N or
+# less) and one of 320 g or more (needs about 4.8 N per finger to lift at the effective friction 0.35), so no single
 # grip force lifts all four intact.
 FILL_BANDS = ((0.020, 0.060), (0.100, 0.180), (0.200, 0.280), (0.320, 0.400))
 

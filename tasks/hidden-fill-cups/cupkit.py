@@ -60,17 +60,19 @@ class CupParams:
     #                        edges, so the wall under a pad is about 5 x this stiff (1,000 N/m)
     wall_damping: float = 3.0  # N s/m
     armature: float = 0.005  # kg
-    crush_empty_n: float = 1.5  # buckling force of an empty cup ...
-    crush_per_kg: float = 34.0  # ... rising with the fill, which braces the wall from inside
+    # buckling force (N) against fill (kg): the means measured on built cups (README "Real-world build"), linear in
+    # between, clamped at the ends. It rises with the fill, which braces the wall from inside.
+    crush_table: tuple = ((0.020, 1.5), (0.060, 1.6), (0.150, 6.5), (0.320, 12.5), (0.400, 15.0))
     crush_hold_steps: int = 3  # physics steps in a row above it (12.5 ms at 240 Hz)
     dent_m: float = 0.016  # a buckled panel's new rest position, inward
     travel_m: float = 0.018  # joint limit, inward
-    friction: float = 0.5  # wall, base, seal (PhysX "min" combine)
-    grip_mu: float = 0.33  # effective pad-on-wall friction this gives in the simulation (measured: lift-off grips)
+    friction: float = 0.53  # wall, base, seal (PhysX "min" combine)
+    grip_mu: float = 0.35  # effective pad-on-wall friction this gives in the simulation (the measured 0.35)
     fill_density: float = 1600.0  # kg/m^3, damp sand: sets the fill's level and the centre of mass
 
     def crush_n(self, fill: float) -> float:
-        return self.crush_empty_n + self.crush_per_kg * fill
+        fills, forces = zip(*self.crush_table)
+        return float(np.interp(fill, fills, forces))
 
     def fill_level(self, fill: float) -> float:
         inner = self.radius - self.wall
