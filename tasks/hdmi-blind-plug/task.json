@@ -18,5 +18,6 @@
   "run_limit": "1,600 steps (80 s at 20 Hz)",
   "reset_notes": "Nothing is used up. Pull the plug out of the port, check the monitor shows no signal, and lay the plug flat on its tape marks, shell wide side up (README lists the start pose per seed, PLUG_SEED).",
   "fidelity": "Approximate. Plug shell and receptacle are boxes with the HDMI trapezoid key, 0.4 mm clearance per side (real: about 0.1 mm). The contact springs are a joint: once the shell is 4 mm in on the axis, it slides only along the port axis against a 15 N capped damping drive. The cable is drawn as a stub; lifted, it pulls the plug 0.5 N toward the generator. Monitor fixed (clamped in the real trial); other bay ports drawn, not open.",
-  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seed 0; also 1.0 on seeds 4 and 10)"
+  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seed 0; also 1.0 on seeds 4 and 10)",
+  "media": "M-S3R5NU"
 }
