@@ -1,0 +1,22 @@
+{
+  "title": "Change gear 1-2-3 through a hidden H-gate, then find reverse past its push-down lockout",
+  "category": "Societal relatability",
+  "keywords": [
+    "gear lever",
+    "H-pattern",
+    "hidden gate",
+    "spring-centred lever",
+    "push-down reverse",
+    "force direction",
+    "constrained order",
+    "manual car"
+  ],
+  "instruction": "Change gear from neutral into first, then second, then third, then reverse. Leave the lever in reverse.",
+  "context": "Changing gear in a manual car is something most adults have done or watched from the passenger seat: 1-2-3 and reverse reads at once in a ten-second clip. The gate is hidden under the boot. Sprung levers pull the knob back to the 3-4 plane, so first needs a push across before going forward, second a straight pull back through neutral, third a release sideways at neutral. Reverse shares the 6 slot and is selected only with the knob pushed down 5 mm while it goes in, two force directions at once; without it the box reads 6. The shifter is a sim-racing unit, but its gate, springs and push-down reverse are those of many cars' boxes (a VW Golf's, for one), operated the way drivers do.",
+  "setup": "Positions in cm from the midpoint between the arm bases on the table top (x forward, y left). A Logitech G Driving Force Shifter (941-000119; black plastic base 14.6 x 17.6 cm, 20.7 cm tall, 0.72 kg; black leather knob about 4.5 cm across and 5 cm tall, its centre about 19 cm above the table; gear pattern printed on the knob) bolted through its two underside M6 holes to a 30 x 25 cm, 12 mm plywood board, which is taped to the table with double-sided carpet tape. The lever pivot is at (27, -21), in front of the right arm; 1-2 is the plane toward +y, 5-6/R toward -y, first and third forward (+x). The shifter's USB adapter (Arduino Leonardo with open firmware) goes to a laptop beside the table, out of reach, showing the gear. Lever in neutral. Nothing else on the table. Arms in the ready pose.",
+  "scoring": "Read from the shifter's own output (the laptop's controller test page lists each gear as a button) and the trial video. 0.25 each for first, second and third engaged in that order, each held engaged for 1 s or more; 0.25 more for reverse engaged after them and still engaged at the end. Any other gear engaged for 0.25 s or more (4, 5, 6, or going back to an earlier gear, or reverse first) ends all further credit; what was earned before stays. Score 0 if the shifter base moved on its board (pencil outline, 1 cm) or the knob came off. Max 1.0.",
+  "run_limit": "1,800 steps (90 s at 20 Hz)",
+  "reset_notes": "Put the lever back in neutral by hand (pull it out of reverse; it springs to the 3-4 plane). Nothing is consumed.",
+  "fidelity": "Approximate. The lever is three joints: sideways and fore-aft hinges and a 6 mm push-down slide. The hidden gate is joint limits switched each 240 Hz step by where the knob is (slots 8 mm wide). Centring and detent springs (2-7 N) and the push-down spring (6 N + 0.8 N/mm) are efforts, estimated, to be checked with a luggage scale. The base is fixed; the R/6 choice is a rule (push-down at slot entry).",
+  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seed 0; also 1.0 on seeds 4 and 10)"
+}
