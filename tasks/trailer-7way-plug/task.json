@@ -19,5 +19,6 @@
   "run_limit": "1,800 steps (90 s at 20 Hz)",
   "reset_notes": "Nothing is used up. Pull the plug out, let the lid shut, and lay the plug back in the V-block with its key rolled to the seed's angle (README: PLUG_SEED); hang the cable on its hook.",
   "fidelity": "Approximate. Barrel and plug are 12-sided prisms (boxes), not round; key rib and slot give about 7 degrees of roll tolerance. The split pins are an axial Coulomb friction force rising from 0 to 20 N over the last 15 mm; the pin face is a solid stop. The lid, its catch, the plug's ridge and the notch are real colliders on a sprung hinge, so the lid locks the plug by contact. The cable is a constant 1.5 N pull toward its hook, not drawn.",
-  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seed 0; also 1.0 on seeds 4 and 10)"
+  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seed 0; also 1.0 on seeds 4 and 10)",
+  "media": "M-YGHQTD"
 }
