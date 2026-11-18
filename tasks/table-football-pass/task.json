@@ -1,0 +1,22 @@
+{
+  "title": "Table football: pass from the 5-bar to the 3-bar, trap the ball under a figure, and shoot it into the goal",
+  "category": "Societal relatability",
+  "keywords": [
+    "bimanual",
+    "table football",
+    "foosball",
+    "dynamic manipulation",
+    "timing",
+    "rolling ball",
+    "tool-mediated",
+    "game"
+  ],
+  "instruction": "Using only the two rod handles in front of you, pass the ball from the midfield rod to the attack rod, stop it there, and shoot it into the far goal. Do not spin a rod more than one full turn.",
+  "context": "Table football is in bars, student unions and offices; most people have played it and know a pass, a trap and a goal on sight. The robot never touches the ball: it acts only through rods it slides (arm along the rod) and turns (wrist roll), one per hand. The pass must be struck through the gap between two blue figures. The trap means lifting the attack figures so the ball rolls under, then dropping a foot onto it at the right moment (at 0.3 m/s the ball moves 1.5 cm in 50 ms). The shot means freeing the ball, getting the foot behind it, and striking past the goalie.",
+  "setup": "Positions in cm from the midpoint between the arm bases, on the bench (x forward, y left, z up); one fixed layout. Table: Sport Squad FX40 40 in tabletop football table (102 x 51 x 20 cm, MDF, laminate field, steel rods, 1-2-5-3 figures a side), long side toward the arms, near wall's inner face at x 42, field centre y 5.75, near corners C-clamped to the bench. Modelled: field 97 x 47 cm, 5 cm above the bench; rods 11.5 cm apart, 8 cm above the field; 5-bar figures 8.5 cm apart, 3-bar 13 cm; goals 15 x 6.5 cm. Red (robot) handles near side: 5-bar at y 11.5 (left arm), 3-bar at y -11.5 (right arm), centred, figures down; red goalie and 2-bar free, unused. Blue rods (3-bar y 23, 5-bar y 0, 2-bar y -23, goalie y -34.5) centred, figures down, each held by a 2 in spring clamp at the far wall. Ball: the table's plastic ball (31 mm, 12 g) on a painted spot 3.5 cm in front of the red 5-bar (x 69.75, y 8). Goal to score: y- end.",
+  "scoring": "Latched stages, highest counts. 0.1 passed: struck by a red 5-bar figure, the ball crosses the blue 5-bar rod. 0.3 received: then a red 3-bar figure touches it. 0.5 trapped: then it stays still (within 3 mm) against or under a red 3-bar figure for 1 s. 0.7: goal off the red 3-bar without a trap. 1.0: goal off the red 3-bar after the trap. A goal straight from the 5-bar stays 0.1. Foul, latched, 0: a gripper within 1 cm of the ball or reaching into the table, ball off the table, own goal, a red rod turned more than one full turn from its start. Real trial: all from the top-camera video (20 fps: a 1 s stop is 20 frames without motion); rod turns from a tape strip on each handle's end.",
+  "run_limit": "1,200 steps (60 s at 20 Hz)",
+  "reset_notes": "Arms stopped: take the ball from the goal, put it on the painted spot. Centre the red 5-bar and 3-bar, figures straight down. Check the four blue spring clamps hold their rods centred and straight down, and the two C-clamps are tight.",
+  "fidelity": "Approximate. Cabinet, goals and unused rods are one fixed body; the red 5-bar and 3-bar each have a slide joint (+-5 / +-6.5 cm bumpers) and a turn joint, with stick-slip bushing friction (1.5 N, 0.004 N m, chosen). Figures are boxes (head, body, 22 x 24 mm foot), soles 3 mm above the field; real figures are moulded with rounded toes. Ball 31 mm, 12 g, rolling damping chosen. Handle held by rubber friction; it slips slightly. Red goalie and 2-bar fixed (free in the real table).",
+  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seeds 0, 4 and 10)"
+}
