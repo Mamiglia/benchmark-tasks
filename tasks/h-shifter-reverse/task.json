@@ -18,5 +18,6 @@
   "run_limit": "1,800 steps (90 s at 20 Hz)",
   "reset_notes": "Put the lever back in neutral by hand (pull it out of reverse; it springs to the 3-4 plane). Nothing is consumed.",
   "fidelity": "Approximate. The lever is three joints: sideways and fore-aft hinges and a 6 mm push-down slide. The hidden gate is joint limits switched each 240 Hz step by where the knob is (slots 8 mm wide). Centring and detent springs (2-7 N) and the push-down spring (6 N + 0.8 N/mm) are efforts, estimated, to be checked with a luggage scale. The base is fixed; the R/6 choice is a rule (push-down at slot entry).",
-  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seed 0; also 1.0 on seeds 4 and 10)"
+  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seed 0; also 1.0 on seeds 4 and 10)",
+  "media": "M-QWV5VB"
 }
