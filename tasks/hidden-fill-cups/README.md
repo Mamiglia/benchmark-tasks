@@ -232,14 +232,15 @@ Isaac Lab-Arena (Isaac Lab 3.0, Isaac Sim 6.1) on a shared RTX workstation, with
 
 | Run | `task_score` | What the log shows |
 |---|---|---|
-| Scripted demo, seed 0 | **1.0** | Lift-test grips at which the load stopped rising: 1.1 N (45 g), 1.6 N (120 g), 3.1 N (205 g), 6.0 N (320 g); highest wall force 5.1 N against 12.4 N for the 320 g cup. All four on the tray, success at 57 s (1,148 steps) |
-| Scripted demo, seed 4 | **1.0** | 60 g, 140 g, 280 g, 325 g (highest wall force 5.1 N against 12.6 N for the 325 g cup). All four on the tray |
-| Scripted demo, seed 10 | **1.0** | 330 g, 115 g, 60 g, 265 g (highest wall force 5.1 N against 12.7 N for the 330 g cup). All four on the tray |
+| Scripted demo, seed 0 | **1.0** | Lift-test grips at which the load stopped rising: 1.1 N (45 g), 1.6 N (120 g), 4.3 N (205 g), 5.9 N (320 g); highest wall force 1.0 N against 1.56 N for the 45 g cup, 5.1 N against 12.5 N for the 320 g cup. All four on the tray |
+| Scripted demo, seed 4 | **1.0** | 60 g, 140 g, 280 g, 325 g (highest wall force 1.32 N against 1.60 N for the 60 g cup, 5.2 N against 12.7 N for the 325 g cup). All four on the tray |
+| Scripted demo, seed 10 | **1.0** | 330 g, 115 g, 60 g, 265 g (highest wall force 1.30 N against 1.60 N for the 60 g cup, 5.2 N against 12.8 N for the 330 g cup). All four on the tray |
 | `DEMO_CHEAT=tap`, seed 0 (closed fingertips pressed on each seal for 0.5 s, then the normal take) | **1.0** | Every cup logged a base or seal touch; none failed, all four on the tray |
 | `DEMO_CHEAT=squeeze` (fingers fully closed, 50 N) | **0** | Every cup's wall buckled on the first squeeze |
+| `DEMO_CHEAT=fixed`, seed 0 (one grip force, 2.0 N, for every cup, no lift tests) | **0.5** | The 45 g and 120 g cups reached the tray intact (highest wall force 1.4 N against 1.56 N for the 45 g cup). The 205 g cup turned in the fingers and tipped out of the grip; the 320 g cup slid out of the grip and fell off the table (off-support rule) |
 | `DEMO_CHEAT=push` | **0** | The shoved cups tipped over and fell off the tray rim (tipped, off-support rules) |
 | `DEMO_CHEAT=seal` | **0** | No cup lifted in a wall grip; each dragged cup went over the tray rim with no wall grip (off-support rule) |
-| Dream-1, seed 0 | **0** | 2,000 steps. Both grippers went down beside the outer cups but never closed on one; no cup moved |
+| Dream-1, seed 0 | **0** | 2,000 steps. The arms moved over and beside the cups but never closed on one; no cup moved |
 
 A scoop from under the base is not reachable with this gripper on a cup standing flat (the base sits on the table,
 3 mm inside the wall); the rule that catches it (off its support without a wall grip) is covered by the unit tests,
