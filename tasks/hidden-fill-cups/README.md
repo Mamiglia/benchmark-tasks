@@ -119,7 +119,14 @@ every cup, and update the simulation's force parameters or fidelity note if the 
 - The cups were built and measured (table under "Measured on built cups" in "Real-world build"); the simulation's
   crease law and pad friction were changed to the measured values.
 
-TK-JXDXL4: (review pending)
+**TK-JXDXL4.** "Clarity and reproducibility (not met): The specified cup's real buckling forces and pad friction have
+not been measured, so the required separation between safe grip ranges remains unverified. What to change: The
+remaining earlier request is still open: build the specified cups and report measured buckling-force and gripper-pad
+friction ranges across the prescribed fills. Use the measurements to show that no single fixed grip safely lifts every
+cup, and update the simulation parameters or fidelity note if the measured behavior differs materially."
+- Same change as for TK-5C7J89: measured crease forces at five fills and pad friction (3 tries each) are in "Measured
+  on built cups"; they show the full cup needs about 4.8 N per pad to hang while 20-60 g cups crease at 1.4-1.7 N; the
+  simulation now uses the measured values.
 
 ## Scoring
 
