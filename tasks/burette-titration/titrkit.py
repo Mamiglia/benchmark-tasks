@@ -15,7 +15,7 @@ static (``BASE``) Arena asset holding three bodies:
 Before every physics step (240 Hz, via a wrapper on ``InteractiveScene.write_data_to_sim``) the kit reads the key's
 angle and the flask's pose and steps :class:`titration.Titration`. ``object_states`` reports a :class:`RigState`.
 
-Importing the module also hooks ``yam_arena.scripted`` (as in our other kits): when the task file defines
+Importing the module also hooks ``yam_arena.scripted`` (as in the other kits): when the task file defines
 ``controller(bases, dt)``, ``yam_scripted`` asks that object for every action, passing it the observation (camera
 images and joint positions). yam_arena itself is not modified. Pure Python at import; Isaac Sim is imported lazily.
 """

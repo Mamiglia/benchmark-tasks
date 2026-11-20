@@ -30,7 +30,7 @@ you add the titrant, and close the stopcock as soon as the pink colour stays.`
     robot is not told it.
 - **Perception guides the motion; it is not the task.** The colour tells the robot when to slow down and when to
   stop. The score depends on what the hands did: the angle the key was held at, how well the flask was swirled,
-  and how fast the key was shut.
+  and how fast the key was shut. In a real trial a pH meter reads the result, so no one judges the colour by eye.
 
 ### Distinct from
 
@@ -153,24 +153,81 @@ The model is updated every physics step (240 Hz). The score at the end of the ep
 | At any time: titrant fell outside the flask | 0 | A drop on the tile, tray or bench paper (photo) |
 | The burette ran empty (T reached 25 mL) | 0 | Burette reading |
 | At the end, the stopcock still lets titrant through | 0 | Video: a drop forms or falls after the end; or a drop falls within 30 s |
-| The flask is pink once mixed, and T - V_e <= 0.30 mL | **1.0** | Burette reading (to 0.05 mL), and a photo of the flask on the tile after the technician swirls it for 10 s |
-| Pink, 0.30 < T - V_e <= 1.00 mL | 0.6 | As above |
-| Pink, 1.00 < T - V_e <= 3.00 mL | 0.3 | As above |
-| Pink, further over | 0 | As above |
-| Still colourless once mixed, T >= V_e - 1.00 mL (stopped on a fading flash) | 0.3 | As above |
-| Still colourless, T >= V_e / 2 | 0.1 | As above |
-| Anything less | 0 | As above |
+| Past the end point once mixed, and T - V_e <= 0.30 mL | **1.0** | pH meter: 8.4 <= pH <= 10.6 |
+| Past, 0.30 < T - V_e <= 1.00 mL | 0.6 | 10.6 < pH <= 11.1 |
+| Past, 1.00 < T - V_e <= 3.00 mL | 0.3 | 11.1 < pH <= 11.55 |
+| Past, further over | 0 | pH > 11.55 |
+| Short once mixed, T >= V_e - 1.00 mL (stopped on a fading flash) | 0.3 | 5.7 <= pH < 8.4 |
+| Short, T >= V_e / 2 | 0.1 | 4.8 <= pH < 5.7 |
+| Anything less | 0 | pH < 4.8 |
 
-"Pink once mixed" is computed in simulation from all the titrant that landed (the colour after full mixing). In a
-real trial the technician swirls the flask by hand for 10 s after the trial, then photographs it on the white tile:
-pink means any pink tint that is visibly different from a colourless reference flask in the same photo. At the
-first permanent pink the titrant is less than half a drop past equivalence, so the flask is pink by then; a flask
-that stayed colourless is short. The 0.30 mL window is 6 drops: a titrator working drop by drop near the end
+"Past the end point once mixed" is computed in simulation from all the titrant that landed: the bulk turns pink at
+0.02 mL (under half a drop) past V_e. The robot uses the indicator's colour to know when to stop. The real trial
+judges the end point with a pH meter, not by eye.
+
+### Real-trial pH reading
+
+- **Meter.** A benchtop pH meter with 0.01 pH resolution, for example the Mettler Toledo FiveEasy Plus FP20 with
+  its LE438 combination electrode (12 mm shaft) and electrode arm (about $600 as a kit). A pocket meter with
+  0.01 pH resolution (Hanna HI98103 Checker, about $40) is a cheaper alternative.
+- **Calibration.** At the start of each session, a three-point calibration with pH 4.01, 7.00 and 10.01 buffers at
+  room temperature (slope 95 to 105%, offset within 30 mV, or recalibrate). Check the pH 10.01 buffer again every
+  10 trials; recalibrate if it reads more than 0.05 pH off.
+- **Reading.** After the trial, the technician reads and records the burette (to 0.05 mL, a cross-check) and
+  raises the burette 3 cm in its clamp so the tip clears the neck. The liquid in the Erlenmeyer is only about 1.5 cm
+  deep, which is too shallow for the electrode's junction. So the technician pours all of it into a 50 mL beaker,
+  swirls the beaker 10 s, and lowers the electrode on the electrode arm into it: the electrode is clamped upright,
+  off-centre and 5 mm above the floor, clear of the swirl. The meter's auto-endpoint gives a stable reading (within
+  about 30 s). The technician records the pH to 0.01 and the temperature, then rinses the electrode with water.
+  The reading is taken within 2 minutes of the end of the trial, because air's CO2 slowly lowers the pH of an
+  alkaline solution.
+- **The indicator does not shift the pH.** 3 drops of 1% phenolphthalein in about 40 mL is far too little to
+  buffer the solution.
+
+### From burette volume to pH
+
+The flask starts as 0.05 M acetic acid (pKa 4.76, aliquot V_e of 8 to 12 mL) made up to 30 mL. After T mL of
+0.05 M NaOH the volume is 30 + T mL. The pH comes from the charge balance
+[Na+] + [H+] = [acetate] + [OH-], with [acetate] = C_acid Ka / (Ka + [H+]). Three cases give simple formulas:
+
+- **Short (T < V_e).** An acetate buffer: pH = 4.76 + log10(T / (V_e - T)). At T = V_e / 2: pH 4.76. At
+  T = V_e - 1.00 mL with V_e 10: pH = 4.76 + log10(9) = 5.71.
+- **At equivalence (T = V_e).** 0.5 mmol acetate in 40 mL (0.0125 M): [OH-] = sqrt(Kw / Ka x 0.0125)
+  = 2.7e-6 M, so pH 8.43.
+- **Past (T > V_e).** Excess hydroxide: [OH-] = 0.05 (T - V_e) / (30 + T). At +0.30 mL with V_e 10:
+  0.015 mmol / 40.3 mL = 3.7e-4 M, pH 10.57. At +1.00 mL: 1.2e-3 M, pH 11.09. At +3.00 mL: 3.5e-3 M, pH 11.54.
+
+The full charge balance, solved over the whole range of aliquots, gives:
+
+| Sim threshold (T - V_e) | pH, V_e 8 mL | pH, V_e 10 mL | pH, V_e 12 mL | Real bound used |
+|---|---|---|---|---|
+| -V_e / 2 | 4.76 | 4.76 | 4.76 | 4.8 |
+| -1.00 mL | 5.61 | 5.71 | 5.80 | 5.7 |
+| 0 (equivalence) | 8.39 | 8.43 | 8.46 | 8.4 |
+| +0.02 mL (sim colour threshold) | 9.42 | 9.40 | 9.38 | (8.4 used) |
+| +0.30 mL | 10.59 | 10.57 | 10.55 | 10.6 |
+| +1.00 mL | 11.11 | 11.09 | 11.07 | 11.1 |
+| +3.00 mL | 11.56 | 11.54 | 11.52 | 11.55 |
+
+The overshoot side is the steep part of the curve, and the aliquot barely moves it (0.04 pH). One more 0.05 mL drop
+near +0.30 mL raises the pH by about 0.07, so a reading to 0.01 pH places the end point to well under a drop. On the
+short side the aliquot moves the -1.00 mL bound by up to 0.1 pH, which is 0.2 mL. That shifts only the 0.3 / 0.1
+boundary, not full credit. One gap is less than half a drop wide: between equivalence and +0.02 mL (pH 8.4 to 9.4)
+the simulation counts the flask as not yet pink (0.3), while the pH meter gives 1.0. A drop is 0.05 mL, so a
+titration rarely ends there. We kept the simulation's colour threshold as it is.
+
+The 0.30 mL window is 6 drops: a titrator working drop by drop near the end
 point stays well inside it, while a stream (0.4 mL/s) shut on the first lasting pink overshoots it.
+
+## Changes since the last review
+
+- TK-688YJC: "Can the scoring be done with a ph meter instead?" Yes. The real trial now judges the end point with a
+  calibrated pH meter (0.01 pH, pH 4/7/10 buffers) instead of a photo of the flask's colour. Each sim volume
+  threshold is mapped to a pH window, with the calculation, under Scoring. The simulation is unchanged.
 
 ## Reset
 
-Close the key. Empty and rinse the flask, then dry its neck. Refill the burette to 0.00 mL (run a little through
+Close the key. Lower the burette back to its clamp mark if it was raised for the pH reading. Empty and rinse the flask, then dry its neck. Refill the burette to 0.00 mL (run a little through
 the tip to clear bubbles). Dispense the next seed's aliquot into the flask, add water to about 30 mL and 3 drops
 of indicator, and stand the flask on the tile under the tip (tip 1 cm inside the neck: mark the tile with the
 flask's outline). Turn the burette in its clamp so the handle faces the left arm at 35 degrees (a tape mark on
@@ -235,8 +292,8 @@ stays closed and nothing is added. Score 0.
   the flask is swirled, measured as the RMS horizontal acceleration of the flask); a pink patch where the drops land
   that fades as it mixes, more slowly over the last 1.5 mL; and the bulk turning pink 0.02 mL past
   equivalence. The flow curve's bore (1.2 mm) and plug radius (4 mm), and the mixing rates, are chosen values,
-  not measured on a real key; a real key is what it is, and the real trial measures the outcome (burette reading,
-  colour) directly. The liquid's level does not rise in the drawing, and the liquid is not drawn swirling.
+  not measured on a real key; a real key is what it is, and the real trial measures the outcome (the flask's pH,
+  and the burette reading as a cross-check) directly. The liquid's level does not rise in the drawing, and the liquid is not drawn swirling.
 - **Colour.** The flask's liquid is drawn in four colour stages (colourless, faint pink, pink, magenta) and the patch
   in four sizes, switched each control step.
 
@@ -262,5 +319,8 @@ Sim / Isaac Lab and Isaac Lab-Arena are used under their own licences (NVIDIA Om
 | Polypropylene lab tray 40 x 30 cm, bench paper | Any | $20 |
 | Nitrile finger cots, size L (box) | Any | $8 |
 | 0-5 N spring gauge (key torque check) | Any | $10 |
+| Benchtop pH meter, 0.01 pH, with electrode and electrode arm | Mettler Toledo FiveEasy Plus FP20 kit with LE438 | $600 |
+| pH 4.01, 7.00 and 10.01 buffers, 250 mL each | Any supplier | $30 |
+| 50 mL glass beakers (x 3) | Any | $10 |
 
-Total about $170.
+Total about $810 (about $250 with a pocket meter such as the Hanna HI98103).
