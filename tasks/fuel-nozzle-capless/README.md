@@ -7,6 +7,13 @@ Category: **Societal relatability**. Filling a car at the pump is one of the mos
 million licensed US drivers do it themselves, most of them every week or two. A ten-second clip of a robot taking
 the nozzle off the pump and pushing it into a car needs no explanation. No fuel is used in any trial.
 
+## Changes since the last review
+
+- TK-X4CEP3: "Specify how this can be made reproducible in a real-world setting." Changed: the "Real-world trial"
+  section now names the filler (Ford part DP5Z-5427936-A) and nozzle (Husky 159464N, with its listed weight), gives a
+  dimensioned panel drawing and mounting steps, how the hose is supported, tape marks and camera set-up, a reset
+  procedure and how each scoring condition is checked on video. Text only; the simulation is unchanged.
+
 ## Why this task
 
 The robot does the whole job the way a driver does, with the real tools: a dry automatic pump nozzle on a real hose,
@@ -151,30 +158,95 @@ embodiment's `_ensure_sim`, `reset` and `_task_step`, and `yam_arena.scripted.Ya
 python -m pytest -q test_fuel_nozzle_capless.py   # NumPy only; no GPU needed
 ```
 
-## Real-world build
+## Real-world trial
 
-All parts new and dry: the nozzle and hose have never carried fuel, and no fuel or other liquid is used.
+Everything below is off the shelf or cut from stock with a saw and a drill. All parts are new and dry: the nozzle and
+hose have never carried fuel, and no fuel or other liquid is used at any point.
+
+### Parts
 
 | Item | Product | Size / mass | Approx. price |
 |---|---|---|---|
-| Nozzle | Husky 1A automatic unleaded nozzle, 3/4 in NPT, three-notch hold-open clip (for example Husky 159464N), die-cast aluminium | spout 21.3 mm OD (the SAE J285 unleaded size), about 35 cm long, 1.3 kg (Husky lists about 3 lb shipping weight) | $90-120 |
+| Nozzle | Husky 159464N automatic unleaded nozzle, 3/4 in NPT, die-cast aluminium, three-notch hold-open clip, waffle splash guard | unleaded spout 21.3 mm OD (SAE J285), about 35 cm overall; Husky lists 1.2 kg (2.7 lb) shipping weight, the sim uses 1.3 kg | $90-120 |
 | Hose | 3/4 in UL 330 dispenser hose whip, male NPT both ends, 4 ft (1.2 m; 1.04 m between fittings) | about 0.6 kg/m | $35-50 |
-| Boot | universal nozzle boot for 3/4 in automatic nozzles, or a 50 mm PVC pipe 18 cm long with an end cap, screwed to the post at 55 degrees below horizontal | 36-50 mm bore | $10-25 |
-| Filler | Ford Easy Fuel capless filler head (the upper filler pipe with its capless head; OE number by VIN, for example a 2013-2019 Escape or Fusion), pipe cut 17 cm below the face | 66 mm face, 23.6 mm restrictor | $30 used, $80-150 new |
-| Car body | 12 mm plywood (or a scrap steel quarter panel) 50 x 42 cm, painted, 10 x 10 cm opening with a pocket box 3.5 cm deep behind it, the head bolted in its back at 30 degrees down; a hinged plate 10 x 10 cm as the open fuel door; two L-brackets to stand it on the table | | $20 |
-| Pump post and mast | 80 x 120 mm timber post 52 cm tall clamped at the panel's right; 30 x 30 mm post 52 cm tall at the right front corner with a 3/4 in NPT floor flange near its top for the hose | | $15 |
+| Boot | universal nozzle boot for 3/4 in automatic nozzles, or a 50 mm PVC pipe 18 cm long with an end cap | 36-50 mm bore, 17.5 cm deep | $10-25 |
+| Filler | Ford Easy Fuel capless filler housing, unleaded, no lock: Ford part DP5Z-5427936-A (or the capless head off any 2010-2019 Ford with Easy Fuel, from a salvage yard), its pipe cut 17 cm below the face | 66 mm face, 23.6 mm restrictor | $30 used, $80-150 new |
+| Car body | 12 mm plywood 50 x 42 cm, painted, plus a 10 x 10 x 3.5 cm pocket box of 6 mm plywood, a 10 x 10 cm plate on a 40 mm butt hinge as the fuel door, two 75 mm steel L-brackets | | $20 |
+| Pump post and mast | 80 x 120 mm timber post 52 cm tall; 30 x 30 mm timber mast 52 cm tall with a 3/4 in NPT floor flange screwed on 2 cm below its top; two G-clamps | | $15 |
 
-Total about $200-250. Positions are in the Design section and the screenshot (world frame: x forward from the arms'
-midpoint, y left, z up): filler lip centre (59.5, 15, 17 above the table), boot mouth (43.7, -5, 16), hose outlet
-(56, -40, 52).
+Total about $200-250. Measure the filler head on arrival: if its face or restrictor differs from 66 mm / 23.6 mm by
+more than 2 mm, use another head.
+
+### Panel drawing
+
+Front view of the car body from the arms (x into the page, y to the left, sizes in cm, origin at the panel's
+bottom right corner, the corner nearest the pump):
+
+```
+ y=50 ┌──────────────────────────────────────────┐ z=42
+      │                                          │
+      │            door  ┌────────┐              │
+      │          (hinged │  lip   │              │
+      │          on this │   o    │ z=17         │
+      │          edge)   └────────┘              │
+      │                  y=18    y=8             │
+      └──────────────────────────────────────────┘ z=0
+                                                 y=0
+```
+
+- Opening 10 x 10 cm, centre 13 cm from the right edge and 17 cm up; the door plate hinges on its left edge and stands
+  open at 90 degrees, facing the arms.
+- Pocket box 3.5 cm deep glued behind the opening. Drill its back plate on the opening's centre at 30 degrees down
+  (pointing away from the arms) and bolt the filler head in it so the head's face sits flush with the back plate, the
+  bore pointing into the car 30 degrees below horizontal.
+- Stand the panel upright, face toward the arms, with its face 56 cm forward of the midpoint between the arm bases
+  and its right edge 2 cm left of that midpoint (panel spans y 2 to 52); screw the two L-brackets to its back and
+  clamp them to the table.
+- Pump post: upright, its front face at x 56.5, spanning y -11 to 1, clamped to the table. Screw the boot to the
+  post's face so it holds the nozzle spout down at 55 degrees below horizontal, mouth centre at (43.7, -5), 16 cm up,
+  handle toward the arms.
+- Mast: at (56, -40), clamped upright; the floor flange 50-52 cm up, facing the post.
+
+Check the positions with a tape measure against the screenshot: filler lip centre (59.5, 15, 17 above the table),
+boot mouth (43.7, -5, 16), hose outlet (56, -40, 52).
+
+### Hose
+
+Screw the hose into the mast's flange and into the nozzle's inlet (PTFE tape, hand tight plus a quarter turn). Nothing
+else supports it: it hangs from the flange in a loop to the nozzle, as in the screenshot, and its other end is carried
+with the nozzle. The real hose is stiffer than the sim's linked hose; if it holds the hung nozzle out of its boot, use
+a softer 3/4 in hose of the same length.
+
+### Before the first trial
+
+Mark the spout with thin tape rings 4, 8 and 13 cm from its tip. Mark the lever's one-third travel on the guard (about
+1 cm up at the finger): squeeze the lever until its tail first reaches the clip's lowest notch, and draw a line on the
+guard's side at the lever's edge. Set a phone camera beside the panel, level with the filler, seeing the spout, the
+lever and both grippers; a second phone (or the station top camera) sees the whole table.
 
 **Forces.** Real nozzle levers and Easy Fuel flaps vary; measure before the first trial. Lever: hook a luggage scale
 at the lever 65 mm behind its pivot and pull up: the dry lever works against its return springs only (no fuel
 pressure); it must take under 30 N at full travel to leave margin under the YAM's roughly 40 N per finger (the sim
 uses 8-20 N). Flap: push a 21 mm dowel into the head on a kitchen scale (the sim takes 4-10 N; it must stay under
-about 15 N, which the wrist can push). Clip: about 2 N on its tab. Weight: 1.3 kg nozzle plus up to about 0.3 kg of
+about 15 N, which the wrist can push). Clip: about 2 N on its tab. Weight: 1.2-1.3 kg nozzle plus up to about 0.3 kg of
 hose on its end, about 0.8 kg per arm in a two-handed carry. Choose a nozzle whose lever works without fuel pressure
 (no "no-pressure/no-flow" feature, or one that can be disabled) and check that the clip holds the dry lever.
+
+**Reset (about 1 minute).** Squeeze the lever past the notch if latched so the clip drops; draw the nozzle out of the
+filler if it is in (the flap closes by itself); hang it in the boot spout fully down, handle toward the arms, lever and
+clip down; lay the hose back in its loop as in the screenshot; arms to the ready pose. Nothing is used up.
+
+### Checking the score
+
+From the side video, frame by frame (30 fps):
+- Fail, lever: the lever passes the one-third line on the guard while the 4 cm tape ring is still outside the filler
+  face. Fail, fall: the nozzle drops out of both grippers or its housing touches the table.
+- 0.15: the 8 cm ring goes inside the filler face.
+- 0.5: with the 8 cm ring still inside, the lever is up on the clip and both grippers are open and clear of the lever
+  for 3 s (90 frames) in a row.
+- 0.7: later, the clip is down and the lever is back against its stop.
+- 1.0: at the end, the 13 cm ring is inside the boot (look into the boot mouth, or use a pen mark on the boot at 13 cm
+  from the tip of a fully seated nozzle), lever down, both grippers open and clear of the nozzle (photo).
 
 **Safety.** No fuel, vapour or liquid anywhere, and the nozzle and hose are new, so nothing can drip onto the rig. The
 spout end is rounded (no sharp edge); tape the panel's opening edges. The nozzle can fall at most to the table: put a
