@@ -18,5 +18,6 @@
   "run_limit": "2,400 steps (120 s at 20 Hz)",
   "reset_notes": "Nothing is used up. Unlock with the key (or the second key), take the head out, put the key in the head in the unlocked position and lay the lock on its tape marks, T-bar toward the monitor, bow flat. Put the monitor back on its base tape marks if it moved.",
   "fidelity": "Approximate. Rigid boxes: head, T-bar (estimated 6.0 x 2.2 mm crossbar) and pins in a 7 x 3 mm slot, 0.4-0.6 mm clearance; contact alone decides insertion, binding and holding. The key is its own body on a joint: it turns the T-bar and comes out only when locked, under 3 N. Detents are a weak spring. The 0.6 m of cable to the anchor is 12 hinged 50 mm segments with an estimated bending spring; the coiled rest is not simulated. The monitor is one rigid body.",
-  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seed 0; also 1.0 on seeds 4 and 10)"
+  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seed 0; also 1.0 on seeds 4 and 10)",
+  "media": "M-8FFS9Q"
 }
