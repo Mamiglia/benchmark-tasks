@@ -50,11 +50,24 @@ def test_seat_geometry():
     assert abs(d2) < 1e-9 and off2 < 1e-9
 
 
-def test_detent_and_cord():
+def test_detent():
     assert M.detent_target(0.2) == 0.0 and M.detent_target(1.0) == M.LOCKED_ANGLE
-    assert np.allclose(M.cord_force([0.3, 0.0, M.TOP + 0.009]), 0.0)
-    f = M.cord_force([0.4, 0.05, M.TOP + 0.13])
-    assert math.isclose(np.linalg.norm(f), M.CORD_PULL) and f[2] < 0 and f[1] > 0
+
+
+def test_cable_lies_on_the_desk_from_the_collar_to_the_anchor():
+    for seed in (0, 4, 10, 17, 33):
+        q = np.array(M.cable_path(seed))
+        assert len(q) == M.SEG_N + 1
+        p, r = M.start_pose(seed)
+        assert np.allclose(q[0], p + r @ np.asarray(M.COLLAR_EXIT))
+        assert np.allclose(np.linalg.norm(np.diff(q, axis=0), axis=1)[1:-1], M.SEG_L, rtol=0.01)  # segments 50 mm
+        assert min(np.linalg.norm(q[1] - q[0]), np.linalg.norm(q[-1] - q[-2])) > 0.8 * M.SEG_L  # end ones rise
+        assert np.linalg.norm(q[-1] - [M.ANCHOR[0], M.ANCHOR[1], M.ANCHOR_Z]) < 0.005  # ends in the anchor
+        assert np.all(q[1:-1, 2] < M.TOP + M.CABLE_D)  # lying on the desk
+        assert np.all(np.linalg.norm(q[:, :2] - [0.0, 0.305], axis=1) > 0.12)  # clear of the left arm's base
+        # it stays off the monitor's stand base
+        base = (q[:, 0] > M.BACK_X - 0.125) & (q[:, 1] > M.MON_Y - 0.115) & (q[:, 1] < M.MON_Y + 0.115)
+        assert not base.any()
 
 
 def test_monitor_moved():
@@ -81,3 +94,4 @@ def test_scores():
     assert t.score(*home, 90.0, True) == 0.0  # monitor shoved: 0 for good
     t.reset()
     assert t.score(*seat(dx=-0.05), 90.0, True) == 0.0  # key turned with the lock in the air: nothing
+

@@ -1,8 +1,8 @@
-"""On the station table: a 24-inch office monitor (black, Dell E2422H) on its stand, its screen facing away from the
-robot, so its back is toward the arms. The security slot is on the back's lower housing, 13 cm above the desk, a
-little left of the arms' centre line. In front of the monitor a keyed cable lock (Kensington MicroSaver 2.0) lies on
-the desk, its T-bar toward the monitor and its key in it, in the unlocked position. Its steel cable is already looped
-round the desk's leg and leads off over the desk's left edge.
+"""On the station table: a 24-inch office monitor (black, Dell E2422H) on its stand, its screen toward a user's seat on
+the desk's far side, so its back is toward the arms. The security slot is on the back's lower housing, 13 cm above the
+desk, a little left of the arms' centre line. In front of the monitor a keyed cable lock (Kensington MicroSaver 2.0)
+lies on the desk, its T-bar toward the monitor and its key in it, in the unlocked position. Its steel cable lies on
+the desk in a curve to a desk-mount cable anchor left of the monitor.
 
 Run it:  inspect-robots run --embodiment yam_arena -E task=task.py -E object_jitter=0 -E control_hz=20 --scorer task_score ...
 The lock's start position and yaw come from the seed LOCK_SEED (environment variable, default 0).
@@ -90,16 +90,12 @@ HEAD_BOXES = (
     ((M.PIN_X / 2, _py, 0.0), (M.PIN_X, M.PIN_Y1 - M.PIN_Y0, M.PIN_Z), STEEL),
     ((M.PIN_X / 2, -_py, 0.0), (M.PIN_X, M.PIN_Y1 - M.PIN_Y0, M.PIN_Z), STEEL),
     ((M.BACK + 0.0035, 0.0, 0.0), (0.007, 0.021, 0.021), BLACK),  # cable collar
-    ((M.BACK + 0.0035, 0.032, 0.0), (0.0045, 0.042, 0.0045), STEEL, False),  # the cable, leading off (drawn)
 )
 TBAR = Slide(name="tbar", origin=(0.0, 0.0, 0.0), axis=(1.0, 0.0, 0.0), revolute=True, lower=0.0,
              upper=M.LOCKED_ANGLE, stiffness=M.DETENT_K, damping=M.DETENT_D, mass=M.TBAR_MASS, armature=2e-6,
-             boxes=(((M.BAR_X0 / 2 - 0.001, 0.0, 0.0), (M.BAR_X0 + 0.002, M.STEM, M.STEM), STEEL),
-                    (((M.BAR_X0 + M.BAR_TIP) / 2, 0.0, 0.0), (M.BAR_TIP - M.BAR_X0, M.BAR_L, M.BAR_T), STEEL),
-                    (((M.BAR_TIP + M.BAR_X1) / 2, 0.0, 0.0),
-                     (M.BAR_X1 - M.BAR_TIP, M.BAR_L - 0.0016, M.BAR_T - 0.0008), STEEL)))  # the crossbar's rounded tip, drawn as a slightly smaller box
+             boxes=tuple((c, s, STEEL) for c, s, _ in M.tbar_boxes()))
 P0, R0 = M.start_pose(SEED)
-LOCK = part("lock", P0, HEAD_BOXES, mass=M.HEAD_MASS, quat=matrix_to_quat(R0), friction=0.6, slides=(TBAR,),
+LOCK = part("lock", P0, HEAD_BOXES, mass=M.HEAD_MASS, quat=matrix_to_quat(R0), friction=0.3, slides=(TBAR,),
             contact_offset=0.0005, com=(-0.020, 0.0, 0.0), inertia=(1.6e-6, 6e-6, 6e-6))
 
 # The key sits in the lock's cylinder: a joint that turns it with the T-bar and lets it slide out along the lock's
@@ -115,9 +111,43 @@ KEY_BOXES = (
 )
 KEY = part("key", P0, KEY_BOXES, mass=M.KEY_MASS, quat=matrix_to_quat(R0), friction=0.8, links=(KEYWAY,),
            contact_offset=0.0005, com=(M.BOW[0] + 0.012, 0.0, 0.0), inertia=(3e-7, 4e-7, 6e-7))
-OBJECTS = [MONITOR, LOCK, KEY]
 
-# -- run-time mechanics: detents, the captive key, the cable's pull (each physics step) -------------------------------
+# -- the cable: SEG_N hinged segments from the head's collar to the desk-mount anchor (ball joints with a bending spring
+# whose rest shape is the start shape, as a coiled steel cable keeps its set) -----------------------------------------
+_I3 = ((1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0))
+CABLE_GREY = (0.62, 0.64, 0.68)
+_Q = M.cable_path(SEED)
+_RS = [M.frame_x(_Q[i + 1] - _Q[i]) for i in range(M.SEG_N)]
+_LEN = [float(np.linalg.norm(_Q[i + 1] - _Q[i])) for i in range(M.SEG_N)]  # each segment its chord (50 mm, 1%)
+ANCHOR = part("cable_anchor", M.ANCHOR, (
+    ((0.0, 0.0, 0.0015), (0.045, 0.030, 0.003), DARK),  # plate, screwed to the desk
+    ((0.0, 0.0, 0.0115), (0.012, 0.030, 0.003), DARK),  # bridge over the cable
+    ((0.0, 0.0125, 0.0075), (0.012, 0.005, 0.009), DARK), ((0.0, -0.0125, 0.0075), (0.012, 0.005, 0.009), DARK),
+), mass=0.05, fixed=True)
+
+
+def _seg_link(i):
+    if i == 0:  # to the head's collar
+        return Link(name="cable0_j", to="lock", pos0=M.COLLAR_EXIT, rot0=tuple(map(tuple, R0.T @ _RS[0])), rot1=_I3,
+                    ball=True, stiffness=M.SEG_K, damping=M.SEG_D, enabled=True)
+    return Link(name=f"cable{i}_j", to=f"cable{i - 1}", pos0=(_LEN[i - 1], 0.0, 0.0),
+                rot0=tuple(map(tuple, _RS[i - 1].T @ _RS[i])), rot1=_I3, ball=True, stiffness=M.SEG_K,
+                damping=M.SEG_D, enabled=True)
+
+
+CABLE = []
+for _i in range(M.SEG_N):
+    _links = [_seg_link(_i)]
+    if _i == M.SEG_N - 1:  # the far end runs through the anchor's bracket
+        _links.append(Link(name="anchor_j", to="cable_anchor", pos0=tuple(_Q[-1] - M.ANCHOR),
+                           rot0=tuple(map(tuple, _RS[-1])), pos1=(_LEN[-1], 0.0, 0.0), rot1=_I3, ball=True,
+                           enabled=True))
+    _box = (((_LEN[_i] / 2, 0.0, 0.0), (_LEN[_i] + 0.002, M.CABLE_D, M.CABLE_D), CABLE_GREY),)
+    CABLE.append(part(f"cable{_i}", _Q[_i], _box, mass=M.SEG_MASS, quat=matrix_to_quat(_RS[_i]), friction=0.5,
+                      links=tuple(_links)))
+OBJECTS = [MONITOR, LOCK, KEY, ANCHOR, *CABLE]
+
+# -- run-time mechanics: detents and the captive key (each physics step) -------------------------------
 TRACK = M.Tracker()
 _RT: dict = {}
 
@@ -137,13 +167,11 @@ _reset()
 
 @on_physics
 def _mechanics(environment) -> None:
-    import torch
     from partkit import _np, quat_to_matrix
 
     base = environment.unwrapped
     lock = base.scene["lock"]
     key = base.scene["key"]
-    origin = _np(base.scene.env_origins)[0]
     angle = float(_np(lock.data.joint_pos)[0, 0])
     target = M.detent_target(angle)
     if target != _RT["target"]:
@@ -161,15 +189,6 @@ def _mechanics(environment) -> None:
         if free and out > M.KEY_GIVE:  # pulled with 3 N or more: the key comes out, and follows the hand
             set_link("keyway", False)
             _RT["key_in"] = False
-    pose = _np(lock.data.root_link_pose_w)[0]
-    pos = pose[:3] - origin
-    f = M.cord_force(pos)
-    at = pose[:3] + quat_to_matrix(pose[3:7]) @ np.array([M.BACK + 0.0035, 0.0, 0.0])
-    forces = torch.tensor([[f.tolist()]], dtype=torch.float32, device=lock.device)
-    lock.permanent_wrench_composer.set_forces_and_torques_index(
-        forces=forces, torques=torch.zeros_like(forces), positions=torch.tensor([[at.tolist()]], dtype=torch.float32,
-                                                                               device=lock.device),
-        body_ids=[int(lock.find_bodies("body")[0][0])], is_global=True)
 
 
 @on_step
@@ -190,6 +209,10 @@ def _track(environment) -> None:
     TRACK.step(depth, off, tilt, moved)
     _RT["steps"] += 1
     _RT.update(states=s, hands=hands, depth=depth, off=off, tilt=tilt, angle=angle, clear=clear)
+    if os.environ.get("LOCK_DEBUG_CABLE") and _RT["steps"] % 8 == 0:
+        cs = object_states(environment, ["cable0", "cable1", "cable2"])
+        print("[cable] " + " ".join(f"{k} {np.round(v.pos, 4)} end {np.round(v.to_world((M.SEG_L, 0, 0)), 4)}"
+                                    for k, v in cs.items()), flush=True)
     if os.environ.get("LOCK_DEBUG") and _RT["steps"] % 4 == 0:
         print(f"[lock] t {_RT['steps'] / 20:6.2f} head {np.round(lk.pos, 4)} depth {depth * 1000:6.2f} off "
               f"{off * 1000:5.2f} tilt {tilt:5.1f} angle {angle:5.1f} key_in {_RT['key_in']} mon "

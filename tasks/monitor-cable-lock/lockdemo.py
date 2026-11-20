@@ -26,7 +26,7 @@ from yam_arena.constants import READY
 from yam_arena.urdf import axis_angle_matrix
 
 DEBUG = bool(os.environ.get("LOCK_DEBUG"))
-HEAD_APPROACH = np.array([0.55, 0.0, -0.835])  # head frame: the right hand comes from above and behind the barrel
+HEAD_APPROACH = np.array([0.35, 0.0, -0.937])  # head frame: the right hand comes from above and behind the barrel
 KEY_OPEN, HEAD_OPEN = 0.30, 0.45
 
 
@@ -183,20 +183,27 @@ class Controller:
                   f"tilt {self.sim['tilt']:.2f} roll {np.degrees(rotvec(self.head()[1]))}")
 
     def push_home(self):
-        """Push the head flat onto the monitor, pressing about 6 mm past the face (a few newtons); if the T-bar stops
-        on the wall, back off 6 mm, line up again and push again (up to four tries)."""
+        """Push the head flat onto the monitor, pressing up to 15 mm past the face (a few newtons, against the cable
+        too). If the crossbar stops on the wall, ease off to just in front of it (its narrower tip still in the
+        slot), let the hand re-centre the head without pressing, and push again (up to six tries); after three, back
+        right off and line up again."""
         seat, rs = M.locked_pose()
-        for attempt in range(4):
-            self.bias_lim, self.gain = np.array([0.006, 0.03, 0.03]), 0.15
-            yield from self.carry(seat - [0.0045, 0.0, 0.0], rs, 1.0)  # the crossbar's tip 0.5 mm off the wall
-            yield from self.until(lambda: self.sim["off"] < 0.00025, 3.0)
+        self.bias_lim, self.gain = np.array([0.015, 0.03, 0.03]), 0.15
+        yield from self.carry(seat - [0.0045, 0.0, 0.0], rs, 1.0)  # the crossbar's tip 0.5 mm off the wall
+        yield from self.until(lambda: self.sim["off"] < 0.00025, 3.0)
+        for attempt in range(6):
             yield from self.carry(seat + [0.003, 0.0, 0.0], rs, 2.0)
             yield from self.until(lambda: self.sim["depth"] > -0.0003, 2.0)
             if self.sim["depth"] > -0.0003:
                 break
             self.note(f"stopped on the wall: depth {self.sim['depth'] * 1000:.2f} off {self.sim['off'] * 1000:.2f}")
-            self.bias_lim, self.gain = np.array([0.03, 0.03, 0.03]), 0.15
-            yield from self.line_up()
+            self.bias_p[0] = min(self.bias_p[0], 0.0)
+            if attempt == 2:
+                yield from self.line_up()
+                yield from self.carry(seat - [0.0045, 0.0, 0.0], rs, 1.0)
+            else:
+                yield from self.carry(seat - [0.0037, 0.0, 0.0], rs, 0.8)
+            yield from self.until(lambda: self.sim["off"] < 0.00025, 3.0)
         yield from self.wait(0.5)
         self.note(f"home: depth {self.sim['depth'] * 1000:.2f} off {self.sim['off'] * 1000:.2f} "
                   f"bias {np.round(self.bias_p * 1000, 1)} mm")

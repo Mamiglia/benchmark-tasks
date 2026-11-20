@@ -43,7 +43,8 @@ PIN_X = 0.0022  # fixed side pins and the T-bar's stem stick out this far past t
 PIN_Y0, PIN_Y1, PIN_Z = 0.0014, 0.0029, 0.0022  # fixed pins: y from .. to (each side), height
 STEM = 0.0020  # T-bar stem, square
 BAR_X0, BAR_X1 = PIN_X, 0.0040  # crossbar: from the pins' end to the tip
-BAR_TIP = 0.0034  # the crossbar's tip (its last 0.6 mm) is rounded off: narrower
+BAR_TIP = 0.0034  # the crossbar's last 0.6 mm is smaller, 4.4 x 1.4 mm (its rounded ends)
+TIP_L, TIP_T = 0.0044, 0.0014
 BAR_L, BAR_T = 0.0060, 0.0022  # crossbar length (along H y, unlocked) and thickness
 HEAD_MASS, TBAR_MASS = 0.050, 0.005
 KEY_MASS = 0.008
@@ -59,9 +60,18 @@ KEY_FREE_ANGLE = math.radians(80.0)  # the key comes out only in the locked posi
 KEY_PULL = 3.0  # N: the pull that takes a turned key out (its pins drag in the cylinder)
 KEY_K = 2000.0  # N/m: in the locked position the key sits on this spring; ...
 KEY_GIVE = KEY_PULL / KEY_K  # ... pulled out this far (1.5 mm, i.e. with 3 N), it comes out
-CORD_PULL = 0.6  # N: the cable's weight and drag on the head once lifted, toward where it leads
-CORD_LIFT = TOP + 0.025
-CORD_ANCHOR = np.array([0.20, 0.42, TOP - 0.10])  # the cable goes over the desk's left edge to its loop round a leg
+# -- the lock's steel cable (1.8 m, about 5 mm): the 0.6 m nearest the head is simulated as hinged segments; the rest
+# is looped through a desk-mount cable anchor screwed to the desk, which holds the segment chain's far end -------------
+CABLE_D = 0.005  # m, across the vinyl-coated steel cable
+SEG_N, SEG_L = 12, 0.05  # segments and their length (0.6 m)
+SEG_MASS = 0.055 * SEG_L  # kg: about 55 g per metre
+SEG_K = 0.1  # N m/rad per joint: bending stiffness EI about 0.005 N m^2 (estimate for a 7 x 7 steel rope, coated)
+SEG_D = 0.0005  # N m s/rad
+COLLAR_EXIT = (BACK + 0.0035, 0.0105, 0.0)  # where the cable leaves the head's collar (H frame) ...
+EXIT_DIR = (-0.7071, 0.7071, 0.0)  # ... and its direction there (the collar swivels; it leads back and to the side)
+ANCHOR = np.array([0.30, 0.50, TOP])  # desk-mount cable anchor: on the desk, left of the arms, toward the left edge
+ANCHOR_DIR = np.array([0.0, 1.0, 0.0])  # the cable runs into the anchor's ring along +y (to the left)
+ANCHOR_Z = TOP + 0.010  # height of the cable where the bracket holds it
 
 # -- scoring ---------------------------------------------------------------------------------------------------------
 FLUSH = 0.001  # head face within 1 mm of the slot's face
@@ -115,12 +125,56 @@ def seat_of(pos, rot, mon_pos, mon_rot, mon_pos0) -> tuple[float, float, float]:
     return depth, off, tilt
 
 
-def cord_force(pos) -> np.ndarray:
-    """The cable's pull on the head (N, world): CORD_PULL toward where it leads, once the head is off the desk."""
-    if pos[2] < CORD_LIFT:
-        return np.zeros(3)
-    d = CORD_ANCHOR - np.asarray(pos, float)
-    return CORD_PULL * d / np.linalg.norm(d)
+def frame_x(axis) -> np.ndarray:
+    """A rotation whose x axis is ``axis``."""
+    x = np.asarray(axis, float) / np.linalg.norm(axis)
+    t = np.array([0.0, 0.0, 1.0]) if abs(x[2]) < 0.9 else np.array([1.0, 0.0, 0.0])
+    y = np.cross(t, x)
+    y /= np.linalg.norm(y)
+    return np.stack([x, y, np.cross(x, y)], axis=1)
+
+
+def cable_path(seed: int) -> list[np.ndarray]:
+    """SEG_N + 1 joint points of the simulated cable at the start: from the head's collar, lying on the desk in a
+    smooth curve (an arc-like bow toward the robot, as deep as makes the curve as long as the cable), into the anchor. The
+    points are equally spaced along the curve, so each segment is its chord (within 1% of SEG_L)."""
+    p, r = start_pose(seed)
+    p0 = p + r @ np.asarray(COLLAR_EXIT)
+    p1 = np.array([ANCHOR[0], ANCHOR[1], ANCHOR_Z])
+    zd = TOP + CABLE_D / 2 + 0.0005
+    s = np.linspace(0.0, 1.0, 4001)[:, None]
+    side = np.array([-(p1 - p0)[1], (p1 - p0)[0], 0.0])
+    side /= np.linalg.norm(side)
+    if side[0] > 0:
+        side = -side  # the curve bows toward the robot, so the cable leads back from the head, away from the monitor
+
+    def curve(a):
+        pts = p0 + s * (p1 - p0) + a * np.sin(np.pi * s) * side
+        pts[1:-1, 2] = zd  # lying on the desk between the collar and the anchor
+        return pts
+
+    def arc(pts):
+        return np.r_[0.0, np.cumsum(np.linalg.norm(np.diff(pts, axis=0), axis=1))]
+
+    lo, hi = 0.0, 0.6
+    for _ in range(40):  # bow depth so that the curve is as long as the cable
+        a = (lo + hi) / 2
+        if arc(curve(a))[-1] < SEG_N * SEG_L:
+            lo = a
+        else:
+            hi = a
+    pts = curve((lo + hi) / 2)
+    t = arc(pts)
+    want = np.linspace(0.0, t[-1], SEG_N + 1)
+    return [np.array([np.interp(w, t, pts[:, k]) for k in range(3)]) for w in want]
+
+
+def tbar_boxes() -> list:
+    """The T-bar's boxes (T-bar frame = H at angle 0): (centre, size, quat XYZW or None). The stem; the crossbar; its
+    last 0.6 mm a smaller box (the real crossbar's ends are rounded), which leads it into the slot."""
+    return [((BAR_X0 / 2 - 0.001, 0.0, 0.0), (BAR_X0 + 0.002, STEM, STEM), None),
+            (((BAR_X0 + BAR_TIP) / 2, 0.0, 0.0), (BAR_TIP - BAR_X0, BAR_L, BAR_T), None),
+            (((BAR_TIP + BAR_X1) / 2, 0.0, 0.0), (BAR_X1 - BAR_TIP, TIP_L, TIP_T), None)]
 
 
 def detent_target(angle: float) -> float:
