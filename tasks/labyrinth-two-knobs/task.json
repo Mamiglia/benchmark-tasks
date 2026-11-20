@@ -19,5 +19,5 @@
   "reset_notes": "Take the ball from the box's ball return and put it on START. Turn the knobs until the board is level (phone inclinometer on the board, 0.0 +- 0.2 deg in both directions). Check the box's corners are on their tape marks on the riser.",
   "fidelity": "Approximate. Box, gimbal, board and knobs are one PhysX articulation; each knob's angle sets its tilt joint's target (1 deg per 25 deg, +-4 deg); string slip and backlash not modelled. Board: BRIO 34030's 8-hole board traced from a product photo (+-3 mm). Holes are a rule: ball centre within 7.2 mm of a hole's centre = dropped. Knob friction and rolling resistance are chosen, not measured.",
   "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seeds 0, 4 and 10)",
-  "media": "M-HYEPXL"
+  "media": "M-PPCTLH"
 }
