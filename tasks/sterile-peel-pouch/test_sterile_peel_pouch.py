@@ -18,15 +18,15 @@ I3 = np.eye(3)
 
 def start_poses():
     tr = K.start_transforms()
-    return {b: (tr[i, :3], I3) for i, b in enumerate(K.BODIES)}
+    return {b: (tr[i, :3], K.quat_to_matrix(tr[i, 3:])) for i, b in enumerate(K.BODIES)}
 
 
 def test_seal_anchors_coincide_at_start():
     P = start_poses()
     for b in range(K.N + 1):
         for pb, pl, fb, fl in K.seal_anchors(b):
-            a = P[pb][0] + np.asarray(pl)
-            c = P[fb][0] + np.asarray(fl)
+            a = P[pb][0] + P[pb][1] @ np.asarray(pl)
+            c = P[fb][0] + P[fb][1] @ np.asarray(fl)
             assert np.allclose(a, c, atol=1e-9)
     assert not any(K.seals_parted(P)) and K.peeled_mm(K.seals_parted(P)) == 0.0
 
@@ -38,18 +38,25 @@ def test_peel_progress_counts_from_the_chevron():
     assert K.peeled_mm([False, True, True] + [False] * (K.N - 2)) == 0.0
 
 
-def test_pouch_fits_stand_and_clears_drape_at_start():
+def test_pouch_lies_flat_on_rest_and_clears_drape_at_start():
     P = start_poses()
-    pts = K.pouch_corners(P)
-    assert pts[:, 2].min() >= K.POUCH_BOTTOM - 1e-9
-    assert not K.pouch_touches_drape(pts)
-    slot_x, slot_y = K.STAND_SLOT
+    assert np.allclose(K.quat_to_matrix(K.FLAT_Q), K.FLAT_R)
     strips = np.concatenate([K.box_corners(*P[f"{p}_{k}"], (0, 0, 0), K.STRIP_SIZE) for p in K.PLIES
                              for k in range(K.N)])
-    assert np.abs(strips[:, 0] - K.POUCH_X).max() < slot_x / 2 and np.abs(strips[:, 1]).max() < slot_y / 2
+    assert abs(strips[:, 2].min() - K.REST_TOP) < 1e-9  # film's outer face on the rest
+    assert np.ptp(strips[:, 2]) < K.GAP + 2 * K.PLY_T + 1e-9  # flat: two plies and the pocket
+    rest_y0 = K.REST_C[1] - K.REST_SIZE[1] / 2
+    assert strips[:, 1].min() >= K.CHEVRON_Y - 1e-9 and strips[:, 1].max() < rest_y0 + K.REST_SIZE[1]
+    film_tab = K.box_corners(*P["film_tab"], (0, 0, 0), K.TAB_SIZE)
+    paper_tab = K.box_corners(*P["paper_tab"], (0, 0, 0), K.TAB_SIZE)
+    assert film_tab[:, 1].max() < rest_y0 and film_tab[:, 2].min() > K.TOP  # hangs over the edge, clear of the table
+    assert paper_tab[:, 2].min() >= strips[:, 2].max() - 1e-9  # turned up
+    assert not K.pouch_touches_drape(K.pouch_corners(P))
+    f = K.forceps_corners(*P["forceps"])
+    assert strips[:, 2].min() + K.PLY_T < f[:, 2].min() and f[:, 2].max() < strips[:, 2].max() - K.PLY_T
 
 
-def test_forceps_inside_pocket():
+def test_forceps_inside_pocket():  # upright design frame
     fc = K.forceps_center()
     pts = K.forceps_corners(fc, I3)
     assert np.abs(pts[:, 1]).max() < K.GAP / 2  # between the plies' inner faces

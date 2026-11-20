@@ -1,13 +1,16 @@
-"""pouchkit: a sealed peel pouch holding dressing forceps, its stand and a sterile field drape, for a yam_arena task.
+"""pouchkit: a sealed peel pouch holding dressing forceps, the block it lies on and a sterile field drape, for a
+yam_arena task.
 
 yam_arena task files only take single primitives. This module adds one object, :class:`PouchRig`, spawned as a fixed
 (``BASE``) Arena asset holding:
 
-- ``stand`` and ``drape``: static colliders: a printed pouch stand (a slot the pouch stands in, chevron end up) and a
-  blue sterile field drape lying flat on the table.
+- ``rest`` and ``drape``: static colliders: a 3 cm block the pouch lies flat on (its chevron end flush with the
+  block's edge, so the lower ply's tab can hang down) and a blue sterile field drape lying flat on the table.
 - ``paper_tab``, ``paper_0`` .. ``paper_{N-1}`` and the same for ``film``: the pouch's two plies, each a chain of rigid
   strips across the pouch's width joined by hinges (revolute joints about the width axis), so each ply bends along its
   length like the real sheet. The tab is the unsealed flap above the chevron, turned out.
+- The geometry below is written for the pouch upright (chevron up, plies separated along y, as if it stood on a 6 mm
+  base); :func:`flat` turns that frame 90 degrees about x onto the rest, so the pouch lies flat, paper up.
 - seal: at every strip boundary (the chevron at the top, the bottom seal at the end and every line between) the two
   plies are joined by two point joints, one in each side seal. Each joint breaks (PhysX ``breakForce``) when the pull
   on it passes ``SEAL_BREAK_N``: pulling the two tabs apart parts the seal one boundary at a time, at the real peel
@@ -41,8 +44,8 @@ TOP = TABLE_TOP["station"]
 
 # -- layout (env frame: x forward, y left, z up; m) ------------------------------------------------------------------
 # Pouch: 3.5 x 9 in (89 x 229 mm) heat-seal peel pouch, medical paper (left, +y) and blue PET/PP film (right, -y),
-# standing chevron end up in the stand's slot. 209 mm sealed body in N strips; a 20 mm unsealed tab above the chevron
-# on each ply, turned out level.
+# lying flat on the rest, paper up. 209 mm sealed body in N strips; a 20 mm unsealed tab beyond the chevron on each
+# ply, turned out (paper tab up, film tab down over the rest's edge). Written in the upright design frame (see flat()).
 POUCH_X = 0.24  # centre of the pouch's width
 POUCH_W = 0.089
 N = 11
@@ -57,14 +60,29 @@ SEAL_BREAK_N = 1.6  # per joint, two per boundary: 3.2 N to part a boundary (REA
 HINGE_DAMPING = 2e-4  # N m s/rad: the sheet's internal friction on each hinge
 TAB_STIFFNESS = 0.02  # N m/rad: the crease that keeps a turned-out tab level (it holds the tab's own weight)
 
-# Stand: printed PLA block on the table, a 16 mm x 100 mm slot, walls 60 mm high (STL in the folder).
-STAND_BASE_T = 0.006
-STAND_SLOT = (0.100, 0.016)  # x, y inside
-STAND_WALL_T, STAND_WALL_H = 0.004, 0.060
-POUCH_BOTTOM = TOP + STAND_BASE_T  # the pouch stands on the slot's floor
+# Upright design frame: the pouch as if standing chevron up on a 6 mm base.
+POUCH_BOTTOM = TOP + 0.006
 Z_SEAL_TOP = POUCH_BOTTOM + N * STRIP_L  # the chevron (top seal boundary)
 
-# Drape: 18 x 26 in (457 x 660 mm) sterile poly-lined towel drape, blue, flat on the table in front of the stand, its
+# Rest: a 40 x 240 x 30 mm block (wood or PLA) on the table; the pouch lies flat on it, film down, chevron toward the
+# right arm (-y) at y CHEVRON_Y, its body along +y. The block's -y face is 2 mm in from the chevron, so the film tab
+# hangs free over the edge. Narrower than the pouch (89 mm), so the pouch's side edges overhang it.
+REST_SIZE = (0.040, 0.240, 0.030)
+REST_TOP = TOP + REST_SIZE[2]
+CHEVRON_Y = 0.0
+REST_C = (POUCH_X, CHEVRON_Y + 0.002 + REST_SIZE[1] / 2, TOP + REST_SIZE[2] / 2)
+FLAT_R = np.array([[1.0, 0, 0], [0, 0, -1.0], [0, 1.0, 0]])  # 90 deg about x: upright -z (body) -> +y, +y (paper) -> +z
+FLAT_Q = (math.sqrt(0.5), 0.0, 0.0, math.sqrt(0.5))  # xyzw
+PIVOT = np.array([POUCH_X, 0.0, Z_SEAL_TOP])  # the chevron's mid-line, upright frame
+FLAT_PIVOT = np.array([POUCH_X, CHEVRON_Y, REST_TOP + GAP / 2 + PLY_T])  # ... lying flat: film's outer face on the rest
+
+
+def flat(p) -> np.ndarray:
+    """A point of the upright design frame, with the pouch lying flat on the rest."""
+    return FLAT_PIVOT + FLAT_R @ (np.asarray(p, float) - PIVOT)
+
+
+# Drape: 18 x 26 in (457 x 660 mm) sterile poly-lined towel drape, blue, flat on the table in front of the rest, its
 # long side across (y). The outer 2.5 cm of a sterile field counts as non-sterile (AORN): the target is the inner area.
 DRAPE_C = (0.52, 0.0)
 DRAPE_HALF = (0.2285, 0.330)  # x, y
@@ -175,17 +193,6 @@ def over_drape(p, margin: float = 0.0) -> bool:
     return abs(p[0] - DRAPE_C[0]) <= DRAPE_HALF[0] - margin and abs(p[1] - DRAPE_C[1]) <= DRAPE_HALF[1] - margin
 
 
-def stand_boxes():
-    """(centre, size) of the stand's boxes, env frame."""
-    sx, sy = STAND_SLOT
-    t, h = STAND_WALL_T, STAND_WALL_H
-    ox, oy = sx + 2 * t, sy + 2 * t
-    zb, zw = TOP + STAND_BASE_T / 2, TOP + STAND_BASE_T + h / 2
-    return [((POUCH_X, 0, zb), (ox + 0.02, oy + 0.03, STAND_BASE_T)),
-            ((POUCH_X, sy / 2 + t / 2, zw), (ox, t, h)), ((POUCH_X, -sy / 2 - t / 2, zw), (ox, t, h)),
-            ((POUCH_X + sx / 2 + t / 2, 0, zw), (t, sy, h)), ((POUCH_X - sx / 2 - t / 2, 0, zw), (t, sy, h))]
-
-
 def quat_to_matrix(q) -> np.ndarray:
     x, y, z, w = np.asarray(q, float) / np.linalg.norm(q)
     return np.array([[1 - 2 * (y * y + z * z), 2 * (x * y - w * z), 2 * (x * z + w * y)],
@@ -250,9 +257,9 @@ class PouchState(ObjectState):
 
 _SPECS: dict[str, PouchRig] = {}
 _PATHS: dict[str, str] = {}
-COLORS = {"stand": (0.85, 0.85, 0.82), "drape": (0.16, 0.42, 0.78), "paper": (0.95, 0.95, 0.92),
+COLORS = {"rest": (0.85, 0.85, 0.82), "drape": (0.16, 0.42, 0.78), "paper": (0.95, 0.95, 0.92),
           "film": (0.55, 0.75, 0.92), "steel": (0.72, 0.73, 0.75), "seam": (0.86, 0.86, 0.80)}
-FRICTION = {"stand": 0.4, "drape": 0.5, "paper": 0.9, "film": 0.9, "steel": 0.35}
+FRICTION = {"rest": 0.4, "drape": 0.5, "paper": 0.9, "film": 0.9, "steel": 0.35}
 
 
 def _spawn(prim_path: str, cfg, translation=None, orientation=None, **kwargs):
@@ -300,7 +307,8 @@ def _spawn(prim_path: str, cfg, translation=None, orientation=None, **kwargs):
     def body(name, pos, mass):
         path = f"{prim_path}/{name}"
         xf = UsdGeom.Xform.Define(stage, path)
-        xf.AddTranslateOp(precision=dbl).Set(Gf.Vec3d(*map(float, pos)))
+        xf.AddTranslateOp(precision=dbl).Set(Gf.Vec3d(*map(float, flat(pos))))
+        xf.AddOrientOp(precision=dbl).Set(Gf.Quatd(FLAT_Q[3], *FLAT_Q[:3]))
         prim = xf.GetPrim()
         UsdPhysics.RigidBodyAPI.Apply(prim)
         rb = PhysxSchema.PhysxRigidBodyAPI.Apply(prim)
@@ -314,8 +322,7 @@ def _spawn(prim_path: str, cfg, translation=None, orientation=None, **kwargs):
 
     static = f"{prim_path}/static"
     UsdGeom.Xform.Define(stage, static)
-    for i, (c, s) in enumerate(stand_boxes()):
-        cube(static, f"stand{i}", c, s, "stand", "stand")
+    cube(static, "rest", REST_C, REST_SIZE, "rest", "rest")
     cube(static, "drape", (*DRAPE_C, TOP + DRAPE_T / 2), (2 * DRAPE_HALF[0], 2 * DRAPE_HALF[1], DRAPE_T), "drape", "drape")
 
     paths = {}
@@ -405,7 +412,7 @@ def _like(ref, data: np.ndarray, dtype="float32"):
 
 def start_transforms() -> np.ndarray:
     tr = np.zeros((len(BODIES), 7))
-    tr[:, 6] = 1.0
+    tr[:, 3:] = FLAT_Q
     for i, b in enumerate(BODIES):
         if b == "forceps":
             tr[i, :3] = forceps_center()
@@ -414,6 +421,7 @@ def start_transforms() -> np.ndarray:
         else:
             ply, k = b.split("_")
             tr[i, :3] = strip_center(ply, int(k))
+        tr[i, :3] = flat(tr[i, :3])
     return tr
 
 

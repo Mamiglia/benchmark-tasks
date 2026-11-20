@@ -1,14 +1,16 @@
 """Scripted demo for sterile-peel-pouch, played by ``yam_scripted`` (see ``pouchkit._patch_scripted``).
 
 Open loop on the fixed layout (the task has no seeded shift): it plans from the layout constants and never reads the
-simulator's state. Each hand comes in from the front, turned 40 degrees in toward the middle, fingers above and below
-its ply's turned-out tab (left: paper, right: film), and pinches the tab's front corner. Both lift the pouch out of
-its stand by the tabs alone, carry it over the field, then draw apart slowly, coming down a little, so
-the seal parts from the chevron down; the forceps slides out of the opened mouth onto the drape. The hands then carry the
-two empty plies out beyond the drape's side edges, lay them on the table, let go and go back to the ready pose.
+simulator's state. The pouch lies flat on its rest, paper up. The left hand pinches the upturned paper tab's front
+corner, lifts the chevron end and turns the tab level, so the pouch slides off the rest and hangs from that tab with
+the film tab turned out toward the right. The right hand, turned 40 degrees in toward the middle, fingers above and
+below the film tab, pinches its front corner. Both carry the pouch over the field, then draw apart slowly, coming
+down a little, so the seal parts from the chevron down; the forceps slides out of the opened mouth onto the drape.
+The hands then carry the two empty plies out beyond the drape's side edges, lay them on the table, let go and go back
+to the ready pose.
 
 Contrasts (``DEMO=...``): ``fast`` peels in 1.2 s (a jerk); ``low`` carries the pouch too low, so it drags on the
-drape; ``grab`` pinches the pouch's sealed body (both plies together) at its front edge in one hand, shakes it over
+drape; ``grab`` pinches the flat pouch's sealed body (both plies together) at its front edge in one hand, shakes it over
 the field and drops it there; ``short`` stops the peel half way and releases the pouch over the field.
 """
 
@@ -29,9 +31,11 @@ YAW = 40.0  # degrees: each hand's approach turned in toward the middle
 HALF_OPEN = -0.020  # fingers 40 mm apart round the 1.5 mm tab
 GRIP_BACK = 0.027  # TCP this far behind the tab's front edge (x)
 GRIP_Y = 0.020  # TCP this far out from the pouch's mid-plane (the pad tips end 8 mm out, clear of the ply)
-GRIP_Z = K.Z_SEAL_TOP + K.PLY_T / 2
-CARRY_Z = TOP + 0.30  # the hanging pouch's bottom 9 cm up: clear of the stand's walls and of the drape
-FIELD_X = 0.45  # TCP x over the field: the pouch's middle 1.7 cm further, 5 cm short of the drape's centre (the forceps tends to slide forward off the opened plies)
+GRIP_Z = K.Z_SEAL_TOP + K.PLY_T / 2  # GRIP_* are in the upright design frame (pouchkit.flat)
+PICK_DZ = 0.003  # the left hand pinches the upturned paper tab 3 mm higher, so its fingers clear the paper ply
+CARRY_Z = TOP + 0.30  # the hanging pouch's bottom 9 cm up: clear of the rest and of the drape
+RIGHT_WAIT = 6.5  # s: the right arm waits at ready while the left lifts the pouch and it settles
+FIELD_X = 0.45  # TCP x over the field; the pouch hangs at x 0.47 and the forceps slides about 9 cm back as it drops
 PEEL_Y = 0.26  # each hand this far out at the end of the peel
 PEEL_END_Z = TOP + 0.27  # and this high: once the plies part, each hangs 23 cm below its hand
 PEEL_S = 6.0
@@ -61,24 +65,35 @@ class JointMove:
         return np.r_[self.q, self.waypoints[0].finger / FINGER_OPEN], "joint move"
 
 
-def arm_plan(side: float, mode: str) -> list[Waypoint]:
+def arm_plan(side: float, mode: str, ready) -> list[Waypoint]:
+    """``ready``: (TCP position, rotation) of the arm's ready pose."""
     s = side
     R = grip(s)
     a = R[:, 2]
-    g = np.array([K.POUCH_X - K.POUCH_W / 2 + GRIP_BACK, s * GRIP_Y, GRIP_Z])
-    pre = g - 0.07 * a
     carry_z = TOP + 0.20 if mode == "low" else CARRY_Z
-    up = np.array([g[0], g[1], carry_z])
-    over = np.array([FIELD_X, g[1], carry_z])
+    gx = K.POUCH_X - K.POUCH_W / 2 + GRIP_BACK
+    up = np.array([gx, s * GRIP_Y, carry_z])  # the pinch once the pouch hangs from the left hand
+    if s > 0:  # left: take the upturned paper tab of the flat pouch, lift it and turn the tab level
+        Rp = K.FLAT_R @ R
+        gp = K.flat((gx, GRIP_Y, GRIP_Z)) + (0, 0, PICK_DZ)
+        w = [Waypoint(2.5, tuple(gp - 0.07 * Rp[:, 2]), HALF_OPEN, "in front of the paper tab", Rp),
+             Waypoint(1.5, tuple(gp), HALF_OPEN, "fingers round the tab", Rp),
+             Waypoint(0.8, tuple(gp), FINGER_CLOSED, "pinch the tab", Rp),
+             Waypoint(1.0, tuple(gp + (0, 0, 0.03)), FINGER_CLOSED, "lift the chevron end", Rp),
+             Waypoint(2.5, tuple(up), FINGER_CLOSED, "lift the pouch off the rest, tab level", R),
+             Waypoint(RIGHT_WAIT + 4.8 - 8.3, tuple(up), FINGER_CLOSED, "hold while the right hand takes the film tab",
+                      R)]
+    else:  # right: once the pouch hangs, its film tab sticks out level toward -y; pinch its front corner
+        w = [Waypoint(RIGHT_WAIT, tuple(ready[0]), FINGER_OPEN, "wait", ready[1]),
+             Waypoint(2.5, tuple(up - 0.07 * a), HALF_OPEN, "in front of the film tab", R),
+             Waypoint(1.5, tuple(up), HALF_OPEN, "fingers round the tab", R),
+             Waypoint(0.8, tuple(up), FINGER_CLOSED, "pinch the tab", R)]
+    over = np.array([FIELD_X, up[1], carry_z])
     peel_y = s * (PEEL_Y if mode != "short" else 0.10)
     apart = np.array([FIELD_X, peel_y, carry_z if mode == "short" else PEEL_END_Z + carry_z - CARRY_Z])
-    w = [Waypoint(2.5, tuple(pre), HALF_OPEN, "in front of the tab", R),
-         Waypoint(1.5, tuple(g), HALF_OPEN, "fingers round the tab", R),
-         Waypoint(0.8, tuple(g), FINGER_CLOSED, "pinch the tab", R),
-         Waypoint(2.0, tuple(up), FINGER_CLOSED, "lift out of the stand", R),
-         Waypoint(2.5, tuple(over), FINGER_CLOSED, "over the field", R),
-         Waypoint(1.2 if mode == "fast" else PEEL_S, tuple(apart), FINGER_CLOSED, "peel apart", R),
-         Waypoint(1.5, tuple(apart), FINGER_CLOSED, "hold while the forceps drops", R)]
+    w += [Waypoint(2.5, tuple(over), FINGER_CLOSED, "over the field", R),
+          Waypoint(1.2 if mode == "fast" else PEEL_S, tuple(apart), FINGER_CLOSED, "peel apart", R),
+          Waypoint(1.5, tuple(apart), FINGER_CLOSED, "hold while the forceps drops", R)]
     if mode == "short":
         return w + [Waypoint(0.6, tuple(apart), FINGER_OPEN, "let go over the field", R),
                     Waypoint(1.5, tuple(apart - 0.06 * a + (0, 0, 0.04)), FINGER_OPEN, "back", R)]
@@ -91,15 +106,16 @@ def arm_plan(side: float, mode: str) -> list[Waypoint]:
 
 
 def grab_plan() -> list[Waypoint]:
-    """Cheat: the left hand pinches the pouch's sealed body (both plies) at its front edge, level, lifts it, shakes it
-    over the field and lets go; the right arm stays at ready."""
-    a = math.radians(30.0)  # approach forward turned 30 degrees toward -y, fingers closing level across the plies
-    R = np.column_stack([[math.sin(a), math.cos(a), 0], [0, 0, 1.0], [math.cos(a), -math.sin(a), 0]])
-    g = np.array([K.POUCH_X - K.POUCH_W / 2 + 0.012, 0.0, K.Z_SEAL_TOP - 0.05])
+    """Cheat: the left hand pinches the flat pouch's sealed body (both plies) at its front edge, where it overhangs the
+    rest, lifts it, shakes it over the field and lets go; the right arm stays at ready."""
+    a = math.radians(30.0)  # upright frame: approach forward turned 30 degrees toward -y, fingers across the plies
+    R = K.FLAT_R @ np.column_stack([[math.sin(a), math.cos(a), 0], [0, 0, 1.0], [math.cos(a), -math.sin(a), 0]])
+    R = R @ np.diag([-1.0, -1.0, 1.0])  # the same grip turned over about the approach: within the wrist's reach
+    g = K.flat((K.POUCH_X - K.POUCH_W / 2 + 0.006, 0.0, K.Z_SEAL_TOP - 0.05))
     up = np.array([g[0], g[1], CARRY_Z])
     over = np.array([FIELD_X, 0.0, CARRY_Z])
-    w = [Waypoint(2.5, tuple(g - 0.08 * R[:, 2]), FINGER_OPEN, "in front of the pouch", R),
-         Waypoint(1.5, tuple(g), FINGER_OPEN, "fingers round the pouch", R),
+    w = [Waypoint(2.5, tuple(g - 0.08 * R[:, 2]), HALF_OPEN, "in front of the pouch", R),
+         Waypoint(1.5, tuple(g), HALF_OPEN, "fingers round the pouch", R),
          Waypoint(0.8, tuple(g), FINGER_CLOSED, "grab it", R),
          Waypoint(2.0, tuple(up), FINGER_CLOSED, "lift", R),
          Waypoint(2.5, tuple(over), FINGER_CLOSED, "over the field", R)]
@@ -118,7 +134,8 @@ class Controller:
         if self.mode == "grab":
             self.plans = {"left": ArmPlan(grab_plan(), self.bases["left"], q_start=READY)}
         else:
-            self.plans = {a: ArmPlan(arm_plan(s, self.mode), self.bases[a], q_start=READY)
+            self.plans = {a: ArmPlan(arm_plan(s, self.mode, ik.tcp_pose(np.asarray(READY, float), self.bases[a])),
+                                     self.bases[a], q_start=READY)
                           for a, s in (("left", 1.0), ("right", -1.0))}
         self.dur = max(p.duration for p in self.plans.values())
         self.home = None

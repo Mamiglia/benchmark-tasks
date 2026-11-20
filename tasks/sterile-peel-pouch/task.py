@@ -1,6 +1,6 @@
 """On the station table, in front of the arms: a sealed 3.5 x 9 in paper/film peel pouch holding 14 cm stainless
-dressing forceps stands chevron end up in a printed stand at x 24 cm, y 0, its paper ply toward the left arm and its
-film ply toward the right; the unsealed tab of each ply above the chevron is turned out level. Beyond it a blue
+dressing forceps lies flat, paper up, on a 3 cm block at x 24 cm, its length along y and its chevron end at y 0; the
+paper tab beyond the chevron is turned up and the film tab hangs over the block's end. Beyond it a blue
 18 x 26 in sterile towel drape lies flat, centred at x 52 cm, y 0. Same layout in every trial.
 
 Run it:  inspect-robots run --embodiment yam_arena -E task=task.py -E object_jitter=0 --scorer task_score ...
