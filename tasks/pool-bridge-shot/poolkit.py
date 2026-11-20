@@ -179,7 +179,7 @@ class TableGeom:
 class Rules:
     target_pocket: str = "near_left"
     strike_gap_s: float = 0.03  # cue-ball contacts closer than this are one strike
-    push_s: float = 0.07  # one cue contact longer than this is a push (2 or more video frames at 30 fps): a foul
+    push_s: float = 0.07  # one cue contact longer than this is a push (17+ frames at 240 Hz): a foul
     near_m: float = 0.10  # object ball at rest within this of the target pocket's mouth: partial credit
     touch_n: float = 1e-3  # N: any contact force above this counts as a touch
 

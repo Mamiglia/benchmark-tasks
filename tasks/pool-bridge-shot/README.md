@@ -11,6 +11,11 @@ player does: one hand makes the bridge the cue slides through, and the other str
 **Category:** Societal relatability. A pool shot is known at a glance from a ten-second clip. Most people have played
 one in a bar, a games room or a student union, and know how hard it is to pot a ball cleanly.
 
+## Changes since the last review
+
+- TK-GEWR8P: "Scoring (not met): The stated 30 fps video check cannot reliably distinguish a contact over 70 ms or separate strikes more than 30 ms apart. What to change: For real-trial scoring, specify an unobstructed high-speed view of the cue tip and a frame-counting procedure that can resolve both the 30 ms strike-separation and 70 ms push thresholds. The current two-frame check at 30 fps does not measure a 70 ms contact reliably."
+  Changed: the real-trial check is now a 240 fps side view of the tip and cue ball (named phone, placement, scale mark, light) with a frame count: a push is 17+ consecutive contact frames, two strikes are contact runs 8+ frames apart, matching the simulation's 240 Hz count. The scorer is unchanged.
+
 ## Why this task
 
 - **The skill is a guided, bimanual tool strike.** The cue is 1.2 m long and weighs 510 g. It is held at its balance
@@ -61,7 +66,31 @@ Latched over the whole trial, from the trial video:
 | 0.5 | The yellow ball drops into another pocket, or comes to rest with its centre within 10 cm of the taped pocket's corner (where the two cushion lines meet) | Video; ruler from the corner |
 | 0.25 | The white ball touched the yellow ball | Video |
 | cap 0.25 | Scratch: the white ball goes into a pocket or off the table | Video |
-| 0 | No strike; two or more strikes (contacts more than 30 ms apart); a push (one cue contact lasting over 70 ms, i.e. the tip visibly stays on the ball for 2 or more frames at 30 fps); a gripper or arm touched either ball; the cue touched the yellow ball; the white ball never touched the yellow ball | Video |
+| 0 | No strike; two or more strikes (contacts 30 ms or more apart); a push (one cue contact lasting over 70 ms); a gripper or arm touched either ball; the cue touched the yellow ball; the white ball never touched the yellow ball | Strikes and push: frame count in the 240 fps side view (below); the rest: video |
+
+**Real-trial strike and push check.** A 30 fps video cannot time a 70 ms contact or a 30 ms gap, so the strike is
+filmed at 240 fps (one frame = 4.17 ms):
+
+- **Camera:** an iPhone 13 or later in Slo-mo at 1080p 240 fps (or any phone or camera with a true 240 fps mode;
+  check with `ffprobe` that the file is 240 fps), on a mini tripod on the cloth at (67, 36): 25 cm from the cue ball,
+  square to the cue line (the line runs along +y through x = 42.3), on the side away from the arms and out of both
+  balls' paths. Lens 3 cm above the cloth (the balls' centre height), main 1x lens, focus and exposure locked on the
+  cue ball. The view must show the tip and the cue ball against the cloth with nothing in between.
+- **Scale:** a 10 mm band of white tape on the ferrule, just behind the tip. It must span at least 30 px in the
+  frame (3 px per mm or better); move the camera closer if not.
+- **Light:** a DC- or battery-powered LED panel (for example a Neewer 660) on the cue ball from the camera side.
+  Mains lighting flickers at 100 or 120 Hz, which shows as banding at 240 fps.
+- **Contact frame:** a frame with no cloth pixel visible between the tip's leather and the cue ball along the cue
+  axis (a gap of 0 px, about 0.3 mm at the stated scale).
+- **Count:** extract the frames (`ffmpeg -i shot.mov f/%04d.png`) and step through them from 10 frames before the
+  cue ball moves to 10 frames after the tip stops. One run of consecutive contact frames is one contact.
+  - **Push:** a run of 17 or more contact frames (17 x 4.17 = 71 ms, over 70 ms).
+  - **Two strikes:** two runs separated by 8 or more non-contact frames (8 x 4.17 = 33 ms, at least 30 ms). Runs
+    separated by 1 to 7 non-contact frames are one strike.
+  - A clean strike lasts a few milliseconds, so it shows as 0 to 2 contact frames; with 0, the strike is the frame
+    where the cue ball starts to move with the tip at it.
+
+  This is the count the simulation makes: it reads contacts at the same 240 Hz, with the same 70 ms and 30 ms limits.
 
 `task_score` gives the score at the end of the episode; a 1.0 shot that holds 1 s with the cue ball at rest ends it
 early. The simulation reads contacts at 240 Hz (PhysX contact reports between each ball and the cue, the other ball,
@@ -144,6 +173,7 @@ and is held at its balance point. The bridge is a light pinch of about 3 N per f
 | Balls | The table's 2 1/4 in set, or Aramith Blue Dot cue ball plus any 1 ball | about $13 each |
 | Cue | Action ACTO48 one-piece 48 in shorty cue, 18 oz, 12 mm tip | about $30 |
 | Tape, spot stickers | any | about $5 |
+| Strike camera | iPhone 13 or later (Slo-mo, 1080p 240 fps; any phone already owned with a true 240 fps mode), a mini tripod, a battery LED panel (for example Neewer 660) | about $40 for tripod and light if a phone is to hand |
 
 This is the one part of the task over the usual ~$200: a full-size table. The honest options are to run the trial at
 a bar or club table, or to buy a home 7 ft table. A tabletop toy table would make it a miniature.
@@ -157,6 +187,8 @@ used and set `TableGeom` if they differ.
 **Safety.** The balls leave the cue at under 0.5 m/s; the cue tip is a rounded leather tip. Nothing is sharp, wet or
 messy. Chalk the tip before the session, not during a trial, so no chalk dust reaches the grippers. Keep people out of
 the cue's butt (it reaches about 40 cm behind the right hand).
+
+**Filming.** Besides the usual trial video, film every strike with the 240 fps side camera described under Scoring.
 
 **Reset.** Take both balls out of the pocket or off the cloth, put them back on their spot stickers, and lay the cue on
 the near rail, tip to the left, its balance point (mark it with a pen) at the marked place.
