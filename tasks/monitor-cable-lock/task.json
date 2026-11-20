@@ -1,0 +1,22 @@
+{
+  "title": "Lock a monitor with a keyed cable lock: T-bar into its 3 x 7 mm slot, held home while the key turns, key out",
+  "category": "Societal relatability",
+  "keywords": [
+    "bimanual",
+    "cable lock",
+    "security slot",
+    "T-bar",
+    "key turn",
+    "hold while turning",
+    "slot insertion",
+    "office"
+  ],
+  "instruction": "Lock the monitor with the cable lock and take the key out.",
+  "context": "Offices, schools, libraries and shops lock their monitors and laptops to the desk with a keyed cable lock. The lock's T-bar must go square into a 3 x 7 mm slot on the monitor's back, and the head must stay pressed flat on the monitor while the key turns a quarter turn: only then does the T-bar turn crosswise behind the slot's wall. If the head backs off, the bar binds in the slot or turns outside it and the lock comes straight out. The cable's weight pulls the head out of the slot unless it is held, so one hand holds the head home while the other turns the key and pulls it out. The monitor stands free on the desk.",
+  "setup": "Positions in m from the midpoint between the arm bases, on the table top (x forward, y left). Dell E2422H 23.8 in monitor (black, 3.9 kg with its stand), screen facing away from the robot so its back faces the arms, not clamped: panel 552.6 x 331.6 mm, 49.7 mm deep, lower edge 88.7 mm above the desk, no tilt; centre line y -0.07; lower rear housing's back face at x 0.42; stand base 222 x 171 mm from x 0.30 to 0.47, corners taped. Its Kensington security slot (7 x 3 mm, long side level, 1.5 mm wall) at (0.42, 0.045), 134 mm above the desk. Kensington MicroSaver 2.0 keyed lock (K65020WW): steel head 10 mm nose, 18 mm barrel, 34 mm long, T-bar and side pins 2.2-4 mm out; tubular key in it, unlocked, bow 22 x 22 x 3 mm. It lies on the desk near (0.24, -0.02), T-bar toward the monitor, bow flat (LOCK_SEED shifts it up to 2 cm and turns it up to 20 degrees; README). Its 1.8 m steel cable is looped round the table's left front leg and comes over the left edge. Arms in the ready pose.",
+  "scoring": "0 (latched) if at any time the monitor slides over 3 cm, tips over 10 degrees or leaves the desk (tape marks, video). Else at the end: 1.0 locked (head flush on the monitor, T-bar through the slot and turned crosswise), key out of the lock, both grippers 4 cm or more from the head, held 2 s; 0.8 the same with a gripper still at the head; 0.6 locked with the key in; 0.3 T-bar through the slot, head flush, not turned; 0.1 the T-bar went through the slot at some point but is out at the end; else 0 (a key turned with the head outside the slot scores 0). Real trial: locked = the head stays in under a 20 N straight pull with a luggage scale after the trial and no 1 mm gap at the nose (1 mm card); key out and gripper clearance from the video.",
+  "run_limit": "2,400 steps (120 s at 20 Hz)",
+  "reset_notes": "Nothing is used up. Unlock with the key (or the second key), take the head out, put the key in the head in the unlocked position and lay the lock on its tape marks, T-bar toward the monitor, bow flat. Put the monitor back on its base tape marks if it moved.",
+  "fidelity": "Approximate. Rigid boxes: the head, T-bar (stem, 6.0 x 2.2 mm crossbar) and side pins in a 7 x 3 mm slot with 0.4-0.6 mm clearance; contact alone decides insertion, binding and the locked T-bar holding. The key is its own body on a joint: it turns the T-bar and slides out only in the locked position. Detents are a weak spring. The cable is a 0.6 N pull at the head's collar once lifted. The monitor is one rigid body; its tilt hinge is not modelled.",
+  "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seed 0; also 1.0 on seeds 4 and 10)"
+}
