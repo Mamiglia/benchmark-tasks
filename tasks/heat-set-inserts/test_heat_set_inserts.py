@@ -50,7 +50,7 @@ def test_flush_takes_seconds_at_a_moderate_push():
         press(ins, 6.0, DT)
         t += DT
     assert 2.0 < t < 6.0  # about 3.3 s at 6 N
-    assert insert_credit(ins) == 0.25
+    assert ins.lip and insert_credit(ins) == 0.10  # flush by the iron alone: lip not pressed flat
 
 
 def test_too_hard_is_forced_and_scores_nothing():
@@ -152,3 +152,60 @@ def test_seeds_vary_and_are_repeatable():
     assert seeded(task.RIG, 0) != seeded(task.RIG, 10)
     proud, soft = seeded(task.RIG, 10)
     assert all(0.0042 <= p <= 0.0048 for p in proud) and 0.75 <= soft <= 1.25
+
+
+def iron_to(proud, force=6.0):
+    """Heat, then sink with the iron to ``proud`` (m) above the face; the iron then leaves."""
+    ins = press(fresh(), force, LAW.heat_s)
+    while ins.proud > proud:
+        press(ins, force, DT)
+    return ins
+
+
+def block(ins, force, seconds, tilt=0.0, wait=0.0):
+    press(ins, 0.0, wait, engaged=False)
+    for _ in range(int(round(seconds / DT))):
+        ins.step(LAW, 0.0, False, 0.0, UP, DT, force, tilt, UP)
+    return ins
+
+
+def test_block_while_soft_seats_flush_and_square():
+    ins = block(iron_to(0.0008), 6.0, 1.5, wait=1.0)
+    assert ins.proud == pytest.approx(0.0, abs=1e-9) and not ins.lip
+    assert insert_credit(ins) == 0.25
+
+
+def test_block_never_drives_past_flush():
+    ins = block(iron_to(0.0008), 12.0, 2.0)
+    assert ins.proud >= 0.0 and insert_credit(ins) == 0.25
+
+
+def test_block_after_the_plastic_cooled_does_nothing():
+    ins = block(iron_to(0.0008), 6.0, 1.5, wait=LAW.cool_s + 0.1)
+    assert ins.proud == pytest.approx(0.0008, abs=1e-5) and ins.lip
+    assert insert_credit(ins) == 0.10
+
+
+def test_block_too_far_from_flush_does_nothing():
+    ins = block(iron_to(0.0025), 6.0, 1.5, wait=0.5)
+    assert ins.proud > LAW.flat_reach and ins.lip and insert_credit(ins) == 0.10
+
+
+def test_leaning_block_sets_it_crooked():
+    ins = block(iron_to(0.0008), 6.0, 1.0, tilt=LAW.tilt_deg + 2, wait=0.5)
+    assert ins.crooked and insert_credit(ins) == 0.0
+
+
+def test_block_pressed_hard_forces_it():
+    ins = block(iron_to(0.0015), 20.0, 0.6, wait=0.2)
+    assert ins.forced and insert_credit(ins) == 0.0
+
+
+def test_block_on_an_unheated_insert_does_nothing():
+    ins = block(fresh(), 6.0, 2.0)
+    assert ins.depth == 0.0 and not ins.sank
+
+
+def test_iron_only_flush_set_scores_partial():
+    s = _state([Insert(travel=0.0045, bottom=0.0055, depth=0.0043, sank=True, lip=True) for _ in range(4)])
+    assert task.score(s) == pytest.approx(0.4) and not task.success(s)

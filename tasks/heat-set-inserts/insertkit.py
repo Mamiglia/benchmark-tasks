@@ -9,6 +9,8 @@ static (``BASE``) Arena asset holding these bodies:
   ``stand_pitch`` below the horizontal, pointing away from the arms.
 - ``insert0`` .. ``insert3`` (kinematic): brass M3 x 5.7 mm inserts (4.6 mm across), each standing in its hole,
   ``start_proud`` above the bracket's top face. Only this kit moves them.
+- ``flat`` (dynamic): the flat block, an aluminium bar offcut 19 x 19 x 50 mm (49 g) standing on its end on the mat,
+  for pressing a just-sunk insert flush and square while the plastic is still soft.
 - ``iron`` (dynamic): the soldering iron with an M3 heat-set tip. Body frame: origin at the end of the tip's pin,
   +z along the iron toward the cord. Pin 2.1 mm x 5 mm (seen, no collider: it sits inside the insert's bore),
   shoulder 6.5 mm across, barrel 8 mm across to 70 mm, then the grip (20 mm across) from 80 to 175 mm.
@@ -22,7 +24,10 @@ engaged it heats; after ``heat_s`` of contact the plastic round it is soft, and 
 the iron leans more than ``tilt_deg`` from the hole's axis sets it *crooked* (latched; the insert then leans with the
 iron). Off the iron for ``cool_s``, it cools and must heat again. It stops at the hole's bottom, 1 mm past flush.
 Any part of the iron pressing on the bracket for ``mark_s`` in all leaves a melt mark, charged to the insert nearest
-the tip (latched).
+the tip (latched). An insert sunk by the iron has a *lip* (plastic raised round it, its top not registered to the
+face). The flat block pressed on it within ``cool_s`` of the iron leaving (still soft) sinks its last ``flat_reach``
+at the same rate, stops at flush (the block lands on the face) and, pressed level, flattens the lip; leaning more than
+``tilt_deg`` while it sinks, it sets the insert crooked; over ``f_max``, forced.
 
 Latches over the whole trial: ``burned`` (a hot part of the iron, tip to the end of the barrel, touched the robot),
 ``dropped`` (the iron out of the stand and in no grip for ``drop_s``).
@@ -59,7 +64,7 @@ class Law:
     touch_n: float = 0.5  # contact counts from this force
     engage_m: float = 0.0015  # pin within this of the insert's axis: its tapered point finds the bore
     heat_s: float = 2.5  # contact time before the plastic round the insert is soft
-    cool_s: float = 1.0  # off the iron this long: cold again
+    cool_s: float = 3.0  # off the iron this long: cold again (the window for the flat block)
     f_min: float = 1.5  # N: below this a soft insert does not sink
     k: float = 0.00030  # m/s per N above f_min (0.3 mm/s per N)
     v_max: float = 0.003  # m/s
@@ -68,6 +73,7 @@ class Law:
     tilt_deg: float = 5.0  # iron's lean from the hole's axis while sinking: crooked
     mark_n: float = 0.5  # the iron pressing on the bracket ...
     mark_s: float = 0.5  # ... this long in all: a melt mark
+    flat_reach: float = 0.0015  # the flat block, pressed on a still-soft insert, sinks it only from this close to flush
 
 
 @dataclass
@@ -85,6 +91,7 @@ class Insert:
     crooked: bool = False
     forced: bool = False
     marked: bool = False
+    lip: bool = False  # sunk by the iron: plastic raised round it, its top not yet pressed flat with the block
     lean: tuple = (0.0, 0.0, 1.0)  # its axis once crooked
 
     @property
@@ -92,9 +99,11 @@ class Insert:
         """Its top face above the bracket's top face (m); negative when sunk below it."""
         return self.travel - self.depth
 
-    def step(self, law: Law, push: float, engaged: bool, tilt: float, axis, dt: float) -> float:
+    def step(self, law: Law, push: float, engaged: bool, tilt: float, axis, dt: float, flat: float = 0.0,
+             flat_tilt: float = 0.0, flat_axis=(0.0, 0.0, 1.0)) -> float:
         """One physics step: ``push`` (N) along the hole by the iron, ``engaged`` (pin in the bore), ``tilt`` (deg)
-        of the iron from the hole's axis, ``axis`` the iron's axis (unit). Returns how much it sank (m)."""
+        of the iron from the hole's axis, ``axis`` the iron's axis (unit); ``flat`` (N) the flat block's push on it,
+        ``flat_tilt`` / ``flat_axis`` the block's. Returns how much it sank (m)."""
         if engaged and push >= law.touch_n:
             self.heat += dt
             self.off = 0.0
@@ -102,6 +111,8 @@ class Insert:
             self.off += dt
             if self.off >= law.cool_s:
                 self.heat = 0.0
+            if self.heat >= law.heat_s and self.sank and flat >= law.touch_n and not self.forced:
+                return self._flat(law, flat, flat_tilt, flat_axis, dt)
             self.over = 0.0
             return 0.0
         if self.heat < law.heat_s or self.forced:
@@ -117,17 +128,37 @@ class Insert:
             self.crooked = True
             self.lean = tuple(float(a) for a in axis)
         self.depth += dz
-        self.sank = True
+        self.sank = self.lip = True
+        return dz
+
+    def _flat(self, law: Law, push: float, tilt: float, axis, dt: float) -> float:
+        """The flat block on the insert while the plastic is still soft: it sinks the last ``flat_reach`` at the
+        plastic's rate and stops at flush (the block lands on the face); pressed level it flattens the lip."""
+        if self.proud > law.flat_reach:
+            return 0.0
+        v = min(law.k * max(0.0, push - law.f_min), law.v_max)
+        dz = min(v * dt, max(0.0, self.proud))
+        if dz > 0.0:
+            self.over = self.over + dt if push > law.f_max else 0.0
+            if self.over >= law.over_s:
+                self.forced = True
+            if tilt > law.tilt_deg and not self.crooked:
+                self.crooked = True
+                self.lean = tuple(float(a) for a in axis)
+            self.depth += dz
+        if tilt <= law.tilt_deg and push >= law.f_min:
+            self.lip = False
         return dz
 
 
 def insert_credit(ins: Insert, flush_m: float = 0.0005, seated_m: float = 0.0025) -> float:
-    """0.25 flush (top within 0.5 mm of the face, either way), 0.10 seated but not flush (top at most 2.5 mm proud,
-    or sunk past 0.5 mm), 0 otherwise or if crooked, forced or marked."""
+    """0.25 flush (top within 0.5 mm of the face, either way) and pressed flat with the block while soft; 0.10
+    seated but not both (top at most 2.5 mm proud, or sunk past 0.5 mm, or flush with its lip left); 0 otherwise or
+    if crooked, forced or marked."""
     if ins.crooked or ins.forced or ins.marked or not ins.sank:
         return 0.0
     if abs(ins.proud) <= flush_m:
-        return 0.25
+        return 0.10 if ins.lip else 0.25
     return 0.10 if ins.proud <= seated_m else 0.0
 
 
@@ -140,7 +171,7 @@ class InsertRig(Box):
 
     table_z: float = 0.0
     mat: tuple[float, float, float] = (0.20, 0.16, 0.002)  # silicone mat, x, y, thickness
-    mat_xy: tuple[float, float] = (0.27, -0.145)
+    mat_xy: tuple[float, float] = (0.27, -0.045)
     bracket: tuple[float, float, float] = (0.040, 0.080, 0.012)  # x, y (long side along y), height
     holes: tuple = ((-0.010, -0.028), (0.010, -0.028), (-0.010, 0.028), (0.010, 0.028))  # from the bracket centre
     insert_r: float = 0.0023
@@ -163,6 +194,10 @@ class InsertRig(Box):
     tail: tuple[float, float] = (0.006, 0.205)
     iron_mass: float = 0.060
     hot_end: float = 0.075  # tip to here is hot
+    flat_size: tuple[float, float, float] = (0.019, 0.019, 0.050)  # the flat block: x, y, height
+    flat_xy: tuple[float, float] = (0.22, 0.005)  # where it stands on the mat
+    flat_mass: float = 0.049
+    alu_color: Color = (0.78, 0.79, 0.80)
     law: Law = Law()
     drop_s: float = 2.0
     mat_color: Color = (0.20, 0.42, 0.55)
@@ -399,6 +434,12 @@ def _spawn(prim_path: str, cfg, translation=None, orientation=None, **kwargs):
         cyl(ins, "brass", -s.insert_len, 0.0, s.insert_r, s.brass_color, mu=0.1, rough=0.35)
         cyl(ins, "bore", -0.0004, 0.00005, 0.00125, s.dark_color)
 
+    # the flat block, standing on its end on the mat: origin at its bottom face's centre
+    fx, fy, fh = s.flat_size
+    flat, fprim = body("flat", (*s.flat_xy, z0 + mt))
+    cube(flat, "block", (0, 0, fh / 2), (fx, fy, fh), s.alu_color, mu=1.0, rough=0.35)
+    UsdPhysics.MassAPI.Apply(fprim).CreateMassAttr(s.flat_mass)
+
     # iron, resting in the holder: origin at the pin's end, +z toward the cord
     tip0 = s.tube_bottom + 0.002 * -ax + s.rest_drop * s.tube_down
     iron, prim = body("iron", tip0, R=frame_from_z(-ax))
@@ -484,6 +525,7 @@ class _Runtime:
         root = _PATHS[spec.name]
         view = PhysxManager.get_physics_sim_view()
         self.iron = _Body(view, f"{root}/iron")
+        self.flat = _Body(view, f"{root}/flat")
         self.ins = [_Body(view, f"{root}/insert{i}") for i in range(N_INSERTS)]
         links, self.link_arm = [], []
         for arm in ARMS:
@@ -502,7 +544,7 @@ class _Runtime:
                                                      max_contact_data_count=512)
         self.n_links = len(links)
         self.c_ins = view.create_rigid_contact_view([f"{root}/insert{i}" for i in range(N_INSERTS)],
-                                                    filter_patterns=[[f"{root}/iron"]] * N_INSERTS,
+                                                    filter_patterns=[[f"{root}/iron", f"{root}/flat"]] * N_INSERTS,
                                                     max_contact_data_count=256)
         self.dt = float(base.physics_dt)
         self.origin = _arr(base.scene.env_origins)[0]
@@ -522,7 +564,7 @@ class _Runtime:
         self.mark_t = 0.0
         self.loose_t = 0.0
         self.held = None
-        self.push_peak = self.bracket_peak = 0.0
+        self.push_peak = self.bracket_peak = self.flat_peak = 0.0
         self.events: list[str] = []
         self._place_inserts()
 
@@ -544,6 +586,7 @@ class _Runtime:
         self.seed = int(os.environ.get("HSI_SEED", "0"))
         tr = self.iron.start[0].copy()
         self.iron.put(tr, np.zeros(6))
+        self.flat.put(self.flat.start[0].copy(), np.zeros(6))
         self.clear()
         print(f"[insertkit] seed {self.seed}: inserts start {np.round(np.array(self.proud0) * 1000, 2)} mm proud, "
               f"plastic k {self.law.k * 1000:.3f} mm/s per N", flush=True)
@@ -559,7 +602,9 @@ class _Runtime:
         tip, axis = self._iron()
         tilt = tilt_deg(axis)
         fi = _arr(self.c_iron.get_contact_force_matrix(dt=self.dt)).reshape(-1, 3)
-        fins = _arr(self.c_ins.get_contact_force_matrix(dt=self.dt)).reshape(-1, 3)
+        fins = _arr(self.c_ins.get_contact_force_matrix(dt=self.dt)).reshape(N_INSERTS, 2, 3)
+        f_axis = quat_to_matrix(self.flat.pose()[3:7])[:, 2]
+        f_tilt = tilt_deg(f_axis)
         link_n = np.linalg.norm(fi[: self.n_links], axis=1)
         bracket_n = float(np.linalg.norm(fi[self.n_links]))
         self.bracket_peak = max(self.bracket_peak, bracket_n)
@@ -602,18 +647,23 @@ class _Runtime:
         # the inserts
         moved = False
         for i, st in enumerate(self.st):
-            push = max(0.0, -float(fins[i][2]))
+            push = max(0.0, -float(fins[i, 0, 2]))
+            flat = max(0.0, -float(fins[i, 1, 2]))
             self.push_peak = max(self.push_peak, push)
+            self.flat_peak = max(self.flat_peak, flat)
             off = float(np.linalg.norm(tip[:2] - s.hole_xy(i)))
             shoulder_z = tip[2] + axis[2] * s.pin[1]
             engaged = off <= law.engage_m and abs(shoulder_z - (s.face_z + st.proud)) < 0.002
-            was = (st.crooked, st.forced, st.heat >= law.heat_s)
-            dz = st.step(law, push, engaged, tilt, axis, self.dt)
+            was = (st.crooked, st.forced, st.heat >= law.heat_s, st.lip)
+            dz = st.step(law, push, engaged, tilt, axis, self.dt, flat, f_tilt, f_axis)
             moved |= dz > 0 or st.crooked != was[0]
             if st.crooked and not was[0]:
-                self.say(f"CROOKED: insert {i} sank with the iron leaning {tilt:.1f} deg")
+                self.say(f"CROOKED: insert {i} sank leaning (iron {tilt:.1f} deg, block {f_tilt:.1f} deg)")
             if st.forced and not was[1]:
                 self.say(f"FORCED: insert {i} pushed at {push:.1f} N (> {law.f_max} N) while sinking")
+            if was[3] and not st.lip:
+                self.say(f"insert {i} pressed flat with the block ({flat:.1f} N, block leaning {f_tilt:.1f} deg, "
+                         f"{st.off:.2f} s after the iron left, {st.proud * 1000:+.2f} mm)")
             if st.heat >= law.heat_s and not was[2]:
                 self.say(f"insert {i} hot (push {push:.1f} N, pin {off * 1000:.2f} mm off its axis)")
         if moved:
@@ -635,10 +685,11 @@ class _Runtime:
             print(f"[insertkit] tcp {np.round(tcp, 4)} approach {np.round(Rg[:, 2], 3)} tip in tcp frame "
                   f"{np.round(rel, 4)} iron axis in tcp frame {np.round(Rg.T @ axis, 3)}", flush=True)
             print(f"[insertkit] t {self.n * self.dt:6.2f} tip {np.round(tip, 4)} tilt {tilt_deg(axis):4.1f} push "
-                  f"{self.push_peak:5.2f} N bracket {self.bracket_peak:4.2f} N held {self.held} stand {st.in_stand} "
-                  f"proud {[round(x.proud * 1000, 2) for x in self.st]} heat {[round(x.heat, 1) for x in self.st]}",
+                  f"{self.push_peak:5.2f} N flat {self.flat_peak:5.2f} N bracket {self.bracket_peak:4.2f} N "
+                  f"held {self.held} stand {st.in_stand} proud {[round(x.proud * 1000, 2) for x in self.st]} "
+                  f"lip {[int(x.lip) for x in self.st]} heat {[round(x.heat, 1) for x in self.st]}",
                   flush=True)
-        self.push_peak = self.bracket_peak = 0.0
+        self.push_peak = self.bracket_peak = self.flat_peak = 0.0
         return st
 
 
@@ -651,7 +702,7 @@ def _runtime(base, name: str) -> _Runtime:
     return _RT[name]
 
 
-# -- hooks (as in our other tasks' kits) -----------------------------------------------------------------------------
+# -- hooks (as in other task kits) ----------------------------------------------------------------------------------
 
 
 def _patch_scene(scene) -> None:

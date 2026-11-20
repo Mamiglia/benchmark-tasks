@@ -9,7 +9,15 @@ rests in the stand; the iron drawn out along the holder tube, lifted, turned upr
 Feel. The measured joints give the tool point by forward kinematics, so the height of the iron's shoulder (the face
 that presses on the insert) is known without looking. Per insert: lower the shoulder onto the insert and command it 3
 mm lower, which presses with a few newtons while the insert heats; then lower the command at 1 mm/s, which the soft
-plastic follows at about 1.5 + 1 / k N, and stop when the measured shoulder is 0.3 mm above the bracket's face.
+plastic follows at about 1.5 + 1 / k N, and stop when the measured shoulder is about 1 mm above the bracket's face.
+
+Flat block (left arm). It picks the aluminium block off the mat. Before each insert it brings the block over the
+insert, measures where it really is by forward kinematics of the left arm's joints, keeps the correction, and waits
+15 cm away (toward the left arm) while the iron works. When the iron stops short of flush it lifts 12 mm and moves
+away; about 1.5 s later, while the plastic is still soft, the block comes down square on the insert and its command
+is set 24 mm below the face for 1.3 s (the arm is soft: a few newtons): the insert sinks the last millimetre and
+stops flush where the block lands on the face. Then the block goes on to the next insert, and at the end back onto
+the mat.
 """
 
 from __future__ import annotations
@@ -83,7 +91,10 @@ class Controller:
     FEED = 0.001  # m/s, once hot
     PRELOAD = 0.003  # m: command below the insert's top while it heats
     HEAT_S = 3.0
-    STOP_ABOVE = 0.0006  # stop when the measured shoulder is this far above the face (it reads about 0.4 mm high under load)
+    STOP_ABOVE = 0.0012  # stop when the measured shoulder is this far above the face (it reads about 0.4 mm high under load)
+    FLAT_GRIP = 0.030  # left TCP this far above the block's bottom face
+    FLAT_WAIT = (0.0, 0.15, 0.06)  # the block waits this far from the insert (toward the left arm, clear of the right)
+    FLAT_PRESS = 0.024  # the block's command goes this far below the face: the arm is soft, so a few newtons
 
     def __init__(self, bases, dt, rig):
         self.rig, self.dt = rig, dt
@@ -94,10 +105,12 @@ class Controller:
         self.t0 = self.dur = 0.0
         self.collect, self.samples = None, []
         self.finished_at = None
-        self.cheat = os.environ.get("DEMO_CHEAT", "")  # contrasts for the README: "hard", "tilt", "keep"
+        self.cheat = os.environ.get("DEMO_CHEAT", "")  # contrasts for the README: "hard", "tilt", "keep", "noflat",
+        # "late" (the block only after the plastic has cooled)
         self.feed = 0.012 if self.cheat == "hard" else self.FEED
         self.preload = 0.012 if self.cheat == "hard" else self.PRELOAD
         self.lean = math.radians(8.0 if self.cheat == "tilt" else 0.0)
+        self.stop_above = 0.0006 if self.cheat == "noflat" else self.STOP_ABOVE  # noflat: the iron alone to flush
         # calibration knobs: where the iron sits in the grip, across and along (m)
         self.grip_dx = _env("DEMO_GRIP_DX", 0.0)
         self.grip_ds = _env("DEMO_GRIP_DS", 0.0)
@@ -153,6 +166,21 @@ class Controller:
         a = np.asarray(axis_down, float) / np.linalg.norm(axis_down)
         return np.asarray(tip, float) - (self.GRIP_S + self.grip_ds) * a - R @ np.array([self.grip_dx, 0.0, 0.0])
 
+    def _left_tcp(self, obs):
+        return ik.tcp_pose(self._joints(obs, "left"), self.bases["left"])[0]
+
+    def _rehearse(self, i, Rl):
+        """Bring the block over insert ``i`` (10 mm up) before the iron comes, measure where the left arm really put it
+        (forward kinematics of the measured joints: the arm sags a few millimetres), and keep the correction."""
+        W = Waypoint
+        goal = self.on(i) + (0, 0, 0.010)
+        yield Segment({"left": [W(1.2, tuple(goal), FINGER_CLOSED, f"block over insert {i} (rehearse)", Rl),
+                                W(0.4, tuple(goal), FINGER_CLOSED, "settle", Rl)]}, collect=self._left_tcp)
+        self.fix = np.clip(goal - self.samples[-1], -0.01, 0.01)
+        self.say(f"insert {i}: block command corrected by {np.round(self.fix * 1000, 1)} mm")
+        back = W(0.8, tuple(self.wait(i) + self.fix), FINGER_CLOSED, f"block waits by insert {i}", Rl)
+        yield Segment({"left": [back]})
+
     def _tip(self, obs):
         p, R = ik.tcp_pose(self._joints(obs, "right"), self.bases["right"])
         return p + R @ self.tip_in_tcp
@@ -175,18 +203,29 @@ class Controller:
         tip_rest = np.array([r.tube_bottom[0] + 0.0089, r.tube_bottom[1], r.table_z + 0.0391])
         g = self._tcp_for_tip(tip_rest, a, Rs)
         W = Waypoint
+        # the left arm takes the flat block off the mat, approached from above, and waits by insert 0
+        Rl = grip_along(np.array([0.0, 0.0, -1.0]))
+        face = r.face_z
+        mat_top = r.table_z + r.mat[2]
+        fg = np.array([*r.flat_xy, mat_top + self.FLAT_GRIP])
+        self.on = lambda i: np.array([*r.hole_xy(i), face + self.FLAT_GRIP])  # left TCP with the block on the face
+        self.wait = lambda i: self.on(i) + self.FLAT_WAIT
+        left = [W(2.0, tuple(fg + (0, 0, 0.08)), FINGER_OPEN, "over the block", Rl),
+                W(1.5, tuple(fg), FINGER_OPEN, "fingers round the block", Rl),
+                W(0.8, tuple(fg), FINGER_CLOSED, "grip the block", Rl),
+                W(1.0, tuple(fg + (0, 0, 0.06)), FINGER_CLOSED, "lift the block", Rl),
+                W(2.0, tuple(self.wait(0)), FINGER_CLOSED, "block waits by insert 0", Rl)]
         right = [W(2.0, tuple(g - 0.08 * a + (0, 0, 0.03)), FINGER_OPEN, "behind the grip", Rs),
                  W(1.2, tuple(g - 0.06 * a), FINGER_OPEN, "line up with the iron", Rs),
                  W(1.2, tuple(g), FINGER_OPEN, "slide the fingers over the grip", Rs),
                  W(0.8, tuple(g), FINGER_CLOSED, "grip the handle", Rs),
                  W(2.0, tuple(g - 0.12 * a), FINGER_CLOSED, "draw the iron out of the holder", Rs),
                  W(1.0, tuple(g - 0.12 * a + (0, 0, 0.04)), FINGER_CLOSED, "lift", Rs)]
-        yield Segment({"left": 2.0, "right": right})
+        yield Segment({"left": left, "right": right})
         down = np.array([math.sin(self.lean), 0.0, -math.cos(self.lean)])
         Rd = grip_along(down)
         # the shoulder (pressing face) in the TCP frame, as gripped
         self.shoulder_in_tcp = Rd.T @ (down * (self.GRIP_S + self.grip_ds - r.pin[1]))
-        face = r.face_z
         top0 = face + r.start_proud
         lifted = g - 0.12 * a + (0, 0, 0.04)
         upright = lifted + np.array([-0.06, 0.04, 0.03])
@@ -195,6 +234,7 @@ class Controller:
         step = 0.1
         for i in range(len(r.holes)):
             x, y = r.hole_xy(i)
+            yield from self._rehearse(i, Rl)
             over = self._tcp_for_tip((x, y, top0 - r.pin[1] + 0.015), down, Rd)
             yield Segment({"right": [W(2.0 if i == 0 else 1.2, tuple(over), FINGER_CLOSED, f"over insert {i}", Rd)]},
                           min_s=2.5 if i == 0 else 1.2)
@@ -217,16 +257,37 @@ class Controller:
                 yield from self._step(x, y, z, down, Rd, step, "feed")
                 sz = self.tip_now[2] + r.pin[1]
                 hist.append(sz)
-                if sz <= face + self.STOP_ABOVE:
+                if sz <= face + self.stop_above:
                     break
                 if len(hist) > 40 and hist[-40] - sz < 0.0002:  # no progress in 4 s: give up on this one
                     self.say(f"insert {i}: stalled")
                     break
             self.say(f"insert {i}: shoulder {(sz - face) * 1000:+.2f} mm over the face, tip off its axis "
                      f"{np.round((self.tip_now[:2] - (x, y)) * 1000, 2)} mm, command {(z + r.pin[1] - face) * 1000:+.2f} mm")
-            up = self._tcp_for_tip((*self.cxy, face + 0.02), down, Rd)
-            yield Segment({"right": [W(0.6, tuple(up), FINGER_CLOSED, "lift off", Rd)]})
+            up = self._tcp_for_tip((*self.cxy, face + 0.012), down, Rd)
+            aside = self._tcp_for_tip((self.cxy[0], self.cxy[1] - 0.10, face + 0.08), down, Rd)
+            right = [W(0.25, tuple(up), FINGER_CLOSED, "lift off", Rd), W(0.5, tuple(aside), FINGER_CLOSED, "away", Rd)]
+            if self.cheat == "noflat":
+                yield Segment({"right": right})
+                continue
+            on = self.on(i) + self.fix
+            late = 3.5 if self.cheat == "late" else 0.0
+            left = [W(0.25 + late, tuple(self.wait(i) + self.fix), FINGER_CLOSED, "wait", Rl),
+                    W(0.6, tuple(on + (0, 0, 0.008)), FINGER_CLOSED, "block over the insert", Rl),
+                    W(0.15, tuple(on + (0, 0, 0.008)), FINGER_CLOSED, "settle", Rl),
+                    W(0.35, tuple(on - (0, 0, 0.002)), FINGER_CLOSED, "block onto the insert, gently", Rl),
+                    W(0.5, tuple(on - (0, 0, self.FLAT_PRESS)), FINGER_CLOSED, "press it flush", Rl),
+                    W(0.8, tuple(on - (0, 0, self.FLAT_PRESS)), FINGER_CLOSED, "hold", Rl),
+                    W(0.3, tuple(on + (0, 0, 0.015)), FINGER_CLOSED, "block off", Rl)]
+            yield Segment({"right": right, "left": left})
+        last = self.on(len(r.holes) - 1)
+        put = [W(0.5, tuple(last + (0, 0, 0.05)), FINGER_CLOSED, "block up", Rl),
+               W(2.0, tuple(fg + (0, 0, 0.06)), FINGER_CLOSED, "block back over the mat", Rl),
+               W(1.2, tuple(fg + (0, 0, 0.001)), FINGER_CLOSED, "block down", Rl),
+               W(0.6, tuple(fg + (0, 0, 0.001)), FINGER_OPEN, "let the block go", Rl),
+               W(1.0, tuple(fg + (0, 0, 0.08)), FINGER_OPEN, "up", Rl)]
         if self.cheat == "keep":
+            yield Segment({"left": put})
             return
         # Back into the holder along the tube's own axis (steeper than the iron rests), tip 12 mm short of the closed
         # end, then let go: the iron settles leaning across the tube as it started.
@@ -240,5 +301,6 @@ class Controller:
                                  W(2.0, tuple(gt), FINGER_CLOSED, "slide the iron into the holder", Rt),
                                  W(0.6, tuple(gt), FINGER_OPEN, "let go", Rt),
                                  W(1.2, tuple(gt - 0.08 * at), FINGER_OPEN, "back off along the iron", Rt),
-                                 W(1.0, tuple(gt - 0.08 * at + (0, 0, 0.08)), FINGER_OPEN, "up", Rt)]})
-        yield Segment({"right": 2.0}, min_s=1.5)
+                                 W(1.0, tuple(gt - 0.08 * at + (0, 0, 0.08)), FINGER_OPEN, "up", Rt)],
+                       "left": put})
+        yield Segment({"right": 2.0, "left": 2.0}, min_s=1.5)
