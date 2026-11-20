@@ -23,5 +23,5 @@
   "reset_notes": "Each trial uses a fresh printed bracket and four new inserts (dropped into the holes by hand). Put the iron back in its stand with a heat-resistant glove if needed; the station stays on at 245 C. Seeds (HSI_SEED) set each insert's start height (4.2 to 4.8 mm proud) and the bracket's softness in the simulation.",
   "fidelity": "Approximate. PhysX cannot melt plastic: a rule moves each insert. It sinks only after 2.5 s of the iron pressing on it, then at 0.3 mm/s per N above 1.5 N (+-25% by seed). Within 3 s of the iron leaving, the block sinks the last 1.5 mm the same way, stops at flush and flattens the lip. Over 15 N: forced; leaning over 5 deg: crooked; iron on the bracket 0.5 s: melt mark. Values estimated; README gives how to measure them.",
   "scores": "Dream-1 run: 0.0; scripted demo: 1.0 (seed 0; also 1.0 on seeds 4 and 10)",
-  "media": "M-3PV3YF"
+  "media": "M-6RX5N8"
 }
