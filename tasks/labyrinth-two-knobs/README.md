@@ -1,8 +1,16 @@
 # Steer the steel ball through a BRIO Labyrinth with its two knobs
 
 A BRIO Labyrinth tilting maze stands in front of the arms. Each arm grips one of its two knobs. Turning a knob tilts
-the playing board about one axis. The robot must roll the steel ball from START along the numbered path, past the
-holes, to FINISH.
+the playing board about one axis. The board is BRIO's 8-hole practice board, sold as BRIO Labyrinth Boards (34030)
+and in BRIO Labyrinth with practice boards (34020). The robot must roll the steel ball from START along the numbered
+path, past the holes, to FINISH.
+
+## Changes since the last review
+
+- TK-TP38XF: "Specify a layout of BRIO that is commercially available". The custom 20-hole serpentine is gone. The
+  board is now BRIO's 8-hole practice board (BRIO Labyrinth Boards, article 34030, the simpler of its two boards;
+  also in set 34020). Its partitions, holes and printed path are traced from BRIO's product photo (Board layout,
+  below). The score is now (holes passed + 1 at FINISH) / 9, and the demo follows the printed path.
 
 **Instruction:** `Turn the labyrinth's two knobs to roll the steel ball from START along the numbered path, past every hole to FINISH, without letting it drop into a hole.`
 
@@ -58,7 +66,7 @@ layout; no randomisation.
 
 | Object | Size, material | Where |
 |---|---|---|
-| Labyrinth | BRIO Labyrinth (article 34000): wooden box 35 x 30.5 x 9.4 cm, 1.25 kg; inside it a gimbal frame and a playing board about 29 x 24.5 cm with a wooden-walled path and holes, a steel ball. Two knobs (35 mm, plastic) on shafts, one centred on a long side, one centred on a short end, axes 5.5 cm above the box's underside | Box centred at (42, 0), turned 45 degrees: the long-side knob faces the left arm, the end knob faces the right arm |
+| Labyrinth | BRIO Labyrinth (article 34000): wooden box 35 x 30.5 x 9.4 cm, 1.25 kg; inside it a gimbal frame, a steel ball and a playing board about 29 x 24.5 cm. The board used is BRIO's 8-hole practice board (below), not the 60-hole board that ships with 34000. Two knobs (35 mm, plastic) on shafts, one centred on a long side, one centred on a short end, axes 5.5 cm above the box's underside | Box centred at (42, 0), turned 45 degrees: the long-side knob faces the left arm, the end knob faces the right arm |
 | Riser | Plywood box riser, 37 x 32 cm top, 9.5 cm high (drawing below), or any rigid flat box of that height | Under the labyrinth, same centre and turn. Taped to the table |
 | Ball | Steel ball 12.7 mm, 8.4 g (the game's own) | At START |
 
@@ -72,10 +80,19 @@ turn (a 8 mm shaft pulling about 10 cm from the tilt axis) and +-4 degrees of bo
 game: put a phone inclinometer app on the board, turn a knob 90 degrees from level and read the tilt; the ratio is
 90 / tilt. The demo's controller reads its gain from this ratio; set `RATIO` in `labmodel.py` to the measured value.
 
-**Path.** The simulated board is a simplified version of the real one: the same size, wall height, hole size and
-ball, but a shorter path: a serpentine of four lanes (5.45 cm between walls) with 20 holes, five per lane, 3.5 cm
-apart along the lane and 12 mm either side of its centre line, alternately. The real BRIO board has 60 numbered holes
-along a longer, winding path. The real trial uses the real board (score below out of 60).
+**Board layout.** BRIO Labyrinth Boards (article 34030, "compatible with 34000") holds two boards that replace the
+board of the 34000 game. The one used is the simpler board: 8 numbered holes, black plastic partitions and a printed
+path from an arrow (START, top middle) to a star (FINISH, bottom middle). The same two boards come in BRIO
+Labyrinth with practice boards (34020). Put it in the box printed side up, with the BRIO logo in the corner nearest
+the side knob (left arm) and furthest from the end knob (right arm).
+
+Where the numbers come from: the simulated layout (`labmodel.py`: 31 partitions, 8 holes, the path as 63 points)
+is traced from BRIO's own product photo of 34030 (the pack shot of the two boards on retailer pages). The photo was
+rectified to the board's outline, taken as 290 x 245 mm (the 34000 board's size, which 34030 replaces). Hole
+diameter as measured: 14.4 mm. Partitions are modelled as 6 mm wide and 10 mm high. Tolerance: about +-3 mm on
+positions (photo resolution about 0.8 mm per pixel, and the partitions' height seen at an angle), plus any error in
+the 290 x 245 mm outline. Measure the delivered board before the first trial. The path runs 1.39 m, passes every
+hole 12 mm or more away, and leaves the ball at least 0.8 mm clear of every partition (unit test).
 
 ## Run a trial
 
@@ -96,16 +113,17 @@ tilts, the holes passed and any foul every 0.2 s.
 - **Foul (latched for the whole trial): 0.** Any gripper finger or tool point inside the box (within its walls,
   below its rim + 1 cm) or within 1 cm of the ball; the box lifted 1 cm, tipped 5 degrees or slid 5 cm on the riser.
   The ball must be moved only by tilting the board through the knobs.
-- **Otherwise: holes passed / 20.** A hole is passed once the ball's centre has crossed the line across the path
-  through that hole (simulation: the ball's furthest point along the path's centre line beyond the hole's
-  point). It is latched: rolling back loses nothing. When the ball drops into a hole (its centre within the hole's
-  9 mm radius), progress stops there; the score keeps the holes passed before it. Past hole 20 the ball is at FINISH:
-  1.0.
+- **Otherwise: (holes passed + 1 at FINISH) / 9.** A hole is passed once the ball's centre has crossed the line
+  across the path through that hole (simulation: the ball's furthest point along the printed path's centre line
+  beyond the hole's point; the ball's place on the path is followed only within 4 cm of its last place, so it
+  never jumps across a partition). It is latched: rolling back loses nothing. When the ball drops into a hole (its
+  centre within the hole's 7.2 mm radius), progress stops there; the score keeps the holes passed before it. FINISH
+  is the star: the ball within 1 cm of the path's end there. 1.0 = all 8 holes passed and at FINISH.
 
 ### Real trial
 
-Run on the real 60-hole board: score = highest-numbered hole the ball has rolled past / 60, read from the trial
-video (top camera) against the numbers printed beside the holes; 1.0 at the board's finish. A ball that drops ends
+Run on the same BRIO 34030 8-hole board: score = (highest-numbered hole the ball has rolled past + 1 if it reaches
+the star) / 9, read from the trial video (top camera) against the numbers printed beside the holes. A ball that drops ends
 the trial. Fouls from the video: a gripper reaches inside the box or touches the ball, the box is lifted off the
 riser (any gap visible), tipped or slid more than 5 cm (tape marks on the riser at its corners).
 
@@ -119,8 +137,8 @@ riser (any gap visible), tipped or slid more than 5 cm (tape marks on the riser 
 2. **Steer.** Every control step (20 Hz) it reads the ball's position and velocity on the board and both knob
    angles (simulator state; a scripted demo may read it, a person reads the same by eye) and computes the ball
    acceleration that pulls it toward a point 25 mm ahead on its planned line at 4 cm/s:
-   `a = 3 (target - p) + 2.5 (v_line - v)`, at most 0.25 m/s^2. The planned line follows the drawn path and swings
-   8 mm away from each hole as the ball passes it. Each tilt is the one that gives that acceleration
+   `a = 3 (target - p) + 2.5 (v_line - v)`, at most 0.25 m/s^2. The planned line is the printed path, which passes each
+   hole 12 mm or more away. Each tilt is the one that gives that acceleration
    (`a = 5/7 g sin(tilt)` for a rolling ball), each knob angle is 25 times its tilt, and each wrist roll is set to
    turn its knob there, plus an integral term that removes the knob's lag behind the wrist. Both hands correct at
    the same time throughout; in each turn of the path both knobs move.
@@ -133,10 +151,10 @@ the ball or the board.
 
 | Run | Policy | Result | Score |
 |---|---|---|---|
-| Demo, seeds 0, 4, 10 | `yam_scripted` | Grips both knobs at 5.2 s, steers the ball past all 20 holes, at FINISH at 22.9 s (about 460 steps) | 1.0, 1.0, 1.0 |
-| Contrast `DEMO_CHEAT=none` | grips the knobs, never turns them | The ball drifts slowly into the corner behind START (the board is never perfectly level) | 0.0 |
-| Contrast `DEMO_CHEAT=press` | right hand on its knob, left fingers press the board's corner down inside the box | Foul "left hand in the box" latched; the ball then drops into hole 1 | 0.0 |
-| Dream-1, seed 0 | `dream`, 2,400 steps | Raises both arms toward the box but never reaches or grips a knob; the board stays level and the ball drifts into the corner behind START | 0.0 |
+| Demo, seeds 0, 4, 10 | `yam_scripted` | Grips both knobs at 5.2 s, steers the ball along the printed path past all 8 holes, at FINISH at 28.2 s (about 575 steps) | 1.0, 1.0, 1.0 |
+| Contrast `DEMO_CHEAT=none` | grips the knobs, never turns them | The ball stays in the START channel (it drifts 5 mm in 80 s) | 0.0 |
+| Contrast `DEMO_CHEAT=press` | right hand on its knob, left fingers press the board's corner down inside the box | Left hand inside the box on the board (foul); the ball rolls back into the dead end beside START and passes no hole | 0.0 |
+| Dream-1, seed 0 | `dream`, 2,400 steps | Raises both arms toward the box but never reaches or grips a knob; the board stays level and the ball drifts 27 mm along the START channel, short of hole 1 | 0.0 |
 
 The demo video shows the top camera (rendered at 1280 x 704) with, on the right, a 2x crop of the same frame
 around the labyrinth, so the 12.7 mm ball can be seen. Seeds only matter through object jitter, which is 0 for this task (one fixed layout), so the three demo seeds run
@@ -153,17 +171,17 @@ the same scene.
   fingertip turn). The gripper turns it by friction on its 35 mm rim.
 - **Ball.** A 12.7 mm, 8.4 g steel sphere with friction 0.3 on wood, light rolling resistance (angular damping
   0.15, chosen). It rolls at 5/7 g sin(tilt), as a real ball does.
-- **Holes.** The board is a solid collider; holes are a rule. When the ball's centre comes within a hole's 9 mm
+- **Holes.** The board is a solid collider; holes are a rule. When the ball's centre comes within a hole's 7.2 mm
   radius it has dropped: it is moved to the box floor under that hole and progress stops.
-- **Path.** Shortened: 20 holes on four lanes (the real board has 60 on a longer path). Same board size, hole size,
-  wall height and ball. The hole numbers are not drawn; holes count in path order.
+- **Board.** BRIO 34030's 8-hole board, traced from a photo (+-3 mm, Board layout above). Partitions are boxes;
+  the board's edge is a 6 mm raised frame just outside the board. The printed path is drawn as dots; the hole
+  numbers, arrow and star are not drawn (green START and red FINISH marks stand for the arrow and the star).
 
 ## Runtime
 
 On the shared RTX workstation used, a scripted demo trial (Isaac Sim start, reset, about 500 control steps)
-takes about 4 minutes of wall time; a 2,400-step Dream-1 run took about an hour. The demo reaches FINISH on the
-20-hole board 17.7 s after gripping (about 460 steps in all). On the real 60-hole board, about three times as long,
-a run at that pace needs about 1,200 steps, inside the 2,400-step limit.
+takes about 5 minutes of wall time; a 2,400-step Dream-1 run takes about an hour. The demo reaches FINISH 23 s
+after gripping (about 575 steps in all), well inside the 2,400-step limit.
 
 ## Tests
 
@@ -176,10 +194,11 @@ pytest test_labyrinth_two_knobs.py      # in the yam_arena environment; no GPU n
 | Item | Part | Approx. price |
 |---|---|---|
 | Labyrinth | BRIO Labyrinth, article 34000 (35 x 30.5 x 9.4 cm, 1.25 kg, two steel balls included) | $55 |
+| Board | BRIO Labyrinth Boards, article 34030 (two boards for the 34000; the 8-hole one is used). Or buy BRIO Labyrinth with practice boards, 34020, in place of 34000 and 34030 | $30 |
 | Riser | 18 mm plywood: a top 37 x 32 cm and two side walls 37 x 7.7 cm under its long edges, glued and screwed (95 mm high in all); or any rigid flat box of the same height | $15 |
 | Tape, phone | Masking tape for corner marks; any phone inclinometer app | - |
 
-Total about $70.
+Total about $100.
 
 **Before the first trial** measure on the delivered game: the knob-axis height above the box's underside (make the
 riser 15 cm minus it); the gearing (put the phone on the board, turn one knob 90 degrees from level, read the tilt:

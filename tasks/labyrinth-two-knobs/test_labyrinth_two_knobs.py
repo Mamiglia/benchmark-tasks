@@ -22,37 +22,50 @@ def state(passed=0, fouls=(), fell=None):
                                   passed=passed, fouls=tuple(fouls), fell=fell)}
 
 
-def test_twenty_holes_in_path_order():
-    assert M.N_HOLES == 20
+def _rect_dist(p, r):
+    u0, u1, v0, v1 = r
+    return math.hypot(max(u0 - p[0], 0.0, p[0] - u1), max(v0 - p[1], 0.0, p[1] - v1))
+
+
+def test_eight_holes_in_path_order():
+    assert M.N_HOLES == 8 and M.N_STEPS == 9
     assert np.all(np.diff(M.HOLE_S) > 0)
 
 
-def test_holes_inside_their_lanes_with_a_way_past():
-    for u, v in M.HOLES:
-        lane = min(M.LANES_V, key=lambda c: abs(c - v))
-        off = abs(v - lane)
-        assert off + M.HOLE_R < M.LANE_W / 2  # the hole is inside its lane
-        band = (M.LANE_W / 2 - M.BALL_R) + off - M.HOLE_R  # where the ball's centre may pass beside it
-        assert band > 0.02
+def test_the_ball_fits_along_the_printed_path():
+    """Every point of the path leaves the ball clear of the partitions, the board's edge and the holes."""
+    bu, bv = M.BOARD[0] / 2, M.BOARD[1] / 2
+    for s in np.linspace(0, M.PATH.length, 3000):
+        p = M.PATH.point(s)
+        assert min(_rect_dist(p, w) for w in M.WALLS) > M.BALL_R
+        assert bu - abs(p[0]) > M.BALL_R and bv - abs(p[1]) > M.BALL_R
+        assert np.min(np.linalg.norm(M.HOLES - p, axis=1)) > M.HOLE_R + 0.004
 
 
-def test_centre_line_misses_every_hole():
+def test_centre_line_reaches_finish():
     p = M.Progress()
-    for s in np.linspace(0, M.PATH.length, 2000):
+    for s in np.linspace(0, M.PATH.length, 3000):
         p.step(M.PATH.point(s))
-    assert p.fell is None and p.passed == M.N_HOLES
+    assert p.fell is None and p.passed == M.N_STEPS
+
+
+def test_stopping_short_of_finish_is_not_full_score():
+    p = M.Progress()
+    for s in np.linspace(0, M.PATH.length - 0.03, 3000):
+        p.step(M.PATH.point(s))
+    assert p.passed == M.N_HOLES and task.score(state(p.passed)) == 8 / 9
 
 
 def test_ball_over_a_hole_falls_and_keeps_its_count():
     p = M.Progress()
-    for s in np.linspace(0, M.HOLE_S[6] + 0.005, 400):
+    for s in np.linspace(0, M.HOLE_S[4] + 0.005, 1000):
         p.step(M.PATH.point(s))
-    assert p.passed == 7
-    p.step(M.HOLES[7])
-    assert p.fell == 8
-    for s in np.linspace(M.HOLE_S[7], M.PATH.length, 200):  # nothing counts after the fall
+    assert p.passed == 5
+    p.step(M.HOLES[5])
+    assert p.fell == 6
+    for s in np.linspace(M.HOLE_S[5], M.PATH.length, 500):  # nothing counts after the fall
         p.step(M.PATH.point(s))
-    assert p.passed == 7
+    assert p.passed == 5
 
 
 def test_progress_does_not_jump_across_walls():
@@ -64,9 +77,9 @@ def test_progress_does_not_jump_across_walls():
 
 def test_progress_is_latched_when_the_ball_rolls_back():
     p = M.Progress()
-    for s in np.linspace(0, M.HOLE_S[2] + 0.01, 200):
+    for s in np.linspace(0, M.HOLE_S[2] + 0.01, 1000):
         p.step(M.PATH.point(s))
-    for s in np.linspace(M.HOLE_S[2] + 0.01, 0.0, 200):
+    for s in np.linspace(M.HOLE_S[2] + 0.01, 0.0, 1000):
         p.step(M.PATH.point(s))
     assert p.passed == 3
 
@@ -81,10 +94,10 @@ def test_gearing():
 
 def test_score():
     assert task.score(state(0)) == 0.0
-    assert task.score(state(7)) == 7 / 20
-    assert task.score(state(20)) == 1.0 and task.success(state(20))
-    assert task.score(state(20, fouls=("left hand in the box",))) == 0.0
-    assert task.score(state(12, fell=13)) == 12 / 20
+    assert task.score(state(7)) == 7 / 9
+    assert task.score(state(9)) == 1.0 and task.success(state(9))
+    assert task.score(state(9, fouls=("left hand in the box",))) == 0.0
+    assert task.score(state(4, fell=5)) == 4 / 9
 
 
 def test_knobs_face_the_arms():

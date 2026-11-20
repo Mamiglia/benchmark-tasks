@@ -1,11 +1,11 @@
-"""labkit: a BRIO-style tilting labyrinth on two knobs and its steel ball, for a yam_arena task file.
+"""labkit: a BRIO tilting labyrinth on two knobs and its steel ball, for a yam_arena task file.
 
 yam_arena task files only take single primitives. This module adds two objects and hooks yam_arena (without
 modifying it):
 
 - :class:`Labyrinth`: a FLOATING-base articulation (it stands loose on its riser). Root ``box`` (the wooden box);
   ``frame`` on revolute ``tilt_x`` (about the box's x); ``board`` on revolute ``tilt_y`` (about the frame's y), with
-  its rim, the path's walls and the drawn path, holes and numbers; ``knob_x`` (on the +x end face) and ``knob_y``
+  its rim, the partitions and the printed path and holes; ``knob_x`` (on the +x end face) and ``knob_y``
   (on the -y long face) on their own revolute shafts.
 - :class:`SteelBall`: one dynamic sphere.
 
@@ -176,7 +176,7 @@ def _spawn_lab(prim_path: str, cfg, translation=None, orientation=None, **kwargs
 
     pivot = (0.0, 0.0, M.BOARD_TOP - M.BOARD[2] / 2)
     frame = body("frame", pivot, 0.08)
-    fu, fv = M.BOARD[0] / 2 + 0.004, M.BOARD[1] / 2 + 0.004  # the gimbal frame's bars, just outside the board
+    fu, fv = M.BOARD[0] / 2 + M.RIM_T + 0.004, M.BOARD[1] / 2 + M.RIM_T + 0.004  # the frame's bars, outside the rim
     for i, (c, sz) in enumerate((((0, fv, -0.012), (2 * fu, 0.004, 0.006)), ((0, -fv, -0.012), (2 * fu, 0.004, 0.006)),
                                  ((fu, 0, -0.012), (0.004, 2 * fv, 0.006)), ((-fu, 0, -0.012), (0.004, 2 * fv, 0.006)))):
         cube(f"{frame}/bar_{i}", c, sz, WOOD_DARK, wood)
@@ -185,28 +185,23 @@ def _spawn_lab(prim_path: str, cfg, translation=None, orientation=None, **kwargs
     top = M.BOARD[2] / 2  # board top surface in the board body's frame
     cube(f"{board}/plate", (0, 0, 0), M.BOARD, BOARD_C, wood, rough=0.8)
     bu, bv = M.BOARD[0] / 2, M.BOARD[1] / 2
-    rz = top + M.RIM_H / 2
-    for i, (c, sz) in enumerate((((0, bv - M.RIM_T / 2, rz), (2 * bu, M.RIM_T, M.RIM_H)),
-                                 ((0, -bv + M.RIM_T / 2, rz), (2 * bu, M.RIM_T, M.RIM_H)),
-                                 ((bu - M.RIM_T / 2, 0, rz), (M.RIM_T, 2 * bv - 2 * M.RIM_T, M.RIM_H)),
-                                 ((-bu + M.RIM_T / 2, 0, rz), (M.RIM_T, 2 * bv - 2 * M.RIM_T, M.RIM_H)))):
+    rz, rt = top + M.RIM_H / 2, M.RIM_T
+    for i, (c, sz) in enumerate((((0, bv + rt / 2, rz), (2 * bu + 2 * rt, rt, M.RIM_H)),
+                                 ((0, -bv - rt / 2, rz), (2 * bu + 2 * rt, rt, M.RIM_H)),
+                                 ((bu + rt / 2, 0, rz), (rt, 2 * bv, M.RIM_H)),
+                                 ((-bu - rt / 2, 0, rz), (rt, 2 * bv, M.RIM_H)))):
         cube(f"{board}/rim_{i}", c, sz, WOOD, wood)
-    for i, (u0, u1, v, th) in enumerate(M.walls()):
-        cube(f"{board}/lane_wall_{i}", ((u0 + u1) / 2, v, top + M.LANE_WALL_H / 2), (u1 - u0, th, M.LANE_WALL_H),
-             WOOD, wood)
-    # drawn on the board (visual only): the path line, the holes, START and FINISH, tick marks numbering the holes
-    pts = M.PATH.pts
-    for i, (a, b) in enumerate(zip(pts[:-1], pts[1:])):
-        mid, d = (a + b) / 2, b - a
-        ln = float(np.linalg.norm(d))
-        sz = (ln + 0.003, 0.003, 0.0004) if abs(d[0]) > abs(d[1]) else (0.003, ln + 0.003, 0.0004)
-        cube(f"{board}/line_{i}", (mid[0], mid[1], top + 0.0002), sz, INK)
+    for i, (u0, u1, v0, v1) in enumerate(M.WALLS):
+        cube(f"{board}/wall_{i}", ((u0 + u1) / 2, (v0 + v1) / 2, top + M.WALL_H / 2), (u1 - u0, v1 - v0, M.WALL_H),
+             INK, wood)
+    # printed on the board (visual only): the path line as 3 mm dots every 4 mm, the holes, START and FINISH
+    for i, s in enumerate(np.arange(0.0, M.PATH.length, 0.004)):
+        u, v = M.PATH.point(s)
+        cube(f"{board}/line_{i}", (u, v, top + 0.0002), (0.003, 0.003, 0.0004), (0.35, 0.33, 0.31))
     for k, (u, v) in enumerate(M.HOLES):
         cyl(f"{board}/hole_{k}", (u, v, top + 0.0003), M.HOLE_R, 0.0006, "Z", HOLE_C)
-    cube(f"{board}/start", (M.START_U - 0.012, M.LANES_V[0], top + 0.0003), (0.006, M.LANE_W - 0.004, 0.0006),
-         (0.10, 0.55, 0.20))
-    cube(f"{board}/finish", (M.FINISH_U, M.LANES_V[3], top + 0.0003), (0.006, M.LANE_W - 0.004, 0.0006),
-         (0.80, 0.12, 0.10))
+    cube(f"{board}/start", (*(M.START + (0.010, 0.0)), top + 0.0003), (0.006, 0.012, 0.0006), (0.10, 0.55, 0.20))
+    cube(f"{board}/finish", (*(M.FINISH - (0.010, 0.0)), top + 0.0003), (0.006, 0.012, 0.0006), (0.80, 0.12, 0.10))
 
     knob_mat = material("knob", 1.0)
     knobs = {}
@@ -370,6 +365,7 @@ class Snapshot:
     knob: dict = field(default_factory=lambda: {"x": 0.0, "y": 0.0})  # rad, outward-axis sense
     tilt: dict = field(default_factory=lambda: {"x": 0.0, "y": 0.0})  # rad
     fell: int | None = None
+    passed: int = 0
     box_pose: tuple = ()
 
 
@@ -446,6 +442,7 @@ class _Runtime:
         SNAP.t = self.n * self.dt
         SNAP.ball_uv, SNAP.ball_vel_uv = rel[:2].copy(), (Rb.T @ vel[:3])[:2]
         SNAP.knob, SNAP.tilt = knob, {"x": float(q[self.jid["tilt_x"]]), "y": float(q[self.jid["tilt_y"]])}
+        SNAP.passed = self.progress.passed
         SNAP.fell, SNAP.box_pose = self.progress.fell, (root[:3] - self.origin, root[3:7])
         if DEBUG and self.n % 48 == 0:
             print(f"[labkit] t {SNAP.t:6.2f} ball uv {np.round(rel[:2] * 1000, 1)} mm v {np.round(SNAP.ball_vel_uv, 3)} "

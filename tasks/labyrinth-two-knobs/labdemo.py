@@ -6,7 +6,7 @@
 2. **Steer.** Every control step (20 Hz) it reads the ball's position and velocity on the board and both knob
    angles (simulator state; a person reads them by eye), and computes the acceleration that pulls the ball toward a
    point 25 mm ahead of it on its line along the path, at 4 cm/s: a = 3 (target - p) + 2.5 (v_line - v), at most
-   0.25 m/s^2. The line follows the drawn path but swings 8 mm away from each hole as the ball passes it. Each tilt
+   0.25 m/s^2. The line is the printed path, which passes each hole 12 mm or more away. Each tilt
    is the one giving that acceleration (a = 5/7 g sin tilt for a rolling ball), each knob angle 25 times its tilt,
    and each wrist roll is set to turn its knob there, plus an integral term that removes the knob's lag behind the
    wrist (grip slip, the arm's compliance).
@@ -34,7 +34,7 @@ ARMS = ("left", "right")
 KNOB_OF = {"left": "y", "right": "x"}
 GRIP = 0.30  # normalised finger command on the knob: pads 3 mm inside its 35 mm rim (about 15 N squeeze)
 PRE = 0.07
-LOOK, SPEED, KP, KV, AMAX, AWAY = 0.025, 0.04, 3.0, 2.5, 0.25, 0.008
+LOOK, SPEED, KP, KV, AMAX = 0.025, 0.04, 3.0, 2.5, 0.25
 KI = 2.0  # 1/s, wrist-roll integral on the knob's error
 G_ROLL = 9.81 * 5 / 7
 INITS = {"left": [-0.34, 1.65, 0.13, 1.52, 0.45, 0.0], "right": [0.28, 1.58, 0.05, 1.53, -0.51, 0.0]}
@@ -50,20 +50,9 @@ def grip_rot(out) -> np.ndarray:
     return R if R[2, 1] < 0 else R @ np.diag([-1.0, -1.0, 1.0])
 
 
-def demo_line(n: int = 600) -> np.ndarray:
-    """The ball's planned line (board frame): the drawn path, swung AWAY from each hole near it."""
-    pts = []
-    for s in np.linspace(0.0, M.PATH.length, n):
-        p = M.PATH.point(s)
-        q = M.PATH.point(min(s + 1e-3, M.PATH.length)) - M.PATH.point(max(s - 1e-3, 0.0))
-        nrm = np.array([-q[1], q[0]]) / (np.linalg.norm(q) + 1e-12)
-        off = np.zeros(2)
-        for h, hs in zip(M.HOLES, M.HOLE_S):
-            w = max(0.0, math.cos(min(abs(s - hs) / 0.03, 1.0) * math.pi / 2))
-            side = np.sign((h - p) @ nrm)
-            off -= side * nrm * AWAY * w
-        pts.append(p + off)
-    return np.array(pts)
+def demo_line(n: int = 1400) -> np.ndarray:
+    """The ball's planned line (board frame): the printed path (it passes every hole by 12 mm or more)."""
+    return np.array([M.PATH.point(s) for s in np.linspace(0.0, M.PATH.length, n)])
 
 
 class Controller:
@@ -177,7 +166,7 @@ class Controller:
                 self.say(f"t {t:6.2f} ball {np.round(snap.ball_uv * 1000, 1)} v {np.round(snap.ball_vel_uv * 1000)} "
                          f"a {np.round(a, 3)} knobs {dict((k, round(math.degrees(v), 1)) for k, v in snap.knob.items())}")
             if self.t_done is None and (snap.fell is not None or
-                                        M.PATH.project(snap.ball_uv)[0] > M.HOLE_S[-1] + 0.01):
+                                        snap.passed >= M.N_STEPS):
                 self.t_done = t
                 self.say(f"{'fell in hole %d' % snap.fell if snap.fell else 'at FINISH'} at {t:.2f} s")
             if self.t_done is not None and t > self.t_done + 1.0:

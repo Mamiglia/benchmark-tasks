@@ -19,16 +19,16 @@ from dataclasses import dataclass
 
 import numpy as np
 
-# -- the product: BRIO Labyrinth (34000) ----------------------------------------------------------------------------
+# -- the game: BRIO Labyrinth (34000) ----------------------------------------------------------------------------
 BOX = (0.350, 0.305, 0.094)  # outside, x y z
 WALL_T = 0.015  # box side walls
 FLOOR_T = 0.006
 BOARD = (0.290, 0.245, 0.008)  # the playing board
 BOARD_TOP = 0.080  # board's top surface above the box's underside, level
-RIM_T, RIM_H = 0.006, 0.012  # the raised edge round the board
-LANE_WALL_T, LANE_WALL_H = 0.005, 0.010  # the path's wooden walls
+RIM_T, RIM_H = 0.006, 0.012  # the gimbal frame's raised edge, just outside the board's edges
+WALL_H = 0.010  # the board's black plastic partitions
 BALL_R, BALL_MASS = 0.00635, 0.0084  # 12.7 mm steel ball
-HOLE_R = 0.009  # 18 mm holes
+HOLE_R = 0.0072  # 14.4 mm holes (measured on the photo, below)
 KNOB_R, KNOB_LEN, KNOB_GAP = 0.0175, 0.022, 0.008  # 35 mm knob, 22 mm deep, 8 mm off the wall on its shaft
 KNOB_Z = 0.055  # knob axis above the box's underside
 GRIP_OUT = KNOB_GAP + 0.014  # where the fingers grip the knob: this far out from the wall (8 mm in from its end)
@@ -40,46 +40,44 @@ TILT_MAX = math.radians(4.0)  # the board's travel each way
 KNOB_LIMIT = math.radians(120.0)  # the knob turns on (string wound further only slips)
 KNOB_FRICTION_NM = 0.04  # the knob's turning resistance (string tension on the shaft, felt as friction)
 
-# -- the path (board frame, m) ----------------------------------------------------------------------------------------
-PLAY_U = BOARD[0] / 2 - RIM_T  # 0.139: playable half length
-PLAY_V = BOARD[1] / 2 - RIM_T  # 0.1165
-LANE_W = (2 * PLAY_V - 3 * LANE_WALL_T) / 4  # 0.0545 m between walls
-LANES_V = tuple(-PLAY_V + LANE_W / 2 + k * (LANE_W + LANE_WALL_T) for k in range(4))[::-1]  # A, B, C, D: +v to -v
-WALLS_V = tuple((LANES_V[k] + LANES_V[k + 1]) / 2 for k in range(3))
-GAP = 0.050  # the turn gap at a wall's open end
-TURN_U = PLAY_U - GAP / 2  # 0.114
-START_U, FINISH_U = -0.120, -0.100  # FINISH: just past the last hole
-HOLE_US = (-0.070, -0.035, 0.0, 0.035, 0.070)  # along each lane
-HOLE_OFF = 0.012  # holes sit this far either side of the lane's centre line, alternately
-
-
-def walls() -> list[tuple[float, float, float, float]]:
-    """Lane walls as (u0, u1, v, thickness): A|B open at +u, B|C open at -u, C|D open at +u."""
-    return [(-PLAY_U, PLAY_U - GAP, WALLS_V[0], LANE_WALL_T),
-            (-PLAY_U + GAP, PLAY_U, WALLS_V[1], LANE_WALL_T),
-            (-PLAY_U, PLAY_U - GAP, WALLS_V[2], LANE_WALL_T)]
-
-
-def lane_dirs() -> tuple[int, ...]:
-    return (1, -1, 1, -1)  # lane A runs toward +u, B back, ...
+# -- the board: BRIO Labyrinth Boards (34030), the 8-hole practice board -------------------------------------------
+# Traced from BRIO's own product photo of 34030 (the 8-hole board, as sold; the same board comes in 34020), rectified
+# to the board's 290 x 245 mm outline (README). Board frame, mm, u along the long side, v toward the far long edge
+# (away from the side knob): the BRIO logo is at the -u, -v corner. Positions +-3 mm.
+_WALLS_MM = (  # (u0, u1, v0, v1): footprints of the 6 mm partitions
+    (-105, 26, 100.5, 106.5), (-105, -99, 91, 106), (20.5, 26.5, 78, 122.5), (20.5, 42, 74, 80),
+    (-121, -20, 61, 67), (-124, -118, 47.5, 72), (-25.5, -19.5, -37, 61), (-20, 37.5, 40, 46),
+    (-145, -50, -4, 2), (-108, -102, 2, 17.5), (-71, -65, 2, 17),
+    (-96, -90, -71, -34), (-115, -90, -75, -69), (-91, 22.5, -46, -40), (-37, -31, -75, -40),
+    (-67, -61, -122.5, -77), (-61, 56, -106, -100), (0, 6, -100, -84.5),
+    (49.5, 55.5, -100, 20), (49.5, 96, 14, 20), (28, 50, -7.5, -1.5), (55, 118, -46, -40),
+    (93, 99, -71, 78), (80, 112.5, 74, 80), (80, 86, 80, 103.5), (64, 86, 97.5, 103.5), (99, 112.5, 42, 48),
+    (128, 145, 57, 63), (121, 145, -12.5, -6.5), (-145, -126, -35, -29), (79.5, 85.5, -122.5, -92))
+_HOLES_MM = ((-110.6, 77.1), (-84.6, 15.1), (-110.9, -55.8), (38.8, -86.9), (14.4, -6.7), (39.0, 57.7),
+             (109.3, 28.3), (109.4, -63.5))  # numbered 1..8 as printed
+# The printed path, START (the arrow, top middle) to FINISH (the star, bottom middle), kept >= 6.35 mm + 0.8 mm
+# (the ball's radius and a margin) from every partition and the board's edge.
+_PATH_MM = ((-12.5, 114.5), (-60, 114.5), (-100, 114.5), (-120, 113), (-131, 103), (-134, 70), (-133, 45), (-125, 33),
+            (-110, 30), (-95, 35), (-70, 42.5), (-50, 36), (-38, 20), (-37, 0), (-42, -12.5), (-62.5, -20),
+            (-100, -25), (-118, -42), (-130, -67.5), (-127.5, -87.5), (-115, -92.5), (-79, -92.5), (-77.5, -65),
+            (-70, -62.5), (-52.5, -63.75), (-48.75, -85), (-17.5, -85), (-15, -62.5), (30, -62.5), (35, -30),
+            (30, -27.5), (2.5, -25), (-5, -10), (-2.5, 7.5), (10, 17.5), (35, 25), (62.5, 42.5), (67.5, 62.5),
+            (65, 77.5), (52.5, 92.5), (53, 106), (62.5, 113), (90, 113), (102.5, 100), (120, 88), (121, 68.5),
+            (121, 50), (130, 40), (127.5, 17.5), (112.5, 5), (110, -9), (116, -22), (130, -32.5), (132.5, -52.5),
+            (130, -72.5), (117.5, -87.5), (97.5, -90), (80, -77.5), (72.5, -80), (67.5, -95), (66, -108),
+            (60, -114), (-36, -114.5))
+WALLS = np.array(_WALLS_MM, float) / 1000
+START, FINISH = np.array(_PATH_MM[0]) / 1000, np.array(_PATH_MM[-1]) / 1000
 
 
 def path_points() -> np.ndarray:
-    """The drawn path's centre line, START to FINISH."""
-    a, b, c, d = LANES_V
-    return np.array([(START_U, a), (TURN_U, a), (TURN_U, b), (-TURN_U, b), (-TURN_U, c), (TURN_U, c), (TURN_U, d),
-                     (FINISH_U, d)], float)
+    """The printed path's centre line, START to FINISH."""
+    return np.array(_PATH_MM, float) / 1000
 
 
 def holes() -> np.ndarray:
-    """(N, 2) hole centres, numbered 1..N in path order (row k is hole k + 1)."""
-    out = []
-    for lane, (v, s) in enumerate(zip(LANES_V, lane_dirs())):
-        us = HOLE_US if s > 0 else HOLE_US[::-1]
-        for j, u in enumerate(us):
-            side = 1 if (lane * len(us) + j) % 2 == 0 else -1
-            out.append((u, v + side * HOLE_OFF))
-    return np.array(out, float)
+    """(N, 2) hole centres, numbered 1..N as printed (row k is hole k + 1)."""
+    return np.array(_HOLES_MM, float) / 1000
 
 
 @dataclass(frozen=True)
@@ -94,13 +92,17 @@ class Path:
     def length(self) -> float:
         return float(self.seg_len.sum())
 
-    def project(self, p) -> tuple[float, float]:
-        """(arc length of the closest point on the path, distance to it)."""
+    def project(self, p, lo: float = -math.inf, hi: float = math.inf) -> tuple[float, float]:
+        """(arc length of the closest point on the path with arc length in [lo, hi], distance to it)."""
         p = np.asarray(p, float)[:2]
         best = (0.0, math.inf)
         s0 = 0.0
         for a, b, ln in zip(self.pts[:-1], self.pts[1:], self.seg_len):
-            t = float(np.clip((p - a) @ (b - a) / ln**2, 0.0, 1.0))
+            if s0 > hi or s0 + ln < lo:
+                s0 += ln
+                continue
+            t = float(np.clip((p - a) @ (b - a) / ln**2, (lo - s0) / ln, (hi - s0) / ln))
+            t = float(np.clip(t, 0.0, 1.0))
             d = float(np.linalg.norm(a + t * (b - a) - p))
             if d < best[1]:
                 best = (s0 + t * ln, d)
@@ -120,12 +122,15 @@ PATH = Path(path_points())
 HOLES = holes()
 HOLE_S = np.array([PATH.project(h)[0] for h in HOLES])  # where each hole is along the path
 N_HOLES = len(HOLES)
+N_STEPS = N_HOLES + 1  # the score counts the holes passed and FINISH
+FINISH_TOL = 0.010  # FINISH: the ball's centre within 1 cm (along the path) of the path's end at the star
 
 
 class Progress:
     """How far along the path the ball has come. The ball's place on the path is its closest point on the centre
-    line; a jump of more than ``max_jump`` (across a wall's end, say) is not followed. ``passed`` is the number of
-    holes whose line across the path the ball's centre has crossed (latched: the furthest point counts)."""
+    line within ``max_jump`` of its last place (so it never jumps to a neighbouring stretch across a partition).
+    ``passed`` is the number of holes whose line across the path the ball's centre has crossed, plus 1 at FINISH
+    (latched: the furthest point counts)."""
 
     def __init__(self, max_jump: float = 0.04):
         self.max_jump = max_jump
@@ -145,14 +150,12 @@ class Progress:
         if d[k] < HOLE_R:
             self.fell = k + 1
             return
-        s, _ = PATH.project(uv)
-        if abs(s - self.s) <= self.max_jump:
-            self.s = s
-            self.s_max = max(self.s_max, s)
+        self.s, _ = PATH.project(uv, self.s - self.max_jump, self.s + self.max_jump)
+        self.s_max = max(self.s_max, self.s)
 
     @property
     def passed(self) -> int:
-        return int(np.sum(HOLE_S < self.s_max))
+        return int(np.sum(HOLE_S < self.s_max)) + int(self.s_max >= PATH.length - FINISH_TOL)
 
 
 def tilt_from_knob(theta: float) -> float:
@@ -168,5 +171,5 @@ def ball_accel(tilt_x: float, tilt_y: float) -> np.ndarray:
 
 
 def score_value(passed: int, foul: bool) -> float:
-    """Holes passed / N (1.0: past the last hole, at FINISH); 0 after a foul."""
-    return 0.0 if foul else passed / N_HOLES
+    """(Holes passed + 1 at FINISH) / (N + 1); 0 after a foul."""
+    return 0.0 if foul else passed / N_STEPS
