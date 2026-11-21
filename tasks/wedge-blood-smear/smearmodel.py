@@ -12,10 +12,15 @@ and its angle to the slide on the trailing side (deg; over 90 means it leans for
    edge and is laid down as a film: thickness ``h = h_ref * (v / v_ref)**(2/3) * (tan a / tan a_ref) * sqrt(V / V0)``
    (Landau-Levich speed law; a steeper spreader holds a taller meniscus; the film thins as the reservoir ``V`` runs
    down). With speed and angle held, the film tapers linearly to nothing at ``L = 2 V0 / (W h0)``: a feathered end.
-3. Faults (latched for the trial). Edge off the slide for more than ``gap_m`` of travel (or ``lift_s``) before the
-   blood is used up: the smear ends blunt; touching down again with blood left is a restart. Moving back more than
-   ``back_m`` while spreading: a restart. Stopping (under ``still_v``) for ``pause_s`` in contact mid-smear: a
-   hesitation ridge. The edge passing the slide's far end with blood left: run off (no feathered end).
+3. Faults. Edge off the slide for more than ``gap_m`` of travel (or ``lift_s``) before the blood is used up: the
+   smear ends blunt; touching down again with blood left lays a second film edge (a line of blood) where it lands.
+   Moving back more than ``back_m`` while spreading also leaves a second film edge, where it turned back. Standing
+   still (under ``still_v``) in contact mid-smear drains the wedge into a band at the edge: the band grows from the
+   film's thickness to twice it over ``pause_s``. The edge passing the slide's far end with blood left: run off.
+
+Ridge and restart are judged only from the deposit record (``h`` per bin and ``edges``), as on the photo: a ridge is a
+band more than ``ridge_k`` times as thick as the film 1-4 mm either side of it; a restart is a second film edge or a
+gap over ``gap_m`` in the film.
 """
 
 from __future__ import annotations
@@ -44,6 +49,8 @@ class Law:
     pause_s: float = 0.3
     start_m: float = 0.001  # forward travel in contact that starts the smear
     bin_m: float = 0.0005  # profile resolution
+    ridge_k: float = 1.5  # a band this many times the film around it is a visible ridge
+    ridge_win: tuple = (0.001, 0.004)  # "around it": 1-4 mm before and after the band
 
     def h0(self, v: float, angle_deg: float) -> float:
         a = min(max(angle_deg, 5.0), 85.0)
@@ -72,7 +79,9 @@ class Smear:
         self.width = 0.0  # wetted width along the edge (then the smear's width)
         self.t_wick = 0.0
         self.vol = self.law.volume
-        self.ploughed = self.restart = self.ridge = False
+        self.ploughed = False
+        self.edges: list[float] = []  # positions where a film edge was laid (the first is the smear's start)
+        self._ridge_msg = False
         self.starts = 0
         self.start_x = None
         self.end_x = None
@@ -163,12 +172,14 @@ class Smear:
                         msg = f"feathered end at {self.end_x * 1000:.1f} mm"
                 self.x_max = max(self.x_max, x)
                 if self.state == "spreading" and self.x_max - x > law.back_m:
-                    self.restart, self.state, self.end_x = True, "blunt", self.last_x
-                    msg = "RESTART: the spreader went back over the smear"
+                    self.state, self.end_x = "blunt", self.last_x
+                    self._edge(x, angle)
+                    msg = "RESTART: the spreader went back over the smear (second film edge)"
                 if self.state == "spreading" and abs(self.v) < law.still_v:
                     self.still_t += dt
-                    if self.still_t >= law.pause_s and not self.ridge:
-                        self.ridge = True
+                    self._band(x)
+                    if not self._ridge_msg and self.ridge:
+                        self._ridge_msg = True
                         msg = f"RIDGE: the spreader stopped mid-smear at {x * 1000:.1f} mm"
                 else:
                     self.still_t = 0.0
@@ -182,18 +193,32 @@ class Smear:
                 self.state, self.end_x = "runoff", self.slide_l
                 msg = "RUN OFF: the smear reached the slide's far end with blood left"
         elif self.state == "blunt" and contact and self.vol > 0 and not self.restart:
-            self.restart = True
-            msg = "RESTART: the spreader came down again with blood on it"
+            self._edge(x, angle)
+            msg = "RESTART: the spreader came down again with blood on it (second film edge)"
         self.prev_x, self.prev_contact = x, contact
         return msg
 
+    def _edge(self, x: float, angle: float) -> None:
+        """Blood on the edge touches the slide again: a line of blood, a second film edge, where it lands."""
+        i = min(max(int(x / self.law.bin_m), 0), len(self.h) - 1)
+        self.h[i] = max(self.h[i], self.law.h0(self.law.v_ref, angle) * math.sqrt(max(self.vol, 0.0) / self.law.volume))
+        self.edges.append(x)
+
+    def _band(self, x: float) -> None:
+        """Edge standing still mid-smear: the wedge drains into a band at the edge, up to 2x the film over pause_s."""
+        i = min(int(x / self.law.bin_m), len(self.h) - 1)
+        film = self.h[i - 1] if i > 0 and self.h[i - 1] > 0 else self.h[i]
+        new = film * (1.0 + min(self.still_t / self.law.pause_s, 1.0))
+        dv = max(new - self.h[i], 0.0) * self.width * self.law.bin_m
+        if 0 < dv <= self.vol:
+            self.h[i], self.vol = new, self.vol - dv
+
     def _start(self, x: float, y: float) -> str:
         self.starts += 1
-        if self.starts > 1:
-            self.restart = True
         self.width = self._wet_width(y)
         self.state = "spreading"
         self.start_x = self.drop_x if self._on_drop(self.x_max) else self.x_max
+        self.edges.append(self.start_x)
         self.last_x = max(self.start_x, self.x_max)
         self.x_max = x
         self.still_t = 0.0
@@ -220,6 +245,23 @@ class Smear:
         if len(nz) == 0:
             return False
         return bool(np.max(np.diff(nz), initial=1) * self.law.bin_m <= self.law.gap_m + 1e-9)
+
+    @property
+    def restart(self) -> bool:
+        """On the photo: a second film edge, or a clear gap band over gap_m across the film."""
+        return len(self.edges) > 1 or (self.far_end is not None and not self.continuous)
+
+    @property
+    def ridge(self) -> bool:
+        """On the photo: a transverse band over ridge_k times as thick as the film 1-4 mm before and after it."""
+        b, (w0, w1) = self.law.bin_m, self.law.ridge_win
+        k0, k1 = int(round(w0 / b)), int(round(w1 / b))
+        h, n = self.h, len(self.h)
+        for i in np.nonzero(h > 0)[0]:
+            nb = [h[j] for j in (*range(i - k1, i - k0 + 1), *range(i + k0, i + k1 + 1)) if 0 <= j < n and h[j] > 0]
+            if len(nb) >= 3 and h[i] > self.law.ridge_k * float(np.median(nb)):
+                return True
+        return False
 
     def summary(self) -> dict:
         a = [x for x in self.angles if x == x]

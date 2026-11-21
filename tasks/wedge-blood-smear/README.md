@@ -6,6 +6,15 @@ stands upright in a slotted stand to the right.
 
 **Instruction:** `Make a wedge smear of the drop on the slide with the spreader slide: let the drop run along the spreader's edge, then push forward in one smooth stroke. The smear should be 30-45 mm long and end in a feathered edge before the slide does.`
 
+## Changes since the last review
+
+- TK-6SNFEJ: "Please judge hesitation and restarts from the finished slide (a visible ridge or a second film edge in
+  the photo) rather than from timing or distances in the video, so a person can score the trial from the photo."
+  Changed: ridge and restart are now defined, in the scoring table, the real-trial checks, task.json and the
+  simulated scorer, by what the finished film shows (a transverse band over 1.5x the film around it; a second film
+  edge or a gap band over 1 mm); the video is no longer used for them, and the smear rule now lays the band and the
+  second edge into its film record, which the scorer reads.
+
 ## Why this task
 
 - **What it is.** The wedge (two-slide) smear is how a peripheral blood film is made by hand for a manual
@@ -108,10 +117,10 @@ centre), held 1 s.
 
 | Score | When |
 |---|---|
-| 0 | no film 15 mm or longer; or a restart (the spreader came down again with blood on it after leaving the slide, or went back more than 1.5 mm over the smear while spreading); or the base slide moved more than 10 mm |
+| 0 | no film 15 mm or longer; or a restart (a second film edge across the film, or a clear gap band over 1 mm across it); or the base slide moved more than 10 mm |
 | 0.3 | any film 15 mm or longer; or the drop was ploughed (the edge slid into it from behind, or the spreader leaned forward, so the blood was pushed ahead instead of trailing); or the base slide moved 3-10 mm |
-| 0.6 | one continuous film (no gap over 1 mm) starting within 5 mm of the drop's centre, 20-55 mm long, ending in a feathered edge on the slide (the blood ran out under the spreader, not lifted off or run off the end) |
-| 1.0 | as 0.6, and 30-45 mm long, 15 mm or more wide, no hesitation ridge (the spreader stopped for 0.3 s or more mid-smear), the feathered end 5 mm or more before the slide's far end |
+| 0.6 | one continuous film starting within 5 mm of the drop's centre, 20-55 mm long, ending in a feathered edge on the slide (the blood ran out under the spreader, not lifted off or run off the end) |
+| 1.0 | as 0.6, and 30-45 mm long, 15 mm or more wide, no hesitation ridge (a transverse band across the film, before the feathered end, more than 1.5 times as thick as the film 1-4 mm either side of it), the feathered end 5 mm or more before the slide's far end |
 
 ### Real trial
 
@@ -123,10 +132,13 @@ Lay the slide on 1 mm graph paper and photograph it from above with a ruler in v
 - **Feathered end:** the film thins out gradually to nothing (no straight, thick line of colour across its end) and
   ends on the slide. A film that reaches the far end, or ends in a thick line where the spreader was lifted, is
   not feathered.
-- **Gap, restart:** any clear band over 1 mm across the film, or a second film start, in the photo; the spreader
-  put down again or moved back over the film, in the video.
-- **Ridge:** the spreader stops on the slide for 0.3 s or more before the film ends (video, 30 fps or better), with
-  a darker transverse line in the photo.
+- **Restart:** a second film edge (a line of colour across the film, or a second film start, behind or ahead of
+  the first film), or a clear, uncoloured band over 1 mm wide across the film.
+- **Ridge:** a visible transverse thick band across the film before the feathered end: a darker stripe clearly
+  thicker than the film on either side of it (in simulation, over 1.5 times the film 1-4 mm before and after).
+
+Length, width, start, end, gaps, restarts and ridges are all read from the photo alone; the video is not needed to
+score them.
 - **Ploughed:** in the video, the spreader touches down behind the drop and is pushed through it, or leans forward
   (its top ahead of its edge).
 - **Base slide moved:** its corners against the pencil marks on the paper, measured with a ruler.
@@ -180,9 +192,15 @@ glass (contact force 0.02 N or more, about half the spreader's weight; PhysX rep
   meniscus; the square root makes the film taper to a feathered end as the blood runs out. At a steady speed and
   angle the film is `2 V0 / (W h0)` long: 37 mm at 45 mm/s and 35 degrees, 30 to 45 mm between about 30 and 41
   degrees at 45 mm/s, or between about 35 and 62 mm/s at 35 degrees.
-- **Faults.** Out of contact for more than 1 mm of travel or 0.15 s while blood is left: blunt end; contact again:
-  restart. Moving back more than 1.5 mm while spreading: restart. Under 3 mm/s for 0.3 s in contact mid-smear:
-  ridge. The edge past the slide's far end with blood left: run off.
+- **Faults.** Out of contact for more than 1 mm of travel or 0.15 s while blood is left: blunt end; contact again
+  lays a line of blood (a second film edge) where the edge lands. Moving back more than 1.5 mm while spreading:
+  a second film edge where it turned back. Standing still (under 3 mm/s) in contact mid-smear drains the wedge into
+  a band at the edge, growing from the film's thickness to twice it over 0.3 s. The edge past the slide's far end
+  with blood left: run off.
+- **Ridge and restart are judged from the film, as on the photo.** The rule keeps the film thickness in 0.5 mm bins
+  along the slide and where each film edge was laid. A ridge is a band over 1.5 times the median thickness of the
+  film 1-4 mm before and after it; a restart is a second film edge or an unfilmed gap over 1 mm inside the film.
+  The scorer never reads the spreader's timing or distances for these two.
 - **Estimates and how to measure them.** All constants are estimates from the textbook description of the
   technique (30-45 degrees, a film of 2/3 to 3/4 of the slide), not measurements. To calibrate them with the
   stand-in: make 9 smears by hand or with the robot at 30, 35 and 40 degrees (a printed protractor card behind the
@@ -235,7 +253,7 @@ Total about $125 (beyond the robot).
 ## Assets and licences
 
 No third-party meshes, scans or textures. The slides, stand, paper and film are primitives defined in `smearkit.py`;
-`spreader_stand.stl` is generated from the same dimensions (our own, MIT like the rest of this task's code). The
+`spreader_stand.stl` is generated from the same dimensions (made for this task, MIT like the rest of this task's code). The
 robot, room and cameras are the standard yam_arena embodiment: the YAM robot model (URDF and meshes in
 `yam_arena/assets/yam/`) comes from i2rt (github.com/i2rt-robotics/i2rt) under the MIT licence; the yam_arena
 station and Isaac Lab Arena are used as provided by the program.

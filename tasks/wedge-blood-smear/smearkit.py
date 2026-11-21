@@ -440,7 +440,7 @@ def _runtime(base, name: str) -> _Runtime:
     return _RT[name]
 
 
-# -- hooks (as in our other tasks' kits) -----------------------------------------------------------------------------
+# -- hooks (as in the other tasks' kits) -----------------------------------------------------------------------------
 
 
 def _patch_scene(scene) -> None:

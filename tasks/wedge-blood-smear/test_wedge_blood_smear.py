@@ -123,3 +123,30 @@ def test_film_tapers_to_a_feathered_end():
     nz = np.nonzero(s.h)[0]
     h = s.h[nz]
     assert h[0] > 3 * h[-1] and math.isclose(len(nz) * s.law.bin_m, s.length, abs_tol=0.001)
+
+
+def test_ridge_is_judged_from_the_film():
+    """A ridge is a band over 1.5x the film 1-4 mm either side, wherever it came from; a slight one is not."""
+    _, s = stroke()
+    assert not s.ridge
+    i = int(0.040 / s.law.bin_m)
+    s.h[i] *= 1.3
+    assert not s.ridge and smear_score(s, 0.0) == 1.0
+    s.h[i] *= 1.5
+    assert s.ridge and smear_score(s, 0.0) == 0.6
+    _, s = stroke(pause_at=0.035)  # the pause's band sits where the spreader stopped
+    assert s.ridge and abs(np.argmax(s.h) * s.law.bin_m - 0.035) < 0.001
+
+
+def test_restart_is_judged_from_the_film():
+    """A restart is a second film edge or a gap band over 1 mm across the film."""
+    _, s = stroke()
+    assert not s.restart and s.edges == [s.start_x]
+    i = int(0.040 / s.law.bin_m)
+    s.h[i:i + 3] = 0.0  # 1.5 mm gap
+    assert s.restart and smear_score(s, 0.0) == 0.0
+    _, s = stroke()
+    s.edges.append(0.045)  # a second film edge
+    assert s.restart and smear_score(s, 0.0) == 0.0
+    _, s = stroke(lift_at=0.035)  # put down again 4 mm on: its line of blood leaves a gap and a second edge
+    assert len(s.edges) == 2 and not s.continuous
