@@ -42,12 +42,12 @@ BEND_LIM = 1.2  # rad either way per joint
 ARMATURE = 1e-5
 
 # -- other objects --------------------------------------------------------------------------------------------------
-FAN_POS = np.array([0.565, 0.31])  # Honeywell HT-900 base centre on the table, blowing toward the arms (-x)
-FAN_BASE = (0.16, 0.14, 0.03)
-FAN_HUB_Z = 0.150  # housing axis above the table
-FAN_R = 0.113  # housing radius (227 mm across)
-FAN_DEPTH = 0.11
-FAN_MASS = 1.18
+FAN_POS = np.array([0.565, 0.31])  # base board centre on the table; the fan blows toward the arms (-x)
+FAN_BASE = (0.16, 0.14, 0.012)  # 12 mm plywood board the 12 V Caframo Sirocco II fan is screwed to
+FAN_HUB_Z = 0.2025  # housing axis above the table (board 12 mm + fan 311 mm tall = 323 mm to the top)
+FAN_R = 0.1205  # housing radius (241 mm across)
+FAN_DEPTH = 0.095
+FAN_MASS = 1.40  # fan 1.26 kg + board
 FAN_CORD_EXIT = np.array([0.565, 0.24 - CORD_R, TOP + CORD_R])  # cord leaves the base's right (-y) side
 FAN_OMEGA = 9.0  # rad/s blade speed drawn in the sim (slowed so 20 fps video does not alias; real ~ 130 rad/s)
 FAN_DRAG = 0.0008  # N m s/rad on the blade

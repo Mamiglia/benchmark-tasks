@@ -1,4 +1,4 @@
-"""On a desk: a black Honeywell HT-900 desk fan stands at the back left, running, blowing toward the arms. Its black
+"""On a desk: a black 12 V Caframo Sirocco II fan, screwed to a small board, stands at the back left, running, blowing toward the arms. Its black
 cord runs right along the desk, over other black cords, to a loose white 6-outlet power strip (no switch) lying
 across the middle of the desk, outlets facing up. Five black plugs sit in the strip: the fan's and those of a desk
 lamp, a monitor, a router and a phone charger, whose cords run back to the desk's cable grommet; one outlet is empty.
@@ -102,12 +102,12 @@ for dev in M.DEVICES:
     PLUGS[dev] = part(f"plug_{dev}", o, plug_boxes(), mass=M.PLUG_MASS, color=PLUG_C, friction=1.0,
                       slides=cord_slides(ROUTES[dev], o), links=(hold,))
 
-# -- the fan (Honeywell HT-900): base, tilting housing, blades on the motor shaft -----------------------------------
+# -- the fan (Caframo Sirocco II on its board): base, rear stem, housing, blades on the motor shaft -----------------------------------
 FAN_O = np.array([M.FAN_POS[0], M.FAN_POS[1], TOP])
 HZ, HX = M.FAN_HUB_Z, -0.01
 FAN_BOXES = [
     ((0.0, 0.0, M.FAN_BASE[2] / 2), M.FAN_BASE, BLACK),
-    *(((0.02, s * 0.085, 0.10), (0.03, 0.012, 0.14), BLACK) for s in (-1, 1)),  # the stand's two arms
+    ((0.05, 0.0, (M.FAN_BASE[2] + HZ) / 2), (0.03, 0.03, HZ - M.FAN_BASE[2]), BLACK),  # stem behind the motor
     seg((HX + M.FAN_DEPTH / 2, 0, HZ), (HX + M.FAN_DEPTH / 2 - 0.03, 0, HZ), 0.12, BLACK),  # motor housing
 ]
 for k in range(16):  # the housing's rim
@@ -125,7 +125,7 @@ for k in range(3):
     a = 2 * math.pi * k / 3
     r = np.array([[1, 0, 0], [0, math.cos(a), -math.sin(a)], [0, math.sin(a), math.cos(a)]]) @ np.array(
         [[math.cos(0.5), 0, math.sin(0.5)], [0, 1, 0], [-math.sin(0.5), 0, math.cos(0.5)]])
-    BLADES.append((tuple(np.array([0.01, 0.0, 0.0]) + r @ np.array([0.0, 0.0, 0.055])), (0.004, 0.06, 0.085),
+    BLADES.append((tuple(np.array([0.01, 0.0, 0.0]) + r @ np.array([0.0, 0.0, 0.05])), (0.004, 0.06, 0.08),
                    (0.55, 0.57, 0.60), False, "box", r))
 BLADE_SLIDE = Slide(name="blade", origin=(HX - M.FAN_DEPTH / 2 + 0.03, 0.0, HZ), axis=(1.0, 0.0, 0.0),
                     boxes=tuple(BLADES), lower=-1e4, upper=1e4, stiffness=0.0, damping=M.FAN_DRAG, mass=0.08,
